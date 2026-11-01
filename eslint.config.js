@@ -4,7 +4,14 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-    { ignores: ['dist', 'storybook-static', 'coverage'] },
+    {
+        ignores: [
+            'dist',
+            'storybook-static',
+            'coverage',
+            'scripts/__tests__/fixtures',
+        ],
+    },
     { ignores: ['.tmp-hz-lint-*'] },
     js.configs.recommended,
     ...tseslint.configs.strict,

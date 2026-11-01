@@ -271,6 +271,24 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 - [ ] **Step 4: Run vitest, storybook project, build; expected PASS**
 - [ ] **Step 5: Commit per component group (only after user approval)** `feat(<Name>): add <Name>`
 
+#### Usage-ordered batch lists (from Task 9)
+
+Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+
+1. `Typography` (294, 292 files; one version)
+2. `Chip` (73)
+3. `Spinner` (x-core `CircularProgress`, 49) *added*
+4. `Alert` (18)
+5. `Badge` (17; x-core `BadgeAI` 5 and `AIVerifiedBadge` 2 become variants, confirm with design)
+6. `Avatar` (11; `AvatarGroup` 1)
+7. `Separator` (x-core `Divider`, 8) *added*
+8. `IconButton` (3; `ActionIconButton` merges in)
+9. `Progress` (x-core `LinearProgress`, 2) *added*
+10. `Link` (no x-core component; 1 import of `Link` from Typography)
+11. `Skeleton` (no x-core component, no usage: new; candidate to defer)
+
+`Button` is done (Task 6): customer360 imports `Button` 75x and `ButtonV2` 74x.
+
 ### Task 11: Batch 2 — Forms and overlays
 
 **Files:** `src/components/{Input,Textarea,Select,Checkbox,RadioGroup,Switch,Label,FormField,Dialog,Drawer,Popover,Tooltip,DropdownMenu,Toast}/`, `src/lib/z-index.ts`, `src/tokens/zIndex.ts`
@@ -287,6 +305,25 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 - [ ] **Step 4: Run vitest, storybook project, `npm run test:coexistence`, build; expected PASS**
 - [ ] **Step 5: Commit per group (only after user approval)**
 
+#### Usage-ordered batch lists (from Task 9)
+
+Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+
+1. `Input` (x-core `TextField` 43 + `TextInput` 10 = 53)
+2. `Dialog` (`Dialog` 27 + `DialogV2` 17 = 44; `ConfirmationDialog` 3 *added* as a preset)
+3. `Select` (`Select` 29 + `SelectV2` 4 = 33)
+4. `Tooltip` (`TooltipV2` 26)
+5. `Checkbox` (`Checkbox` 17 + `CheckboxV2` 3 = 20)
+6. `RadioGroup` (`Radio` 6 + `Radiov2` 3 + x-core `RadioGroup` 4 = 13)
+7. `Drawer` (`DrawerV3` 9; the plan's migration target)
+8. `Popover` (`PopoverV2` 7)
+9. `Switch` (`Switch` 3 + `SwitchV2` 3 = 6)
+10. `Toast` (x-core `Snackbar` 2)
+11. `Textarea` (x-core `TextArea` 2)
+12. `Label`, `FormField`, `DropdownMenu`: no direct x-core import; required infrastructure for the above.
+
+Used by customer360 but not listed: `Combobox` (x-core `Autocomplete` 9 + `CountryAutoComplete` 2), `LabelColorActionsPopover` (11, app-specific, ask whether to keep it local), `PhoneInput` (7, needs a dependency decision), `EmailsField` (6), `Filter` (5), `SplitButton` (5), `SearchBar` (`SearchBarV2` 4; plan names it only in Interfaces), `NumberInput` (1). Proposed order after the list above: `Combobox`, `SearchBar`, `SplitButton`, `Filter`, `EmailsField`, `PhoneInput`, `LabelColorActionsPopover`.
+
 ### Task 12: Batch 3 — Navigation, layout, data display
 
 **Files:** `src/components/{Tabs,Accordion,Breadcrumbs,Pagination,Card,Table,Drawer navigation (name: NavigationDrawer),AppBar}/`
@@ -301,11 +338,34 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 - [ ] **Step 4: Run vitest, storybook, build; expected PASS**
 - [ ] **Step 5: Commit per group (only after user approval)**
 
+#### Usage-ordered batch lists (from Task 9)
+
+Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+
+1. `Table` (75 imports, 49 files; the most-used composite after Typography and Button)
+2. `Card` (`Card` 36 + `CardV2` 14 + `CardElevation` 2 = 52)
+3. `Timeline` (`TimelineV2` 9 + `TimeLineHistory` 2 = 11) *added to the plan's Interfaces only*
+4. `Accordion` (`Accordion` 7 + `AccordionV2` 1 = 8)
+5. `NavigationDrawer`, `AppBar` (with `AppBarActionsV3` 4), `Layout` (`LayoutEnum` 5 + `LayoutV2` 1): customer360 reaches these almost only through `LayoutV2` (1 direct import that composes AppBarV2, DrawerV2, dropdowns and UserPopover), so port them as one unit
+6. `Pagination` (3)
+7. `Tabs` (`TabsV2` 1)
+8. `Breadcrumbs` (0 in customer360; il-acl-client uses it 6x): defer unless requested
+
+Used by customer360 but not listed: `InsightsCard` (13), `EvaluationAccordion` (5), `LevelCard` (5), `RatingBar` (`RatingBarV2` 5), `SectionDescriptionWithIcon` (2), `StatisticCard` (1) as Card compositions. x-core `Grid` (8) maps to Tailwind utilities (`no-equivalent`).
+
 ### Task 13: Batch 4 — Heavy components (deferred, one task per item when scheduled)
 
 **Files:** none until scheduled.
 
 - [ ] **Step 1: Using the usage report, decide with the user which of charts, date pickers, file dropzone, flow diagrams are still needed in customer360; add one task per item with replacement library choice (Recharts directly, react-day-picker, react-dropzone) following `porting-checklist.md`. Mark the rest `no-equivalent` in the map.**
+
+#### Usage-ordered batch lists (from Task 9)
+
+Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+
+Live in customer360 (decide with the user, one task each): charts `AreaChart` (12), `StackedBarChart` (8), `VerticalBarChart` (6) with `CustomTooltip` (6), `MultipleBarChart` (2), `DonutChart` (2), `HorizontalBarChart` (1), `PieChart` (1); `DateRangePicker` (10) and `DatePicker` (7); `FileDropUploader` (7, plus `FileInputUploader` 1); `ClusterMap` (3), `LocationMap` (2); `DataGrid` (3, check whether `Table` covers it); `PDFViewer` (1), `JSONExplorer` (1).
+
+No imports (mark `skip`, port only on request): `LineChart`, `SemiDonutChart`, `PieChart{Rounded,Thick,Thin}`, `StackedBarChart{Horizontal,Vertical}`, `WorldMapChart`, `Legend`, `LegendCustom`, `CustomLegend`, `JSONViewer`, `Palette`. x-core has no flow-diagram component, so none is needed unless a consumer asks.
 
 ---
 
