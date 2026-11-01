@@ -47,7 +47,12 @@ export const fontWeight = {
 
 // Semantic scale — domain/size/weight pattern per Horizon DS
 // All 4 weight variants available: bold, semibold, regular, light
-/** Semantic type scale: 11 roles in `{role}/{size}` notation. */
+/**
+ * Semantic type scale: 11 roles in `{role}/{size}` notation.
+ * Values here are rem (16px root); the generated CSS (`tokens.css`, the
+ * `text-<role>` utilities) emits them as px so a 14px host root cannot shrink
+ * them (ADR 0001).
+ */
 export const typeScale = {
     'display/xl': {
         fontSize: fontSize[44],

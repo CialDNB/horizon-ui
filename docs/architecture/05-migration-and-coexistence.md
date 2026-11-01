@@ -10,7 +10,7 @@ horizon-ui lives beside x-core. Consumers (starting with customer360) add `@cial
 |---|---|
 | CSS reset leaking into MUI screens | No global preflight; reset scoped to `.hz-root` (03) |
 | Class collisions with consumer CSS/Tailwind | `hz:` prefix + `@layer horizon` (03) |
-| Root font-size mismatch (x-core Legacy = 14px html, Horizon = 16px) | Components size via rem against a scoped `.hz-root { font-size: 16px }` baseline so they render identically regardless of html size; builder to verify |
+| Root font-size mismatch (x-core Legacy = 14px html, Horizon = 16px) | Type tokens are emitted in px and spacing/radius are px, so components render identically regardless of html size. The rem-against-scoped-font-size approach was disproved by the spike (rem resolves against `html`, not `.hz-root`); see [ADR 0001](decisions/0001-css-isolation.md) |
 | Export name clash if both imported in one file | horizon-ui exports the same component names (`Button`, `Dialog`...). Consumers alias on import during transition. Not suffixed with V-numbers: x-core's `V2` suffix existed to dodge breaking changes; horizon-ui is a fresh API |
 | Two theme systems | Independent. `ThemeProvider` (MUI) and `HorizonProvider` nest freely; they share only brand intent. Both read the same brand source in the app |
 | Portals / z-index | Radix portals target `.hz-root` container; z-index scale tokens documented; MUI modals use 1300 — horizon overlays must be ordered intentionally (builder to define scale) |

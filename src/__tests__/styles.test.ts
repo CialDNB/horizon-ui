@@ -1,27 +1,26 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, inject, it } from 'vitest';
+import { buildStylesCss } from '../../scripts/build-styles';
 import { breakpoints } from '../tokens/breakpoints';
 import { typeScale } from '../tokens/typography';
 
-// dist/styles.css is produced by `vite build`, which scripts/vitest-global-setup.ts
-// runs before any test file.
-const css = readFileSync(
-    join(__dirname, '..', '..', 'dist', 'styles.css'),
-    'utf8'
-);
+// Rule assertions run on the same function the Vite plugin emits; one smoke test
+// below checks the file `vite build` actually wrote (scripts/vitest-global-setup.ts).
+const css = await buildStylesCss();
 
 interface Node {
     prelude: string;
     children: Node[];
     /** Enclosing at-rule preludes, outermost first. */
     ancestors: string[];
+    /** Declarations directly inside this block. */
+    decls: string[];
 }
 
 /** Minimal CSS block parser: enough structure to inspect selectors and nesting. */
 function parse(source: string): Node[] {
     const text = source.replace(/\/\*[\s\S]*?\*\//g, '');
-    const root: Node = { prelude: '', children: [], ancestors: [] };
+    const root: Node = { prelude: '', children: [], ancestors: [], decls: [] };
     const stack: Node[] = [root];
     let buffer = '';
     let quote: string | null = null;
@@ -39,6 +38,7 @@ function parse(source: string): Node[] {
             const node: Node = {
                 prelude: buffer.trim(),
                 children: [],
+                decls: [],
                 ancestors:
                     parent === root
                         ? []
@@ -48,6 +48,8 @@ function parse(source: string): Node[] {
             stack.push(node);
             buffer = '';
         } else if (ch === '}') {
+            const last = buffer.trim();
+            if (last) stack[stack.length - 1]?.decls.push(last);
             stack.pop();
             buffer = '';
         } else if (ch === ';') {
@@ -57,11 +59,14 @@ function parse(source: string): Node[] {
                 parent.children.push({
                     prelude: statement,
                     children: [],
+                    decls: [],
                     ancestors:
                         parent === root
                             ? []
                             : [...parent.ancestors, parent.prelude],
                 });
+            } else if (statement) {
+                parent.decls.push(statement);
             }
             buffer = '';
         } else {
@@ -74,15 +79,18 @@ function parse(source: string): Node[] {
 const walk = (nodes: Node[]): Node[] =>
     nodes.flatMap((n) => [n, ...walk(n.children)]);
 
+const styleRulesOf = (nodes: Node[]): Node[] =>
+    walk(nodes).filter(
+        (n) =>
+            !n.prelude.startsWith('@') &&
+            n.children.length === 0 &&
+            // declarations inside @property / keyframe steps are not selectors
+            !n.ancestors.some((a) => /^@(property|keyframes)\b/.test(a))
+    );
+
 const tree = parse(css);
 const all = walk(tree);
-const styleRules = all.filter(
-    (n) =>
-        !n.prelude.startsWith('@') &&
-        n.children.length === 0 &&
-        // declarations inside @property / keyframe steps are not selectors
-        !n.ancestors.some((a) => /^@(property|keyframes)\b/.test(a))
-);
+const styleRules = styleRulesOf(tree);
 /** Splits a selector list on top-level commas (not those inside `:where()`). */
 function splitSelectors(list: string): string[] {
     const out: string[] = [];
@@ -103,9 +111,29 @@ function splitSelectors(list: string): string[] {
 }
 
 const selectors = styleRules.flatMap((r) => splitSelectors(r.prelude));
+
+/**
+ * Selectors that declare a custom property without being horizon-owned: only
+ * `.hz-root*` scope rules and `.hz\\:` utilities may declare variables.
+ */
+function foreignVariableDeclarations(source: string): string[] {
+    return styleRulesOf(parse(source))
+        .filter((r) => r.decls.some((d) => /^--[\w-]+\s*:/.test(d)))
+        .flatMap((r) => splitSelectors(r.prelude))
+        .filter(
+            (sel) =>
+                /^(:root|:host|html|\*)/.test(sel) ||
+                !(sel.startsWith('.hz-root') || sel.startsWith('.hz\\:'))
+        );
+}
 const slug = (role: string) => role.replace('/', '-');
 
 describe('dist/styles.css', () => {
+    it('vite build emits the compiled stylesheet', () => {
+        const emitted = readFileSync(inject('stylesCssPath'), 'utf8');
+        expect(emitted).toBe(css);
+    });
+
     it('contains no global preflight', () => {
         expect(selectors.length).toBeGreaterThan(0);
         const global =
@@ -160,14 +188,23 @@ describe('dist/styles.css', () => {
     it('no :root variable declarations', () => {
         expect(css).not.toMatch(/:root/);
         expect(css).not.toMatch(/:host/);
-        const declaringVars = styleRules.filter((r) => {
-            const start = css.indexOf(`${r.prelude} {`);
-            return (
-                start !== -1 &&
-                /--[\w-]+\s*:/.test(css.slice(start, css.indexOf('}', start)))
-            );
-        });
-        for (const r of declaringVars) expect(r.prelude).toMatch(/^\.hz-root/);
+        expect(foreignVariableDeclarations(css)).toEqual([]);
+    });
+
+    it('allows prefixed utilities to declare variables', async () => {
+        const withRing = await buildStylesCss(['hz:ring-2', 'hz:shadow-1']);
+        expect(withRing).toMatch(/\.hz\\:ring-2 \{\s*--hz-tw-ring-shadow:/);
+        expect(foreignVariableDeclarations(withRing)).toEqual([]);
+        // The checker itself rejects a global declaration.
+        expect(
+            foreignVariableDeclarations(
+                ':root { --primary: red; } * { --x: 1 }'
+            )
+        ).toEqual([':root', '*']);
+    });
+
+    it('never uses the shared --tw- variable namespace', () => {
+        expect(css).not.toContain('--tw-');
     });
 
     it('reduced motion media query present', () => {

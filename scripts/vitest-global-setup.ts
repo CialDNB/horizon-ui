@@ -1,9 +1,31 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
+import type { TestProject } from 'vitest/node';
+
+declare module 'vitest' {
+    export interface ProvidedContext {
+        /** `styles.css` emitted by a real `vite build` for this test run. */
+        stylesCssPath: string;
+    }
+}
 
 /**
- * Builds the package once before the suite so tests that read `dist/`
- * (e.g. `dist/styles.css`) never depend on a stale or missing build.
+ * Runs a real `vite build` once per test run so tests can check what the build
+ * emits. It builds into a fresh temp dir, never `dist/`, so it cannot race a
+ * concurrent `npm run build` or another vitest process.
  */
-export default async function setup(): Promise<void> {
-    await build({ configFile: 'vite.config.ts', logLevel: 'warn' });
+export default async function setup(project: TestProject) {
+    const outDir = mkdtempSync(join(tmpdir(), 'horizon-ui-build-'));
+    await build({
+        configFile: fileURLToPath(
+            new URL('../vite.config.ts', import.meta.url)
+        ),
+        logLevel: 'warn',
+        build: { outDir, emptyOutDir: true },
+    });
+    project.provide('stylesCssPath', join(outDir, 'styles.css'));
+    return () => rmSync(outDir, { recursive: true, force: true });
 }

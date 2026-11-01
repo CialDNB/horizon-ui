@@ -11,7 +11,7 @@ Status: **Decided** (owner answered), **Default** (my default stands unless you 
 | 5 | Dark mode | Default | Not in v1; semantic-variable structure allows adding later |
 | 6 | Tokens: copy vs separate package | Default | One-time copy into horizon-ui, then diverge |
 | 7 | Consumers beyond customer360, React < 18 | Default | customer360 only; React >= 18 |
-| 8 | Tailwind `hz:` prefix vs scope under `.hz-root` | Default | Prefix + `@layer horizon`; builder prototypes both against a MUI page and confirms |
+| 8 | Tailwind `hz:` prefix vs scope under `.hz-root` | Decided | Prefix + `@layer horizon`, `--tw-*` renamed to `--hz-tw-*`; spike evidence in [ADR 0001](decisions/0001-css-isolation.md) |
 | 9 | Git home | Decided | New repo `CialDNB/horizon-ui` |
 | 10 | DrawerV2 | Decided | Port behaviour, redesign visuals per Figma |
 | 11 | Storybook hosting | Default | Same as x-core's (nginx image on the cluster) |

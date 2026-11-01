@@ -36,7 +36,7 @@ Consumers must not need Tailwind. Therefore:
 - Ship precompiled `dist/styles.css`; consumer imports once: `import '@cialdnb/horizon-ui/styles.css'`.
 - Coexistence safety (see 05):
   - **No global preflight.** Tailwind's reset is not emitted globally; a minimal reset is applied only inside `.hz-root` (provider wrapper) and to portal content roots.
-  - Tailwind utilities use a **prefix** (`hz:`) in the compiled output so they cannot collide with consumer Tailwind or other classes. Authors write normal utilities in source via a build-time prefix setting; builder to verify ergonomics (alternative: scope everything under `.hz-root` with CSS nesting/`@layer`).
+  - Tailwind utilities use a **prefix** (`hz:`) in the compiled output so they cannot collide with consumer Tailwind or other classes. Authors write the prefix in source (`hz:flex`, `hz:tablet:px-6`); Tailwind's `--tw-*` internals are renamed to `--hz-tw-*` at build time. Decided in [ADR 0001](decisions/0001-css-isolation.md) after a spike showed scoping under `.hz-root` collides with consumer utility classes.
   - All output in `@layer horizon` so consumers can order it relative to MUI/Emotion styles.
 - Radix portals (Dialog, Popover, Select, Tooltip) render at `document.body`; provider re-targets the portal container to a `.hz-root` element so scoped styles/vars apply.
 - Consumers *with* Tailwind v4 can optionally import `@cialdnb/horizon-ui/theme.css` to get tokens as `@theme` and use `bg-primary` in their own code. Optional, not required for v1.
