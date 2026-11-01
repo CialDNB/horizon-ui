@@ -1,0 +1,64 @@
+{
+    "name": "@cialdnb/horizon-ui",
+    "version": "0.0.1",
+    "description": "Horizon DS React component library (shadcn + Tailwind v4)",
+    "type": "module",
+    "sideEffects": [
+        "**/*.css"
+    ],
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./styles.css": "./dist/styles.css",
+        "./tokens": {
+            "types": "./dist/tokens/index.d.ts",
+            "import": "./dist/tokens/index.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "@cialdnb:registry": "https://npm.pkg.github.com"
+    },
+    "scripts": {
+        "build": "vite build",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint src/",
+        "test": "vitest run",
+        "storybook": "echo \"storybook is configured in a later task\" && exit 1",
+        "build:tokens": "echo \"build:tokens is implemented in a later task\" && exit 1",
+        "build:mcp-manifest": "echo \"build:mcp-manifest is implemented in a later task\" && exit 1"
+    },
+    "peerDependencies": {
+        "react": ">=18",
+        "react-dom": ">=18"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.5",
+        "@types/node": "^26.6.6",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "eslint": "^9.39.5",
+        "eslint-import-resolver-typescript": "^4.4.5",
+        "eslint-plugin-boundaries": "^5.4.0",
+        "eslint-plugin-jsx-a11y": "^6.10.2",
+        "jsdom": "^29.1.1",
+        "lint-staged": "^16.4.0",
+        "prettier": "^3.9.10",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1",
+        "tailwindcss": "^4.3.3",
+        "tsx": "^4.23.15",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.72.1",
+        "vite": "^8.3.5",
+        "vite-plugin-dts": "^5.1.2",
+        "vitest": "^4.1.12"
+    }
+}
