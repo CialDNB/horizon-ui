@@ -5,6 +5,14 @@ export type {
     ButtonVariant,
     ButtonVariantOptions,
 } from './Button';
+export { Chip, chipVariants } from './Chip';
+export type {
+    ChipAppearance,
+    ChipProps,
+    ChipSize,
+    ChipVariant,
+    ChipVariantOptions,
+} from './Chip';
 export { Typography, typographyVariants } from './Typography';
 export type {
     TypographyAlign,

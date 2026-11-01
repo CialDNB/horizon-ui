@@ -5,7 +5,7 @@ import {
     Typography as MuiTypography,
     createTheme,
 } from '@mui/material';
-import { Button, HorizonProvider, Typography } from '@cialdnb/horizon-ui';
+import { Button, Chip, HorizonProvider, Typography } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
@@ -61,6 +61,15 @@ const muiTheme = createTheme({
     },
     palette: { primary: { main: '#0050F0' } },
 });
+
+const CHIP_TONES = [
+    'neutral',
+    'primary',
+    'info',
+    'success',
+    'warning',
+    'error',
+] as const;
 
 const TYPOGRAPHY_ROLES = [
     'display/xl',
@@ -186,6 +195,33 @@ function App() {
                         >
                             h6 element
                         </Typography>
+                        {CHIP_TONES.map((variant) => (
+                            <Chip
+                                key={variant}
+                                variant={variant}
+                                label={variant}
+                                data-testid={`hz-chip-${variant}`}
+                            />
+                        ))}
+                        <Chip
+                            appearance="outline"
+                            variant="success"
+                            size="sm"
+                            label="outline sm"
+                            data-testid="hz-chip-outline"
+                        />
+                        <Chip
+                            label="action"
+                            onClick={() => undefined}
+                            onDelete={() => undefined}
+                            data-testid="hz-chip-action"
+                        />
+                        <Chip
+                            label="disabled"
+                            disabled
+                            onClick={() => undefined}
+                            data-testid="hz-chip-disabled"
+                        />
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">

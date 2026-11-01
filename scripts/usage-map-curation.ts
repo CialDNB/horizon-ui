@@ -30,7 +30,8 @@ export const curation: Record<string, Curation> = {
     Chip: {
         batch: 1,
         horizon: 'Chip',
-        note: 'Planned: `ChipColor`/`color` become `variant` (info/success/warning/error/neutral); `onDelete` renders a labelled remove button.',
+        note: 'Done in Task 10a, see Chip section below. `color` becomes `variant` (neutral/primary/info/success/warning/error; palette colours dropped), `variant` filled/outlined becomes `appearance` soft/outline, `size` small/medium becomes sm/md; `label` is a required string (array labels with the +N tooltip dropped); `onDelete` renders a remove button named `Remove <label>`; `onClick` renders a real button; `avatar`, `deleteIcon`, `sx` dropped; `ChipColor` type becomes `ChipVariant`.',
+        status: 'done',
     },
     CircularProgress: {
         batch: 1,

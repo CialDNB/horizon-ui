@@ -82,9 +82,11 @@ describe('architecture', () => {
             expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
               [
                 "Button",
+                "Chip",
                 "HorizonProvider",
                 "Typography",
                 "buttonVariants",
+                "chipVariants",
                 "cn",
                 "typographyVariants",
                 "usePortalContainer",
