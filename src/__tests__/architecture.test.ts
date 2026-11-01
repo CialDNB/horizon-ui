@@ -71,6 +71,12 @@ describe('architecture', () => {
 
     it('public API matches snapshot', async () => {
         const api = await import('../index');
-        expect(Object.keys(api).sort()).toMatchInlineSnapshot(`[]`);
+        expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
+          [
+            "HorizonProvider",
+            "cn",
+            "usePortalContainer",
+          ]
+        `);
     });
 });
