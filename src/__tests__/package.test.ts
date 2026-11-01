@@ -1,6 +1,7 @@
 import {
     existsSync,
     mkdtempSync,
+    rmSync,
     readdirSync,
     readFileSync,
     writeFileSync,
@@ -97,33 +98,36 @@ describe('built package (real vite build, scripts/vitest-global-setup.ts)', () =
     });
 
     it('one icon from the icons subpath stays small in a consumer bundle', async () => {
-        const entry = join(
-            mkdtempSync(join(tmpdir(), 'hz-consumer-')),
-            'entry.js'
-        );
+        const dir = mkdtempSync(join(tmpdir(), 'hz-consumer-'));
+        const entry = join(dir, 'entry.js');
         writeFileSync(
             entry,
             `import { CheckIcon } from ${JSON.stringify(join(outDir, 'icons/index.js'))}; console.log(CheckIcon);`
         );
-        const result = await build({
-            configFile: false,
-            logLevel: 'silent',
-            root,
-            resolve: {
-                alias: {
-                    '@phosphor-icons/react': join(
-                        root,
-                        'node_modules/@phosphor-icons/react/dist/index.es.js'
-                    ),
+        let result: Awaited<ReturnType<typeof build>>;
+        try {
+            result = await build({
+                configFile: false,
+                logLevel: 'silent',
+                root,
+                resolve: {
+                    alias: {
+                        '@phosphor-icons/react': join(
+                            root,
+                            'node_modules/@phosphor-icons/react/dist/index.es.js'
+                        ),
+                    },
                 },
-            },
-            build: {
-                write: false,
-                minify: true,
-                lib: { entry, formats: ['es'] },
-                rollupOptions: { external: ['react', 'react/jsx-runtime'] },
-            },
-        });
+                build: {
+                    write: false,
+                    minify: true,
+                    lib: { entry, formats: ['es'] },
+                    rollupOptions: { external: ['react', 'react/jsx-runtime'] },
+                },
+            });
+        } finally {
+            rmSync(dir, { recursive: true, force: true });
+        }
         const output = Array.isArray(result) ? result[0] : result;
         const code =
             output !== undefined && 'output' in output

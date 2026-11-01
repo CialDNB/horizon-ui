@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState, type CSSProperties } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import * as icons from '../icons';
+import { ResponsiveSpec } from './ResponsiveSpec';
 
 /*
  * Catalog of the Phosphor icons re-exported from `@cialdnb/horizon-ui/icons`. Only
@@ -56,7 +57,7 @@ const cell: CSSProperties = {
 function Catalog({ names }: { names: readonly string[] }) {
     const shown = catalog.filter(([name]) => names.includes(name));
     return (
-        <ul style={grid}>
+        <ul style={grid} className="hz-story-icons">
             {shown.map(([name, Icon]) => (
                 <li key={name} style={cell}>
                     <Icon size={24} aria-hidden="true" />
@@ -165,6 +166,59 @@ export const DirectionalRtl: Story = {
                     />
                 </div>
             ))}
+        </div>
+    ),
+};
+
+const responsiveCss = `
+.hz-story-icons { grid-template-columns: repeat(2, 1fr) !important; }
+@media (min-width: 768px) { .hz-story-icons { grid-template-columns: repeat(4, 1fr) !important; } }
+@media (min-width: 1280px) { .hz-story-icons { grid-template-columns: repeat(6, 1fr) !important; } }
+@media (min-width: 1920px) { .hz-story-icons { grid-template-columns: repeat(8, 1fr) !important; } }`;
+
+/** Per-breakpoint specification (Responsive Standard). */
+export const Responsive: Story = {
+    render: () => (
+        <div style={{ display: 'grid', gap: 24 }}>
+            <style>{responsiveCss}</style>
+            <ResponsiveSpec
+                caption="Icon catalog responsive specification"
+                spec={{
+                    mobile: {
+                        size: 'Icons render identically at every breakpoint: the size prop (24px here) is chosen by the consuming component, never by the viewport. Search input is 44px tall with 16px type (no iOS zoom).',
+                        density: '12px gap, 12px tile padding.',
+                        layout: 'Catalog grid: 2 columns; search input full width up to 360px; no horizontal overflow at 320px (names wrap anywhere).',
+                        contentVisibility:
+                            'Name always visible under the icon; at most 48 results shown, with a status line giving the total.',
+                        interaction:
+                            'Tiles are not interactive (no touch target needed); icons are aria-hidden, the name is the text. The search field is the only control.',
+                    },
+                    tablet: {
+                        size: 'Same icon size.',
+                        density: 'Same.',
+                        layout: '4 columns.',
+                        contentVisibility: 'Same.',
+                        interaction:
+                            'Same; keyboard focus ring on the search field.',
+                    },
+                    laptop: {
+                        size: 'Same icon size.',
+                        density: 'Same.',
+                        layout: '6 columns.',
+                        contentVisibility: 'Same.',
+                        interaction: 'Same.',
+                    },
+                    desktop: {
+                        size: 'Same icon size.',
+                        density: 'Same.',
+                        layout: '8 columns.',
+                        contentVisibility: 'Same.',
+                        interaction: 'Same.',
+                        note: 'Only the catalog column count changes; an icon is a fixed-size glyph and gains nothing from width.',
+                    },
+                }}
+            />
+            <Searchable />
         </div>
     ),
 };

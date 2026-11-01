@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 const srcDir = join(__dirname, '..');
 
@@ -69,16 +69,25 @@ describe('architecture', () => {
         expect(offenders.map(rel)).toEqual([]);
     });
 
-    it('public API matches snapshot', async () => {
-        const api = await import('../index');
-        expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
-          [
-            "Button",
-            "HorizonProvider",
-            "buttonVariants",
-            "cn",
-            "usePortalContainer",
-          ]
-        `);
-    }, 15_000);
+    describe('public API', () => {
+        let api: Record<string, unknown>;
+        // The test body takes ~200 ms; the first import of src/index.ts is slow
+        // because it cold-transforms every Radix-based component, and that
+        // stretches under parallel load. The hook timeout covers that, not the test.
+        beforeAll(async () => {
+            api = await import('../index');
+        }, 30_000);
+
+        it('matches snapshot', () => {
+            expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
+              [
+                "Button",
+                "HorizonProvider",
+                "buttonVariants",
+                "cn",
+                "usePortalContainer",
+              ]
+            `);
+        });
+    });
 });

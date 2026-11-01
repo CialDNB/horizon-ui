@@ -53,6 +53,18 @@ Consumers must not need Tailwind. Therefore:
 
 Radix and cva as direct `dependencies` (not peers) so consumers install nothing else. x-core rule retained: new direct dependency needs a bundle-size justification in the PR.
 
+## Dependency justifications
+
+Sizes are minified, measured by bundling the package alone with Vite (react external); gzip in brackets. Whole-module imports for the small ones, so an upper bound.
+
+| Dependency | Size | Why it is a direct dependency |
+|---|---|---|
+| `@phosphor-icons/react` | one icon via the `@cialdnb/horizon-ui/icons` subpath: 2.6 KB (1.0 KB); the whole set via a namespace import: about 5.5 MB | x-core's icon set is already Phosphor, so names carry over. Subpath-only exports and `sideEffects: false` upstream keep named imports tree-shakeable (regression-tested in `src/__tests__/package.test.ts`); external in the build, never vendored. |
+| `tailwind-merge` | 39.2 KB (10.0 KB) | Resolves conflicting `hz:` utilities when consumers pass `className` (`cn`). Largest of the runtime deps; shared by every component. |
+| `class-variance-authority` | 1.6 KB (0.8 KB) | Typed variants (shadcn default); replaces boolean-prop explosions. |
+| `@radix-ui/react-slot` | 4.3 KB (1.7 KB) | `asChild` composition (Button as link). Further Radix primitives are justified per component. |
+| `clsx` | 0.8 KB (0.5 KB) | Conditional class strings inside `cn`. |
+
 ## Publishing
 
 - GitHub Packages, `@cialdnb/horizon-ui`, same `.npmrc` registry setup as x-core.

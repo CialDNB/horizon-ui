@@ -5,7 +5,7 @@ Status: **Decided** (owner answered), **Default** (my default stands unless you 
 | # | Question | Status | Resolution |
 |---|---|---|---|
 | 1 | Name | Decided | `horizon-ui`, published as `@cialdnb/horizon-ui` |
-| 2 | Icons | Decided | Re-export `@phosphor-icons/react` as the `icons` namespace (x-core's icon set is Phosphor, not custom SVG wrappers); no lucide-react anywhere, shadcn internals use Phosphor too. Illustrations are generated from the brand SVGs |
+| 2 | Icons | Decided | Re-export `@phosphor-icons/react` from the `@cialdnb/horizon-ui/icons` subpath (x-core's icon set is Phosphor, not custom SVG wrappers); no lucide-react anywhere, shadcn internals use Phosphor too. Illustrations are generated from the brand SVGs |
 | 3 | IL brand typography | Decided | IL uses cial typography until design says otherwise |
 | 4 | Visual regression | Decided | Playwright, self-hosted screenshots |
 | 5 | Dark mode | Default | Not in v1; semantic-variable structure allows adding later |
