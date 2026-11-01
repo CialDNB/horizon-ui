@@ -40,7 +40,7 @@ x-core (MUI v5 + Emotion, 150+ components) is the shared UI library for CIAL / D
 | Docs / dev | Storybook 10 (`@storybook/react-vite`) | proposed, user asked for advice |
 | Tests | Vitest + Testing Library + Storybook Vitest addon; Playwright for visual | proposed |
 | Language | TypeScript 5, strict | proposed |
-| Icons / illustrations | Icons: `@phosphor-icons/react` re-exported as the `icons` namespace (same set as x-core, no lucide). Illustrations: brand SVGs copied verbatim and generated into typed components by `scripts/port-illustrations.ts` | decided |
+| Icons / illustrations | Icons: `@phosphor-icons/react` re-exported from the `@cialdnb/horizon-ui/icons` subpath (same set as x-core, no lucide). Illustrations: brand SVGs copied verbatim and generated into typed components by `scripts/port-illustrations.ts`, exported from the `@cialdnb/horizon-ui/illustrations` subpath | decided |
 | Distribution | npm, GitHub Packages, scope `@cialdnb` | decided |
 | Package manager | npm (match x-core) | proposed |
 | React | peer `>=18` | proposed |

@@ -229,12 +229,12 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 
 **Files:**
 - Create: `src/icons/index.ts`, `src/icons/icons.test.tsx`, `scripts/port-illustrations.ts`, `scripts/__tests__/port-illustrations.test.ts`, `src/illustrations/{Illustration.types.ts,IllustrationFrame.tsx,useSvgId.ts,index.ts,illustrations.test.tsx}`, `src/illustrations/assets/{cial,il}/*.svg` (verbatim copies from x-core), `src/illustrations/generated/*` (generated, committed), `src/stories/{Icons,Illustrations}.stories.tsx`
-- Modify: `src/index.ts` (namespaces `icons`, `illustrations`), `package.json` (`@phosphor-icons/react` dependency, `./icons` and `./illustrations` subpath exports), `eslint.config.js` (boundaries elements `icons`, `illustrations`)
+- Modify: `package.json` (`@phosphor-icons/react` dependency, `./icons` and `./illustrations` subpath exports), `eslint.config.js` (boundaries elements `icons`, `illustrations`)
 
 **Interfaces:**
 - Icons: x-core's icons are `export * from '@phosphor-icons/react'` plus legacy aliases, so `src/icons/index.ts` re-exports `@phosphor-icons/react` and the types `Icon`, `IconProps`, `IconWeight`. Only `*Icon` names, no legacy aliases, no lucide-react. Phosphor sets no `aria-*`: consumers pass `aria-hidden`/`aria-label`; directional icons use Phosphor's `mirrored` under `dir="rtl"`. `@phosphor-icons/react` is a direct dependency and stays a bare import in `dist`.
 - Illustrations: `IllustrationProps = React.SVGProps<SVGSVGElement> & DnbBase & { size?: number | string; title?: string }`; `forwardRef` + `displayName`; names equal x-core's exports (`EmptyState`, `EmptyStateIL`, ...). `aria-hidden` unless `title`/`aria-label`; `focusable="false"`; clip/mask ids made per instance with `useId`. Artwork is never edited: the script only converts attribute spelling and fails on any element or attribute it does not know.
-- Public API: `icons` and `illustrations` namespaces from the root, and tree-shakeable `@cialdnb/horizon-ui/icons` and `@cialdnb/horizon-ui/illustrations` subpaths (root namespace member access cannot be tree-shaken).
+- Public API: subpath-only `@cialdnb/horizon-ui/icons` and `@cialdnb/horizon-ui/illustrations`; the root entry exports neither (a root namespace measured 5.5 MB vs 2.6 KB per icon via the subpath; a package test asserts this).
 
 - [ ] **Step 1: Write failing tests:** `'every exported icon renders an svg'`, `'icon aria-hidden by default'`, `'size prop sets width and height'`, `'illustrations render an svg for every export'`, `'illustrations aria-hidden by default and expose role img with aria-label'`, `'illustration size prop sets width and height'`, `'illustration ids are unique across two instances'`, plus the existing `no mui import` package tests.
 - [ ] **Step 2: Run; expected FAIL**

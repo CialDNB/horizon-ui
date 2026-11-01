@@ -1,5 +1,13 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import {
+    existsSync,
+    mkdtempSync,
+    readdirSync,
+    readFileSync,
+    writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { build } from 'vite';
 import { describe, expect, inject, it } from 'vitest';
 
 const root = join(__dirname, '..', '..');
@@ -59,4 +67,70 @@ describe('built package (real vite build, scripts/vitest-global-setup.ts)', () =
             expect.arrayContaining(['clsx', 'tailwind-merge'])
         );
     });
+
+    const pkg = JSON.parse(
+        readFileSync(join(root, 'package.json'), 'utf8')
+    ) as { exports: Record<string, { types?: string; import?: string }> };
+    const built = (target: string) =>
+        join(outDir, target.replace(/^\.\/dist\//, ''));
+
+    it.each(['./icons', './illustrations'])(
+        'subpath %s resolves to built JS and d.ts files',
+        (subpath) => {
+            const entry = pkg.exports[subpath];
+            expect(entry?.import).toBeDefined();
+            expect(entry?.types).toBeDefined();
+            expect(existsSync(built(entry?.import ?? ''))).toBe(true);
+            expect(existsSync(built(entry?.types ?? ''))).toBe(true);
+        }
+    );
+
+    it('root entry does not export icons or illustrations', () => {
+        const source = readFileSync(join(outDir, 'index.js'), 'utf8');
+        expect(source).not.toMatch(/icons|illustrations|phosphor/);
+        const types = readFileSync(join(outDir, 'index.d.ts'), 'utf8');
+        expect(types).not.toMatch(/icons|illustrations/);
+    });
+
+    it('keeps phosphor a bare import in the icons entry', () => {
+        expect(imports('icons/index.js')).toContain('@phosphor-icons/react');
+    });
+
+    it('one icon from the icons subpath stays small in a consumer bundle', async () => {
+        const entry = join(
+            mkdtempSync(join(tmpdir(), 'hz-consumer-')),
+            'entry.js'
+        );
+        writeFileSync(
+            entry,
+            `import { CheckIcon } from ${JSON.stringify(join(outDir, 'icons/index.js'))}; console.log(CheckIcon);`
+        );
+        const result = await build({
+            configFile: false,
+            logLevel: 'silent',
+            root,
+            resolve: {
+                alias: {
+                    '@phosphor-icons/react': join(
+                        root,
+                        'node_modules/@phosphor-icons/react/dist/index.es.js'
+                    ),
+                },
+            },
+            build: {
+                write: false,
+                minify: true,
+                lib: { entry, formats: ['es'] },
+                rollupOptions: { external: ['react', 'react/jsx-runtime'] },
+            },
+        });
+        const output = Array.isArray(result) ? result[0] : result;
+        const code =
+            output !== undefined && 'output' in output
+                ? (output.output[0]?.code ?? '')
+                : '';
+        // Whole set is ~5.5 MB; one icon is ~3 KB.
+        expect(code.length).toBeGreaterThan(0);
+        expect(code.length).toBeLessThan(50_000);
+    }, 60_000);
 });

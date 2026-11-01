@@ -4,7 +4,7 @@ import { expect, userEvent, within } from 'storybook/test';
 import * as icons from '../icons';
 
 /*
- * Catalog of the Phosphor icons re-exported as the `icons` namespace. Only
+ * Catalog of the Phosphor icons re-exported from `@cialdnb/horizon-ui/icons`. Only
  * `*Icon` names are listed (the unsuffixed aliases are deprecated upstream) and
  * at most MAX_RESULTS are rendered at once. Stories are excluded from the
  * Tailwind scan, so layout uses inline styles.
@@ -113,7 +113,7 @@ const meta = {
         docs: {
             description: {
                 component:
-                    'Icons are Phosphor (`@phosphor-icons/react`) re-exported as the `icons` namespace. Use the `*Icon` names. Phosphor sets no `aria-*`: pass `aria-hidden` on decorative icons and `aria-label` on meaningful ones. Directional icons need `mirrored` under `dir="rtl"`.',
+                    'Icons are Phosphor (`@phosphor-icons/react`) re-exported from `@cialdnb/horizon-ui/icons`. Use the `*Icon` names. Phosphor sets no `aria-*`: pass `aria-hidden` on decorative icons and `aria-label` on meaningful ones. Directional icons need `mirrored` under `dir="rtl"`.',
             },
         },
     },

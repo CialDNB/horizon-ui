@@ -26,7 +26,7 @@ Single package, not a monorepo (matches x-core; revisit only if tokens or icons 
 - Vite library mode, ESM only, `preserveModules: true`, sourcemaps, `.d.ts` emitted.
 - Tailwind v4 compiles `src/styles/index.css` at build time to **`dist/styles.css`** (layered, `@layer horizon`) and **`dist/styles.unlayered.css`** (the same rules with every `@layer` flattened away, for legacy hosts), both from `scripts/build-styles.ts`.
 - `dist/` is published; `src/` is not.
-- `exports` map: `.` (JS), `./styles.css`, `./styles.unlayered.css`, `./tokens` (TS tokens for non-CSS use), `./package.json`. Per-component subpath exports are a builder option if tree-shaking proves insufficient.
+- `exports` map: `.` (JS), `./styles.css`, `./styles.unlayered.css`, `./tokens` (TS tokens for non-CSS use), `./icons` (Phosphor re-export), `./illustrations`, `./package.json`. Icons and illustrations are subpath-only: a root namespace cannot be tree-shaken (5.5 MB vs 2.6 KB measured). Per-component subpath exports are a builder option if tree-shaking proves insufficient.
 - `sideEffects: ["**/*.css"]`.
 
 ## CSS delivery (the key constraint)

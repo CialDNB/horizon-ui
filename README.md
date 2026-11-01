@@ -36,7 +36,7 @@ Import exactly one of the two, once, and render components inside `HorizonProvid
 
 ## Icons and illustrations
 
-Icons are Phosphor (`@phosphor-icons/react`, same set as x-core), re-exported with the `*Icon` names. Prefer the subpath so bundlers can tree-shake: member access on the root `icons` namespace pulls in the whole set (about 5.5 MB minified).
+Icons are Phosphor (`@phosphor-icons/react`, same set as x-core), re-exported with the `*Icon` names. They are only available from the subpaths `@cialdnb/horizon-ui/icons` and `@cialdnb/horizon-ui/illustrations` (not from the root entry), so named imports tree-shake (one icon is about 3 KB; the whole set is about 5.5 MB). x-core's `icons`/`illustrations` namespaces map to these subpaths.
 
 ```tsx
 import { CaretRightIcon } from '@cialdnb/horizon-ui/icons';

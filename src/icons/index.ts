@@ -1,4 +1,7 @@
 /**
+ * Public entry: `@cialdnb/horizon-ui/icons` (subpath only; the root entry does not
+ * export icons, so named imports tree-shake: one icon is ~3 KB, the set ~5.5 MB).
+ *
  * Icons are Phosphor (`@phosphor-icons/react`), re-exported unchanged so the
  * horizon-ui and x-core icon sets stay name-compatible. Use the `*Icon`
  * suffixed names (`CaretRightIcon`); the unsuffixed aliases are deprecated
