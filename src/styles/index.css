@@ -1,0 +1,23 @@
+/*
+ * Entry for the precompiled dist/styles.css (scripts/build-styles.ts).
+ * Consumers never run Tailwind. Isolation rules (ADR 0001):
+ * - utilities carry the `hz:` prefix;
+ * - no preflight: only theme.css and utilities.css are imported, the reset is
+ *   base.css scoped to `.hz-root`;
+ * - the build wraps everything in `@layer horizon`.
+ */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme) prefix(hz) theme(inline);
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+
+@source '../';
+@source not '../**/*.test.{ts,tsx}';
+@source not '../**/*.test-d.ts';
+@source not '../**/*.stories.{ts,tsx}';
+@source not '../__tests__';
+
+@import './theme.css';
+@import './tokens.css' layer(theme);
+@import './base.css' layer(base);
+@import './typography.css';

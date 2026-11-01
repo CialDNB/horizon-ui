@@ -13,7 +13,10 @@ tokens/*.ts  (copied once into horizon-ui/src/tokens, then owned here)
       |  scripts/build-tokens.ts
       v
 src/styles/tokens.css   (generated, committed)  -> .hz-root primitives + .hz-root[data-brand] semantic vars (never :root)
-src/styles/theme.css    (hand-written)          -> Tailwind v4 @theme mapping to the vars
+src/styles/theme.css    (generated, committed)  -> Tailwind v4 `@theme inline` mapping to the vars
+src/styles/typography.css (generated, committed) -> `@utility text-<role>` for the 11 type-scale roles
+src/styles/base.css     (hand-written)          -> reset scoped to .hz-root
+src/styles/index.css    -> scripts/build-styles.ts -> dist/styles.css (prefix hz:, @layer horizon; ADR 0001)
 ```
 
 - Copy, don't import across repos. x-core is being retired; a cross-repo dependency would pin us to it. A one-time copy then diverge. (Builder may instead publish tokens as `@cialdnb/horizon-tokens` if a non-React consumer appears — not needed now.)
@@ -36,7 +39,7 @@ Non-color mappings:
 | `typography` typeScale (`display/xl`, `heading/md`, `body/default`...) | utility classes `text-display-xl` etc. via `@utility`, bundling size, line-height, weight, family |
 | `borders` | `--border-width-*` |
 
-Note: rem values with 16px root (Horizon uses `htmlFontSize: 16`). Consumers still on x-core Legacy set a 14px html font-size; horizon-ui must not depend on root size being 16 -> see coexistence doc (builder decision: use px-derived rem or scope font-size on `.hz-root`).
+Note: tokens are authored in rem with a 16px root (Horizon uses `htmlFontSize: 16`). Consumers still on x-core Legacy set a 14px html font-size, so type sizes are emitted in px (decided in ADR 0001 from spike evidence); `.hz-root` also sets `font-size: 16px` for em-based values.
 
 ## Brands
 

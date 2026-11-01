@@ -41,4 +41,4 @@ Only the 11 `typeScale` roles are ported. Not ported: MUI variants `h5`, `h6`, `
 ## Other
 
 - `elevation` slots 5-24 and `muiShadowsArray` (MUI-specific) are dropped.
-- Rem-based font tokens assume a 16px root; scoping `font-size` on `.hz-root` is deferred to the coexistence task.
+- Font tokens are authored in rem (16px root) in `src/tokens/typography.ts` but emitted as px in `tokens.css`, so a 14px host root (x-core Legacy) cannot shrink them. See `docs/architecture/decisions/0001-css-isolation.md`.

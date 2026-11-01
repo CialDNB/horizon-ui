@@ -1,0 +1,86 @@
+/*
+ * Scoped base: the only reset horizon-ui ships. Applies inside `.hz-root`
+ * (the HorizonProvider wrapper and the portal container), never globally.
+ * It sits in the `base` sub-layer, so every utility overrides it.
+ */
+.hz-root {
+    font-family: var(--font-family);
+    /* px, not rem: the host page may set html { font-size: 14px } (ADR 0001). */
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--foreground);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.hz-root,
+.hz-root::before,
+.hz-root::after,
+.hz-root *,
+.hz-root ::before,
+.hz-root ::after,
+.hz-root ::backdrop {
+    box-sizing: border-box;
+    border-color: var(--border);
+}
+
+.hz-root :where(button, input, select, optgroup, textarea),
+.hz-root ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-width: 0;
+    border-style: solid;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+    opacity: 1;
+}
+
+.hz-root
+    :where(
+        button,
+        input:where([type='button'], [type='reset'], [type='submit'])
+    ),
+.hz-root :where(::file-selector-button) {
+    appearance: button;
+}
+
+.hz-root :where(textarea) {
+    resize: vertical;
+}
+
+.hz-root :where(input, textarea)::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+}
+
+.hz-root :where(:disabled) {
+    cursor: not-allowed;
+}
+
+.hz-root :where(:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+.hz-root :where([hidden]:not([hidden='until-found'])) {
+    display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hz-root,
+    .hz-root *,
+    .hz-root ::before,
+    .hz-root ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

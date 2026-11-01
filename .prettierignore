@@ -2,3 +2,5 @@ docs
 README.md
 package-lock.json
 src/styles/tokens.css
+src/styles/theme.css
+src/styles/typography.css

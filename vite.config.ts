@@ -1,8 +1,22 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
+import { buildStylesCss } from './scripts/build-styles';
+
+/** Emits the precompiled, scoped stylesheet as `dist/styles.css`. */
+const horizonStyles = (): Plugin => ({
+    name: 'horizon-styles',
+    async generateBundle() {
+        this.emitFile({
+            type: 'asset',
+            fileName: 'styles.css',
+            source: await buildStylesCss(),
+        });
+    },
+});
 
 export default defineConfig({
     plugins: [
+        horizonStyles(),
         dts({
             include: ['src'],
             exclude: [
