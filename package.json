@@ -32,7 +32,7 @@
         "lint": "eslint .",
         "test": "vitest run",
         "storybook": "echo \"storybook is configured in a later task\" && exit 1",
-        "build:tokens": "echo \"build:tokens is implemented in a later task\" && exit 1",
+        "build:tokens": "tsx scripts/build-tokens.ts",
         "build:mcp-manifest": "echo \"build:mcp-manifest is implemented in a later task\" && exit 1"
     },
     "peerDependencies": {

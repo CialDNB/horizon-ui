@@ -14,7 +14,13 @@ export default defineConfig({
         }),
     ],
     build: {
-        lib: { entry: 'src/index.ts', formats: ['es'] },
+        lib: {
+            entry: {
+                index: 'src/index.ts',
+                'tokens/index': 'src/tokens/index.ts',
+            },
+            formats: ['es'],
+        },
         sourcemap: true,
         rollupOptions: {
             external: ['react', 'react-dom', 'react/jsx-runtime'],
