@@ -6,18 +6,30 @@ import {
     createTheme,
 } from '@mui/material';
 import { Button, HorizonProvider } from '@cialdnb/horizon-ui';
+import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
 import { createRoot } from 'react-dom/client';
 
-// ?styles=0 renders the page without horizon-ui's stylesheet (baseline).
-if (new URLSearchParams(location.search).get('styles') !== '0') {
+function addStyle(id: string, css: string) {
     const style = document.createElement('style');
-    style.id = 'hz-styles';
-    style.textContent = hzStyles;
+    style.id = id;
+    style.textContent = css;
     document.head.append(style);
 }
 
-// Mirrors x-core Legacy: htmlFontSize 14, Open Sans, primary #0050F0.
+const params = new URLSearchParams(location.search);
+// customer360 ships Bootstrap 4.4.1 UNLAYERED plus `* { box-sizing: border-box }`.
+// ?reboot=1 loads the real bootstrap-reboot.css (the global element rules of
+// Bootstrap) and that universal rule, both unlayered, before horizon's CSS.
+if (params.get('reboot') === '1') {
+    addStyle('bootstrap-reboot', bootstrapReboot);
+    addStyle('c360-global', '* { box-sizing: border-box; }');
+}
+// ?styles=0 renders the page without horizon-ui's stylesheet (baseline).
+if (params.get('styles') !== '0') addStyle('hz-styles', hzStyles);
+
+// Mirrors x-core Legacy: MUI htmlFontSize 14 against the browser-default 16px
+// root, as in customer360 (it sets no html font-size). Tests also stress 14px.
 const muiTheme = createTheme({
     typography: {
         htmlFontSize: 14,
@@ -40,8 +52,43 @@ function App() {
                         MUI button
                     </MuiButton>
                 </section>
+                <section data-testid="plain">
+                    <h1>Plain h1</h1>
+                    <p>Plain p</p>
+                    <a href="#plain">Plain a</a>
+                    <ul>
+                        <li>Plain li</li>
+                    </ul>
+                    <button type="button">Plain button</button>
+                    <input aria-label="Plain input" />
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>Plain td</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
                 <section data-testid="horizon">
                     <HorizonProvider>
+                        {(
+                            [
+                                'primary',
+                                'secondary',
+                                'tertiary',
+                                'destructive',
+                                'ghost',
+                                'link',
+                            ] as const
+                        ).map((variant) => (
+                            <Button
+                                key={variant}
+                                variant={variant}
+                                data-testid={`hz-variant-${variant}`}
+                            >
+                                {variant}
+                            </Button>
+                        ))}
                         <Button data-testid="hz-button">Horizon button</Button>
                         <Button loading data-testid="hz-ltr-loading">
                             Horizon ltr loading
@@ -54,10 +101,20 @@ function App() {
                         </div>
                     </HorizonProvider>
                 </section>
-                <section data-testid="hz-rtl-section" dir="rtl">
+                <section data-testid="hz-rtl-section">
                     <HorizonProvider dir="rtl">
                         <Button loading data-testid="hz-rtl-loading">
                             Horizon rtl loading
+                        </Button>
+                    </HorizonProvider>
+                </section>
+                <section data-testid="rtl-area" dir="rtl">
+                    <MuiButton data-testid="mui-in-rtl">
+                        MUI in rtl area
+                    </MuiButton>
+                    <HorizonProvider dir="ltr">
+                        <Button loading data-testid="hz-ltr-in-rtl">
+                            Horizon ltr in rtl
                         </Button>
                     </HorizonProvider>
                 </section>

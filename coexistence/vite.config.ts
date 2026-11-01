@@ -1,5 +1,4 @@
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build, defineConfig } from 'vite';
@@ -32,7 +31,7 @@ export default defineConfig(async () => {
     });
     return {
         root: dirname(fileURLToPath(import.meta.url)),
-        cacheDir: mkdtempSync(join(tmpdir(), 'horizon-ui-coexistence-vite-')),
+        cacheDir: join(cacheRoot, 'vite'),
         resolve: {
             alias: [
                 {

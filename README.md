@@ -15,7 +15,7 @@ npm run storybook                 # dev server on :6006
 npx vitest run                    # unit tests and story tests
 npx vitest run --project storybook  # story tests only
 npm run build-storybook
-npm run test:coexistence          # MUI coexistence harness (Playwright); needs `npx playwright install chromium`
+npm run test:coexistence          # MUI + Bootstrap coexistence harness (Playwright); needs `npx playwright install chromium`; must be a CI gate (with `tsc --noEmit -p coexistence`), wired in Task 15
 ```
 
 ## Docs

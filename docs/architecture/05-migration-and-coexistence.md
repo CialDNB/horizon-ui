@@ -10,7 +10,7 @@ horizon-ui lives beside x-core. Consumers (starting with customer360) add `@cial
 |---|---|
 | CSS reset leaking into MUI screens | No global preflight; reset scoped to `.hz-root` (03) |
 | Class collisions with consumer CSS/Tailwind | `hz:` prefix + `@layer horizon` (03) |
-| Root font-size mismatch (x-core Legacy = 14px html, Horizon = 16px) | Type tokens are emitted in px and spacing/radius are px, so components render identically regardless of html size. The rem-against-scoped-font-size approach was disproved by the spike (rem resolves against `html`, not `.hz-root`); see [ADR 0001](decisions/0001-css-isolation.md) |
+| Root font-size mismatch (MUI `htmlFontSize: 14` against customer360's browser-default 16px root; a 14px `html` is the stress case; Horizon = 16px) | Type tokens are emitted in px and spacing/radius are px, so components render identically regardless of html size. The rem-against-scoped-font-size approach was disproved by the spike (rem resolves against `html`, not `.hz-root`); see [ADR 0001](decisions/0001-css-isolation.md) |
 | Export name clash if both imported in one file | horizon-ui exports the same component names (`Button`, `Dialog`...). Consumers alias on import during transition. Not suffixed with V-numbers: x-core's `V2` suffix existed to dodge breaking changes; horizon-ui is a fresh API |
 | Two theme systems | Independent. `ThemeProvider` (MUI) and `HorizonProvider` nest freely; they share only brand intent. Both read the same brand source in the app |
 | Portals / z-index | Radix portals target `.hz-root` container; z-index scale tokens documented; MUI modals use 1300 — horizon overlays must be ordered intentionally (builder to define scale) |
@@ -19,15 +19,16 @@ horizon-ui lives beside x-core. Consumers (starting with customer360) add `@cial
 
 ## Verified coexistence (automated gate)
 
-`npm run test:coexistence` (Playwright, `coexistence/`, details in [ADR 0001](decisions/0001-css-isolation.md)) renders MUI v5 (Legacy-like theme, 14px root, `CssBaseline`) beside horizon-ui built from the real package output and fails on any regression of these guarantees:
+`npm run test:coexistence` (Playwright, `coexistence/`, details in [ADR 0001](decisions/0001-css-isolation.md)) renders MUI v5 (Legacy-like theme with `htmlFontSize: 14` on the 16px root as in customer360, and a 14px root as stress case, `CssBaseline`) beside horizon-ui built from the real package output and fails on any regression of these guarantees:
 
 - Loading `styles.css` leaves MUI Button, Typography and `body` computed styles (font-size, padding, radius, colour, family, line-height) identical.
+- Plain elements outside `.hz-root` (`button`, `h1`, `a`, `input`, `table`, `p`, `ul`, `body`) are unchanged by `styles.css`.
 - Horizon components do not depend on the host's root font-size: a Button is the same size at `html` 14px and 16px.
 - Horizon `dir="rtl"` and MUI ltr on one page do not affect each other.
 - No horizontal overflow at 320px; `hz:tablet:`, `hz:laptop:`, `hz:desktop:` flip exactly at 768, 1280 and 1920px.
 - Pending (Task 11): Dialog stacking above/below a MUI modal and both clickable.
 
-Not guaranteed (consumer responsibility): the host's unlayered global element rules (`button {}`, `a {}`, `html {}` changes) can restyle horizon elements. Put legacy global CSS in a layer declared before `horizon`, for example `@layer legacy, horizon;`, or scope it away from `.hz-root`.
+Not guaranteed (measured, see the ADR): customer360's unlayered Bootstrap 4.4.1 reboot overrides the Horizon Button's `border-radius` (20px to 0), `font-size` (14px to 16px), `line-height` (20px to 24px) and focus outline (2px solid to 5px auto). Mitigation is pending a decision (consumer `@layer legacy` wrapping, `!important` in the layer, or unlayered utilities; trade-offs in the ADR). Wrapping legacy CSS in `@layer legacy` is real work for customer360; the declaration `@layer legacy, horizon;` alone does not fix bare unlayered CSS.
 
 The harness needs `npx playwright install chromium`. MUI and Emotion are devDependencies used only there; they are never in `dependencies`, `peerDependencies` or `src/`.
 

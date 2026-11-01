@@ -30,7 +30,7 @@ Story tests run in Vitest browser mode on Playwright Chromium. Every machine, in
 
 ## CI gates (all required to merge)
 
-`tsc --noEmit` (zero errors), `eslint` (zero errors), `vitest run`, `vite build`, token-drift check.
+`tsc --noEmit` (zero errors), `tsc --noEmit -p coexistence`, `eslint` (zero errors), `vitest run`, `npm run test:coexistence` (Playwright MUI/Bootstrap coexistence harness, needs `npx playwright install chromium`), `vite build`, token-drift check. Task 15 wires the coexistence gates into CI; they are required, not optional.
 
 ## Rules carried from x-core
 

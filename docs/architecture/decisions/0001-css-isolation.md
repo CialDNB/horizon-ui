@@ -6,12 +6,12 @@
 
 ## Context
 
-horizon-ui ships one precompiled stylesheet, `dist/styles.css` (`import '@cialdnb/horizon-ui/styles.css'`). Consumers do not run Tailwind. The first consumers are MUI v5 / Emotion apps built on x-core Legacy DS, which sets `html { font-size: 14px }` and uses `CssBaseline`. Some consumers also carry their own utility CSS (Tailwind v3, legacy utility classes). The stylesheet must:
+horizon-ui ships one precompiled stylesheet, `dist/styles.css` (`import '@cialdnb/horizon-ui/styles.css'`). Consumers do not run Tailwind. The first consumers are MUI v5 / Emotion apps built on x-core Legacy DS (`htmlFontSize: 14` in the MUI theme, `CssBaseline`). customer360 sets no `html` font-size: its root stays at the browser default 16px, so MUI rem values render about 14% larger than the nominal 14px; a host that does set `html { font-size: 14px }` is the stress case. customer360 also imports Bootstrap 4.4.1 (full, including reboot) UNLAYERED plus `* { box-sizing: border-box }` and `html, body { width/height: 100%; margin: 0; font-family }` (`client/src/projectx-core/css/index.scss`). Some consumers also carry their own utility CSS (Tailwind v3, legacy utility classes). The stylesheet must:
 
 - not change anything outside horizon-ui's own DOM (no global preflight, no `:root` variables);
 - not be broken by consumer class names that match ours;
 - let consumers order it against their own styles (`@layer horizon`);
-- keep Horizon sizes correct on a 14px root.
+- keep Horizon sizes correct on a 14px root (stress case) and on the default 16px root.
 
 Two isolation options were proposed:
 
@@ -55,20 +55,40 @@ Findings:
 
 ## Verification in the repo (Task 7: coexistence harness)
 
-The spike was throwaway; the same claims are now an automated gate: `npm run test:coexistence` (Playwright Test, `coexistence/`). It builds the real library and `styles.css` (`vite build` into a fresh directory under `node_modules/.cache`, never `dist/`), serves a page with a MUI v5 theme mirroring x-core Legacy (`htmlFontSize: 14`, `html { font-size: 14px }`, `CssBaseline`, Open Sans, primary `#0050F0`) next to `HorizonProvider` + `Button`, and measures in Chromium.
+The spike was throwaway; the same claims are now an automated gate: `npm run test:coexistence` (Playwright Test, `coexistence/`). It builds the real library and `styles.css` (`vite build` into a fresh directory under `node_modules/.cache`, never `dist/`), serves a page with a MUI v5 theme mirroring x-core Legacy (`htmlFontSize: 14` against the browser-default 16px root as in customer360, `CssBaseline`, Open Sans, primary `#0050F0`) next to `HorizonProvider` + `Button`, and measures in Chromium.
 
 Measured (all green on the shipped CSS pipeline, so **no leakage was found and no change to `base.css` or the layer order was needed**):
 
 | Check | Result |
 |---|---|
-| MUI `Button`, MUI `Typography` (h5) and `body`: `font-size`, `padding`, `border-radius`, `background-color`, `font-family`, `line-height`, page loaded without vs with `styles.css` | deep-equal (MUI Button baseline: 14px, `rgb(0, 80, 240)`) |
+| MUI `Button`, MUI `Typography` (h5) and `body`: `font-size`, `padding`, `border-radius`, `background-color`, `font-family`, `line-height`, page loaded without vs with `styles.css` | deep-equal at both roots: 16px (the real customer360 setup; MUI Button font-size 16px) and 14px (stress case; 14px), `rgb(0, 80, 240)` |
+| Plain `button`, `h1`, `a`, `input`, `table`/`td`, `p`, `ul`/`li` outside `.hz-root` and `body` (margin, padding, font-*, line-height, colour, border-*, radius, box-sizing, display, list-style, text-decoration, background), without vs with `styles.css`, at both roots | identical (a bare `button { font-size: 40px }` or `* { box-sizing: border-box }` inside `base.css` fails it) |
 | Horizon `Button` bounding box with `html` font-size 14px vs 16px | identical (101.53 x 36 px), tolerance 1px |
-| Horizon in `dir="rtl"` subtree beside MUI and a horizon ltr sibling | logical `border-inline-end` lands on the left edge in rtl, on the right in ltr; MUI `direction`, `text-align`, padding and position unchanged by removing the rtl subtree |
+| Horizon in `dir="rtl"` (provider's own `dir`, no wrapper), Horizon ltr beside MUI and inside a rtl area, MUI in a rtl area | logical `border-inline-end` lands on the left edge in rtl, on the right in ltr; MUI `direction`, `text-align`, padding and position unchanged by removing the rtl subtree |
 | Page width at 320px | `scrollWidth` equals `clientWidth` (no horizontal overflow) |
 | `hz:tablet:` / `hz:laptop:` / `hz:desktop:` probe at 767/768, 1279/1280, 1919/1920px | computed `font-size` flips exactly at 768, 1280 and 1920 (4 distinct values) |
 | Dialog stacking vs MUI modal (z-index 1300) | not yet testable: `test.fixme` until Task 11 (Dialog and the z-index scale) |
 
 Tests were shown able to fail (deliberate mutations, each reverted): an unlayered `html { font-size: 16px }` in the stylesheet with the `@layer horizon` wrap removed changed MUI Button/Typography/body (14px -> 16px, 16px -> 18.29px) and failed the leakage test, while the same rule inside the layer did not (a layered rule loses to MUI's unlayered 14px root); a rem-based Button padding failed the 14px/16px test (6px width delta); a physical `border-r` instead of `border-e` failed the rtl test; moving the tablet breakpoint to 800px failed the breakpoint test; a 400px-wide element failed the 320px test.
+
+### Known limit measured: unlayered Bootstrap 4.4.1 reboot restyles Horizon Button
+
+The harness loads the real `bootstrap/dist/css/bootstrap-reboot.css` (4.4.1, a devDependency used only under `coexistence/`, so the rules are exactly what customer360 ships) unlayered, plus `* { box-sizing: border-box }`, and compares all six Horizon Button variants against the same page without it (focused with the keyboard so `:focus-visible` is included). Measured today:
+
+| Property | without reboot | with reboot | cause |
+|---|---|---|---|
+| `border-radius` | 20px | **0px** | reboot `button { border-radius: 0 }` beats layered `hz:rounded-lg` |
+| `font-size` | 14px | **16px** | reboot `button { font: inherit }` beats layered `text-label-md` (inherits `.hz-root` 16px) |
+| `line-height` | 20px | **24px** | same |
+| focus `outline-style` / `outline-width` | 2px solid | **auto** (5px) | reboot `button:focus { outline: 5px auto -webkit-focus-ring-color }` beats `hz:focus-visible:outline-2 outline-solid` |
+
+Unchanged (so not overridden): background, colour, cursor, padding, margin, box-sizing, font-family, font-weight, text-transform, box-shadow, display. These are asserted by the test group `known limit: unlayered Bootstrap reboot overrides horizon Button`, which asserts today's measured behaviour, not desired behaviour; invert it when a mitigation lands. The same mechanism will affect any Horizon element that Bootstrap restyles by element selector (inputs, links, tables, headings), so each new component needs the same check.
+
+Mitigation options (decision pending, no library change made in Task 7):
+
+1. **Consumer layers its legacy CSS.** customer360 wraps the Bootstrap import (and other global element CSS) in `@layer legacy { ... }` (in Sass: `@layer legacy { @include meta.load-css("bootstrap/scss/bootstrap"); }`) and declares `@layer legacy, horizon;` first. Declaring the order alone does nothing for bare unlayered Bootstrap: only CSS that is actually inside a layer ranks below `horizon`. No library change, and it fixes the whole class of problem, but it is real work for customer360 and it changes cascade precedence of Bootstrap against MUI/Emotion (unlayered) and the app's own unlayered CSS, so the whole app needs a visual regression pass.
+2. **Library ships a small set of properties as `!important` inside the layer** (`hz:rounded-lg!`, `hz:text-label-md!`, outline) for elements Bootstrap resets. Important declarations in a layer beat unlayered normal ones, so no consumer change is needed. Costs: consumers and `className` overrides can no longer win with normal CSS, `tailwind-merge` conflict resolution must account for `!`, it must be repeated for every element-level conflict, and it hides the problem rather than isolating it.
+3. **Drop the layer for utilities** (emit them unlayered). `.hz\:rounded-lg` (specificity 0,1,0) beats `button` (0,0,1) by specificity, with no consumer change. Costs: loses the ordering guarantee of `@layer horizon` (consumer layers can no longer be placed above it deliberately), and consumer element-plus-class rules (`button.btn`) win by specificity; the `.hz-root` reset would no longer be a low-priority base.
 
 Note for harness authors: a layered `button { font-size: 40px }` inside horizon-ui would not change a MUI button (MUI's class selectors are unlayered and also more specific); leakage that matters is root-level (`html`/`:root` font-size, variables), which is why the root font-size case is the one measured.
 
@@ -120,7 +140,7 @@ Related decisions made in this task:
 ## Consequences
 
 - No class collisions with consumer CSS or a consumer's own Tailwind (v3 or v4). MUI/Emotion pages are unaffected (measured).
-- Consumers can place horizon anywhere in their layer order, e.g. `@layer mui, horizon;` Note that **unlayered consumer CSS always wins over horizon**: global element rules in a host app (`button { ... }`, `a { ... }`) will restyle horizon elements. Known limit and guidance for consumers: a host app's **unlayered global element rules** (`button { ... }`, `a { ... }`, `* { ... }`) beat any horizon layer and will restyle horizon elements; horizon-ui cannot prevent this. Host apps should wrap such legacy global element CSS in a layer ordered before `horizon` (`@layer legacy, horizon;`), or scope it away from `.hz-root`. Unlayered class rules of the host only affect horizon if they match horizon's DOM (our own classes are `hz:`-prefixed, so accidental collisions do not occur). Task 7 verified the other direction (horizon CSS does not alter MUI/CssBaseline output).
+- Consumers can place horizon anywhere in their layer order, e.g. `@layer mui, horizon;` Note that **unlayered consumer CSS always wins over horizon**: global element rules in a host app (`button { ... }`, `a { ... }`) will restyle horizon elements. Known limit and guidance for consumers: a host app's **unlayered global element rules** (`button { ... }`, `a { ... }`, `* { ... }`) beat any horizon layer and will restyle horizon elements; horizon-ui cannot prevent this. Host apps should wrap such legacy global element CSS in a layer ordered before `horizon` (`@layer legacy, horizon;`), or scope it away from `.hz-root`. Unlayered class rules of the host only affect horizon if they match horizon's DOM (our own classes are `hz:`-prefixed, so accidental collisions do not occur). Task 7 verified the other direction (horizon CSS does not alter MUI/CssBaseline output or plain elements). Consumers must actually wrap their legacy CSS in `@layer legacy`: the declaration `@layer legacy, horizon;` on its own does not help bare unlayered Bootstrap. For customer360 this is real migration work (see the measured Bootstrap findings above).
 - Tailwind's internal variables are renamed `--tw-*` -> `--hz-tw-*`, so neither a consumer Tailwind v3 (which sets `--tw-*` on `*`, unlayered) nor a consumer Tailwind v4 of another version (own unlayered `@property --tw-*`) can change horizon rings, shadows, borders or transforms, and our registrations cannot affect theirs. `@property --hz-tw-*` registrations are still global by nature but use a horizon-only name. Only the `@supports` fallback (browsers without `@property`) declares them as values, and only inside `.hz-root`.
 - Everything outside `.hz-root` is unstyled by our base; the provider and portal container must carry `hz-root` (Task 4, Review Focus 1 and 3).
 - `prefers-reduced-motion: reduce` collapses animation/transition durations inside `.hz-root` with `!important`; inside a layer, important declarations beat unlayered normal ones, so this holds even against consumer styles on content rendered inside horizon.
