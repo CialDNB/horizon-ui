@@ -5,6 +5,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
     { ignores: ['dist', 'storybook-static', 'coverage'] },
+    { ignores: ['.tmp-hz-lint-*'] },
     js.configs.recommended,
     ...tseslint.configs.strict,
     jsxA11y.flatConfigs.strict,
@@ -98,7 +99,20 @@ export default tseslint.config(
                 'error',
                 {
                     default: 'disallow',
-                    rules: [{ target: ['component'], allow: ['**/index.ts'] }],
+                    rules: [
+                        { target: ['component'], allow: ['**/index.ts'] },
+                        {
+                            target: [
+                                'tokens',
+                                'lib',
+                                'provider',
+                                'primitives',
+                                'types',
+                                'root',
+                            ],
+                            allow: ['**'],
+                        },
+                    ],
                 },
             ],
         },
