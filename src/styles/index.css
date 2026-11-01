@@ -28,3 +28,16 @@
  * consumer-set) but not merely busy: a loading control keeps its colours.
  */
 @custom-variant inactive (&:is(:disabled, [aria-disabled='true']:not([aria-busy='true'])));
+/*
+ * `hz:touch-hover:*` = `:hover` on a device without hover (`hover:` is
+ * pointer-only, inside `@media (hover: hover)`). Touch browsers leave :hover on
+ * a tapped element, so a host's `a:hover` rule (Bootstrap reboot) would restyle
+ * it; components re-assert their rest look here (ADR 0001).
+ */
+@custom-variant touch-hover {
+    @media not all and (hover: hover) {
+        &:hover {
+            @slot;
+        }
+    }
+}

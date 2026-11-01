@@ -218,6 +218,7 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 
 - [x] **Step 1: Failing tests:** `src/__tests__/styles.test.ts` (`'unlayered build contains no @layer'`, `'unlayered build has the same rule set as the layered build modulo the layer wrapper'`, `'unlayered build keeps cascade order: base before utilities, breakpoints after base utilities'`, `'unlayered build still has no preflight or global selectors'`, specificity guards), `flattenLayers` unit tests, coexistence: unlayered build with the reboot in both load orders preserves all measured Button properties; plain-element and MUI probes for both builds; layered group keeps asserting the override.
 - [x] **Step 2: Implement:** flatten by layer declaration order (Tailwind's raw text order differs), keep the `.hz-root` reset at (0,1,0) so utilities still win; Button state utilities out-rank the reboot's `button:focus` and `[type="button"]:not(:disabled)`.
+- [x] **Step 2b (controller ruling): `Button asChild` + `<a href>`:** explicit hover colour/decoration per variant and a `touch-hover:` variant so the reboot's `a:hover` (0,1,1) cannot restyle links in the unlayered build; harness tests for rest/hover/focus/active/visited and touch, both load orders. Commit `fix(Button): keep anchor colour and decoration against legacy a:hover`.
 - [x] **Step 3: Docs** (two builds, when to use which, measurements, load order, consumer overrides) and commit `feat(styles): unlayered build for legacy hosts`.
 
 ---

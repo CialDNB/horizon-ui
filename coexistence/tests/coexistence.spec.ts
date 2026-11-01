@@ -377,7 +377,10 @@ const measureButtons = async (page: Page, path: string): Promise<Styles> => {
         out[id] = await button.evaluate(async (el, props) => {
             // `hz:transition` animates colours (outline-color included) for
             // 100ms after focus; read the settled values, not a midpoint.
-            await Promise.all(el.getAnimations().map((a) => a.finished));
+            // A cancelled transition rejects `finished` with AbortError.
+            await Promise.all(
+                el.getAnimations().map((a) => a.finished.catch(() => undefined))
+            );
             const cs = getComputedStyle(el);
             return Object.fromEntries(
                 props.map((p) => [
@@ -548,80 +551,177 @@ test.describe('unlayered build: Bootstrap reboot does not override horizon Butto
         });
 });
 
-// KNOWN LIMIT of both builds for `Button asChild` + `<a href>` (ADR 0001):
-// the reboot's `a:hover { color: #0056b3; text-decoration: underline }` has
-// specificity (0,1,1), above a plain utility such as `hz:text-primary-foreground`
-// (0,1,0). At rest the unlayered build keeps every Horizon value; on hover the
-// link takes Bootstrap's colour and underline. Asserts measured behaviour;
-// invert when Button gains hover-state colour/decoration utilities.
-test.describe('known limit: reboot a:hover restyles Button asChild links', () => {
-    const linkStyles = async (page: Page, path: string, hover: boolean) => {
-        await page.goto(path);
-        await expect(page.getByTestId('hz-link-primary')).toBeVisible();
-        const out: Record<string, string> = {};
-        for (const variant of VARIANTS) {
-            const link = page.getByTestId(`hz-link-${variant}`);
-            if (hover) await link.hover();
-            else await page.mouse.move(0, 0);
-            out[variant] = await link.evaluate(async (el) => {
-                await Promise.all(el.getAnimations().map((a) => a.finished));
-                const cs = getComputedStyle(el);
-                return [
-                    cs.color,
-                    cs.backgroundColor,
-                    cs.textDecorationLine,
-                    cs.borderRadius,
-                    cs.fontSize,
-                ].join(' / ');
-            });
-        }
-        return out;
-    };
+// `Button asChild` + `<a href>` against the reboot's anchor rules:
+// `a { color: #007bff; text-decoration: none; background-color: transparent }`
+// (0,0,1) and `a:hover { color: #0056b3; text-decoration: underline }` (0,1,1).
+// The reboot has no `a:focus`, `a:active` or `a:visited` rule; those states are
+// measured anyway (an `a:hover` also matches while pressed). Computed styles
+// never expose `:visited` colours (browser privacy), so "visited" checks the
+// link after it has been followed.
+const LINK_STATES = ['rest', 'hover', 'focus', 'active', 'visited'] as const;
+const LINK_PROPS = [
+    'color',
+    'backgroundColor',
+    'textDecorationLine',
+    'textDecorationThickness',
+    'borderRadius',
+    'fontSize',
+] as const;
 
-    test('unlayered build: rest state preserved, hover colour and underline overridden', async ({
-        page,
-    }) => {
-        const rest = await linkStyles(page, url('unlayered'), false);
-        const hover = await linkStyles(page, url('unlayered'), true);
-        for (const order of [false, true]) {
-            const path = url('unlayered', {
-                reboot: true,
-                horizonFirst: order,
-            });
-            expect(await linkStyles(page, path, false)).toEqual(rest);
-            const rebootHover = await linkStyles(page, path, true);
-            for (const variant of VARIANTS) {
-                const [, bg, , radius, size] = (hover[variant] ?? '').split(
-                    ' / '
+const linkStates = async (page: Page, path: string, touch = false) => {
+    await page.goto(path);
+    await expect(page.getByTestId('hz-link-primary')).toBeVisible();
+    const out: Record<string, Record<string, string>> = {};
+    const read = async (variant: string, state: string) => {
+        out[`${variant} ${state}`] = await page
+            .getByTestId(`hz-link-${variant}`)
+            .evaluate(async (el, props) => {
+                // A cancelled transition rejects `finished` with AbortError.
+                await Promise.all(
+                    el
+                        .getAnimations()
+                        .map((a) => a.finished.catch(() => undefined))
                 );
-                const [color, rbg, deco, rradius, rsize] = (
-                    rebootHover[variant] ?? ''
-                ).split(' / ');
-                // Background, radius and type stay Horizon's on hover too.
-                expect([rbg, rradius, rsize], variant).toEqual([
-                    bg,
-                    radius,
-                    size,
-                ]);
-                expect(deco, variant).toBe('underline');
-                // Secondary and ghost set a hover colour, so theirs holds.
-                if (variant !== 'secondary' && variant !== 'ghost')
-                    expect(color, variant).toBe('rgb(0, 86, 179)');
-            }
+                const cs = getComputedStyle(el);
+                return Object.fromEntries(
+                    props.map((p) => [
+                        p,
+                        cs[p as keyof CSSStyleDeclaration] as string,
+                    ])
+                );
+            }, LINK_PROPS);
+    };
+    const reset = async () => {
+        await page.mouse.move(0, 0);
+        await page.evaluate(() =>
+            (document.activeElement as HTMLElement | null)?.blur()
+        );
+    };
+    for (const variant of VARIANTS) {
+        const link = page.getByTestId(`hz-link-${variant}`);
+        await reset();
+        await read(variant, 'rest');
+        if (touch) {
+            // Real touch browsers leave :hover on a tapped element (sticky
+            // hover) while `(hover: hover)` is false. Playwright's tap does
+            // not, so a pointer move puts :hover on the link instead.
+            await link.hover();
+            expect(
+                await link.evaluate((el) => el.matches(':hover')),
+                `${variant} :hover`
+            ).toBe(true);
+            await read(variant, 'hover');
+            continue;
         }
-    });
+        await link.hover();
+        await read(variant, 'hover');
+        await reset();
+        await page.keyboard.press('Shift');
+        await link.focus();
+        await read(variant, 'focus');
+        await reset();
+        await link.hover();
+        await page.mouse.down();
+        await read(variant, 'active');
+        await page.mouse.up();
+        await reset();
+        await read(variant, 'visited');
+    }
+    return out;
+};
 
-    test('layered build: reboot a { colour, background } overrides links at rest', async ({
+const diffStates = (
+    a: Record<string, Record<string, string>>,
+    b: Record<string, Record<string, string>>
+) =>
+    Object.fromEntries(
+        Object.keys(a)
+            .map((key) => [
+                key,
+                LINK_PROPS.filter((p) => a[key]?.[p] !== b[key]?.[p]).map(
+                    (p) => `${p}: ${a[key]?.[p]} -> ${b[key]?.[p]}`
+                ),
+            ])
+            .filter(([, changed]) => (changed?.length ?? 0) > 0)
+    );
+
+test.describe('unlayered build: Bootstrap reboot does not restyle Button asChild links', () => {
+    for (const order of [
+        { label: 'reboot before horizon CSS', horizonFirst: false },
+        { label: 'horizon CSS before reboot', horizonFirst: true },
+    ])
+        test(`colour, fill and decoration kept at rest, hover, focus, active and visited (${order.label})`, async ({
+            page,
+        }) => {
+            const without = await linkStates(page, url('unlayered'));
+            const withReboot = await linkStates(
+                page,
+                url('unlayered', { reboot: true, ...order })
+            );
+            expect(Object.keys(without)).toHaveLength(
+                VARIANTS.length * LINK_STATES.length
+            );
+            expect(diffStates(without, withReboot)).toEqual({});
+            // Sanity: the states are real (tertiary underlines on hover only).
+            expect(without['tertiary rest']?.['textDecorationLine']).toBe(
+                'none'
+            );
+            expect(without['tertiary hover']?.['textDecorationLine']).toBe(
+                'underline'
+            );
+            expect(without['primary hover']?.['color']).toBe(
+                without['primary rest']?.['color']
+            );
+        });
+});
+
+test.describe('unlayered build on a touch device (no hover media)', () => {
+    test.use({ hasTouch: true, isMobile: true });
+
+    for (const order of [false, true])
+        test(`sticky :hover shows no Bootstrap a:hover colour or underline (${order ? 'horizon first' : 'reboot first'})`, async ({
+            page,
+        }) => {
+            const without = await linkStates(page, url('unlayered'), true);
+            expect(
+                await page.evaluate(() => matchMedia('(hover: hover)').matches)
+            ).toBe(false);
+            const withReboot = await linkStates(
+                page,
+                url('unlayered', { reboot: true, horizonFirst: order }),
+                true
+            );
+            expect(diffStates(without, withReboot)).toEqual({});
+        });
+});
+
+// KNOWN LIMIT of the LAYERED build: the reboot's unlayered anchor rules beat
+// every layered utility, so asChild links lose their colour and fill at rest
+// and take Bootstrap's hover colour and underline. Not fixable inside the
+// layer without !important; legacy hosts use styles.unlayered.css.
+test.describe('layered build (known limit): reboot anchor rules restyle Button asChild links', () => {
+    test('rest: Bootstrap link colour, no fill; hover: Bootstrap hover colour and underline', async ({
         page,
     }) => {
-        const rest = await linkStyles(
-            page,
-            url('layered', { reboot: true }),
-            false
-        );
-        for (const variant of VARIANTS)
-            expect(rest[variant], variant).toMatch(
-                /^rgb\(0, 123, 255\) \/ rgba\(0, 0, 0, 0\) \/ none \/ 20px/
-            );
+        const states = await linkStates(page, url('layered', { reboot: true }));
+        for (const variant of VARIANTS) {
+            const rest = states[`${variant} rest`] ?? {};
+            const hover = states[`${variant} hover`] ?? {};
+            expect(
+                [
+                    rest['color'],
+                    rest['backgroundColor'],
+                    rest['textDecorationLine'],
+                ],
+                variant
+            ).toEqual(['rgb(0, 123, 255)', 'rgba(0, 0, 0, 0)', 'none']);
+            expect(
+                [hover['color'], hover['textDecorationLine']],
+                variant
+            ).toEqual(['rgb(0, 86, 179)', 'underline']);
+            // Radius and type come from utilities the reboot does not set on `a`.
+            expect(rest['borderRadius'], variant).toBe('20px');
+            expect(rest['fontSize'], variant).toBe('14px');
+        }
     });
 });

@@ -33,7 +33,7 @@ horizon-ui lives beside x-core. Consumers (starting with customer360) add `@cial
 Not guaranteed (measured, see the ADR):
 
 - With the layered `styles.css`, the unlayered reboot overrides the Horizon Button's `border-radius` (20px to 0), `font-size` (14px to 16px), `line-height` (20px to 24px), focus outline (2px solid ring to 5px auto, also on mouse focus) and loading cursor. That is why customer360 uses the unlayered build.
-- With either build, `Button asChild` around an `<a href>` takes Bootstrap's `a:hover` colour (`#0056b3`) and underline on hover (primary, tertiary, destructive, link; secondary and ghost keep their colour but are underlined). At rest the unlayered build is unaffected. Fix pending a Button/Link design decision.
+- With the layered build, `Button asChild` around an `<a href>` takes Bootstrap's `a { colour; transparent background }` at rest and `a:hover` colour (`#0056b3`) and underline on hover. With the unlayered build this is fixed: all six link variants keep colour, fill and decoration at rest, hover, focus, active and visited, and on touch devices, in both load orders (measured).
 
 The harness needs `npx playwright install chromium`. MUI and Emotion are devDependencies used only there; they are never in `dependencies`, `peerDependencies` or `src/`.
 
