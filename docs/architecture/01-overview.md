@@ -37,7 +37,7 @@ x-core (MUI v5 + Emotion, 150+ components) is the shared UI library for CIAL / D
 | Styling | Tailwind CSS v4, tokens as CSS variables in `@theme` | proposed |
 | Variants | `class-variance-authority` + `tailwind-merge` + `clsx` | proposed (shadcn default) |
 | Build | Vite library mode, ESM, `preserveModules`, d.ts via `vite-plugin-dts` | proposed |
-| Docs / dev | Storybook 9 (`@storybook/react-vite`) | proposed, user asked for advice |
+| Docs / dev | Storybook 10 (`@storybook/react-vite`) | proposed, user asked for advice |
 | Tests | Vitest + Testing Library + Storybook Vitest addon; Playwright for visual | proposed |
 | Language | TypeScript 5, strict | proposed |
 | Distribution | npm, GitHub Packages, scope `@cialdnb` | decided |

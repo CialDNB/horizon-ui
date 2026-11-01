@@ -158,6 +158,29 @@ export const ResponsiveSpecExample: Story = {
         const table = within(canvasElement).getByRole('table', {
             name: 'Example: token swatch grid',
         });
+        await expect(within(table).getAllByRole('row')).toHaveLength(5);
+        await expect(
+            within(table)
+                .getAllByRole('columnheader')
+                .map((header) => header.textContent)
+        ).toEqual([
+            'Breakpoint',
+            'Size',
+            'Density',
+            'Layout',
+            'Content visibility',
+            'Interaction pattern',
+            'Note',
+        ]);
+        const rowNames = within(table)
+            .getAllByRole('rowheader')
+            .map((header) => /^[a-z]+/.exec(header.textContent ?? '')?.[0]);
+        await expect(rowNames).toEqual([
+            'mobile',
+            'tablet',
+            'laptop',
+            'desktop',
+        ]);
         for (const name of ['mobile', 'tablet', 'laptop', 'desktop']) {
             await expect(
                 within(table).getByRole('rowheader', { name: new RegExp(name) })

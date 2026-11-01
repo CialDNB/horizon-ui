@@ -6,7 +6,7 @@
 
 **Architecture:** Single npm package built with Vite library mode (ESM, `preserveModules`) that ships precompiled, scoped CSS (`dist/styles.css`) so consumers need no Tailwind. Tokens are copied from x-core, converted to CSS variables per brand. A second artifact, a Node HTTP MCP server with a build-time manifest, is containerised and deployed via a new `horizon-ui-deployment` helmfile repo.
 
-**Tech Stack:** TypeScript 5 (strict), React >=18 (peer), Tailwind CSS v4, Radix UI, class-variance-authority, clsx, tailwind-merge, Vite, Storybook 9 (`@storybook/react-vite`), Vitest (+ browser mode, Testing Library, vitest-axe), Playwright, react-docgen-typescript, `@modelcontextprotocol/sdk`, Docker, helmfile.
+**Tech Stack:** TypeScript 5 (strict), React >=18 (peer), Tailwind CSS v4, Radix UI, class-variance-authority, clsx, tailwind-merge, Vite, Storybook 10 (`@storybook/react-vite`), Vitest (+ browser mode, Testing Library, vitest-axe), Playwright, react-docgen-typescript, `@modelcontextprotocol/sdk`, Docker, helmfile.
 
 **Spec:** `docs/architecture/01-overview.md` through `07-mcp-server.md` (approved 2026-11-01; open-question resolutions in `06-open-questions.md`).
 
@@ -156,7 +156,7 @@ Design quality (this is UI work; use the Impeccable skill, as the workspace inst
 - [ ] **Step 4: Run; expected PASS**
 - [ ] **Step 5: Commit (only after user approval)** `feat(provider): HorizonProvider and cn`
 
-### Task 5: Storybook 9 harness
+### Task 5: Storybook 10 harness
 
 **Files:**
 - Create: `.storybook/{main.ts,preview.tsx}`, `src/stories/Tokens.stories.tsx`
@@ -170,7 +170,7 @@ Design quality (this is UI work; use the Impeccable skill, as the workspace inst
 - [ ] **Step 2: Run `npx vitest run --project storybook`; expected FAIL (no config)**
 - [ ] **Step 3: Configure Storybook (`@storybook/react-vite`, addons `a11y`, `docs`, `vitest`), preview imports `src/styles/index.css`, decorator wraps stories.**
 - [ ] **Step 4: Run `npx vitest run --project storybook` and `npm run build-storybook`; expected PASS, `storybook-static/` exists**
-- [ ] **Step 5: Commit (only after user approval)** `chore(storybook): Storybook 9 harness with brand and RTL toolbar`
+- [ ] **Step 5: Commit (only after user approval)** `chore(storybook): Storybook 10 harness with brand and RTL toolbar`
 
 ### Task 6: Button vertical slice
 

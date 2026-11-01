@@ -10,7 +10,7 @@ export default tseslint.config(
     ...tseslint.configs.strict,
     jsxA11y.flatConfigs.strict,
     {
-        files: ['src/**/*.{ts,tsx}'],
+        files: ['src/**/*.{ts,tsx}', '.storybook/**/*.{ts,tsx}'],
         plugins: { boundaries },
         settings: {
             'import/resolver': { typescript: { project: './tsconfig.json' } },
@@ -25,6 +25,10 @@ export default tseslint.config(
                     capture: ['name'],
                 },
                 { type: 'types', pattern: 'src/types/**' },
+                {
+                    type: 'storybook',
+                    pattern: ['src/stories/**', '.storybook/**'],
+                },
                 { type: 'root', pattern: 'src/*.{ts,tsx}', mode: 'file' },
             ],
         },
@@ -82,6 +86,19 @@ export default tseslint.config(
                         },
                         { from: 'types', allow: ['types'] },
                         {
+                            from: 'storybook',
+                            allow: [
+                                'storybook',
+                                'tokens',
+                                'lib',
+                                'provider',
+                                'primitives',
+                                'types',
+                                'component',
+                                'root',
+                            ],
+                        },
+                        {
                             from: 'root',
                             allow: [
                                 'component',
@@ -109,6 +126,7 @@ export default tseslint.config(
                                 'primitives',
                                 'types',
                                 'root',
+                                'storybook',
                             ],
                             allow: ['**'],
                         },
@@ -120,6 +138,7 @@ export default tseslint.config(
     {
         files: [
             'src/**/*.stories.{ts,tsx}',
+            '.storybook/**/*.{ts,tsx}',
             'src/**/__tests__/**',
             'src/**/*.test.{ts,tsx}',
         ],

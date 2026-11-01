@@ -7,6 +7,8 @@ const HORIZON_STYLES_ID = 'virtual:horizon-styles.css';
 /**
  * Serves the real precompiled horizon stylesheet (`hz:` prefix, `@layer horizon`,
  * scoped reset), the same output `vite build` ships as `dist/styles.css`.
+ * No HMR: it is compiled once at server start, so restart Storybook after
+ * editing src/styles or adding new utility classes to components.
  */
 const horizonStyles = (): Plugin => ({
     name: 'horizon-styles-virtual',

@@ -4,7 +4,7 @@
 
 shadcn gives you source files, not documentation. Storybook remains the component catalog, a11y checker, brand/RTL switcher and visual-test host. Reasons to keep over alternatives (Ladle, custom docs site): 150+ existing stories to port, team familiarity, mature addon ecosystem, and its Vitest addon turns stories into tests.
 
-- Storybook 9, framework `@storybook/react-vite` (shares Vite config with the build; no Webpack/CRA as in x-core).
+- Storybook 10, framework `@storybook/react-vite` (shares Vite config with the build; no Webpack/CRA as in x-core).
 - Toolbar globals: brand (cial/dnb/il), direction (ltr/rtl). Implemented as `data-brand` / `dir` on the story root via a decorator — trivial with CSS variables.
 - Addons: `a11y`, `docs` (autodocs from TS types), `vitest`, `themes` not needed.
 - Static build deployed as today's x-core Storybook is (builder to match existing hosting).
@@ -23,6 +23,10 @@ This replaces Cypress component tests; Cypress is not carried over (Vitest brows
 ## Responsive verification
 
 Storybook viewports and Playwright projects mirror the breakpoint tokens: mobile 375x812, tablet 768x1024, laptop 1280x800, desktop 1920x1080. Every component ships a `Responsive` story documenting its behaviour per breakpoint. Visual tests run each viewport; assertions cover no horizontal overflow and 44px mobile touch targets.
+
+## Playwright browsers
+
+Story tests run in Vitest browser mode on Playwright Chromium. Every machine, including CI, must run `npx playwright install chromium` before `vitest run`; Task 15 wires this into CI.
 
 ## CI gates (all required to merge)
 
