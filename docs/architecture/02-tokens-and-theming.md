@@ -14,7 +14,7 @@ tokens/*.ts  (copied once into horizon-ui/src/tokens, then owned here)
       v
 src/styles/tokens.css   (generated, committed)  -> .hz-root primitives + .hz-root[data-brand] semantic vars (never :root)
 src/styles/theme.css    (generated, committed)  -> Tailwind v4 `@theme inline` mapping to the vars
-src/styles/typography.css (generated, committed) -> `@utility text-<role>` for the 11 type-scale roles
+src/styles/typography.css (generated, committed) -> `@utility text-<role>` for the type-scale roles (11 Horizon roles + `label/sm|md|lg`)
 src/styles/base.css     (hand-written)          -> reset scoped to .hz-root
 src/styles/index.css    -> scripts/build-styles.ts -> dist/styles.css (prefix hz:, @layer horizon; ADR 0001)
 ```

@@ -1,15 +1,8 @@
 import { Slot } from '@radix-ui/react-slot';
-import { cva } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes, type MouseEvent } from 'react';
 import { cn } from '../../lib/cn';
 import type { DnbBase } from '../../types/DnbBase';
-
-/** Visual style of a {@link Button}. */
-export type ButtonVariant =
-    'primary' | 'secondary' | 'tertiary' | 'destructive' | 'ghost' | 'link';
-
-/** Size of a {@link Button}. */
-export type ButtonSize = 'sm' | 'md' | 'lg';
 
 /** Props for {@link Button}. */
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
@@ -52,33 +45,34 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
 const buttonStyles = cva(
     [
         'hz:relative hz:inline-flex hz:max-w-full hz:min-w-0 hz:items-center hz:justify-center',
-        'hz:rounded-lg hz:border hz:border-transparent hz:font-semibold hz:text-center hz:text-balance hz:wrap-anywhere',
+        'hz:rounded-lg hz:border hz:border-transparent hz:text-center hz:text-balance hz:wrap-anywhere',
         'hz:cursor-pointer hz:select-none hz:no-underline hz:underline-offset-4',
-        'hz:transition hz:duration-100 hz:ease-standard',
+        'hz:transition hz:duration-fast hz:ease-standard',
         'hz:focus-visible:outline-2 hz:focus-visible:outline-offset-2 hz:focus-visible:outline-solid hz:outline-ring',
         'hz:active:scale-[0.98]',
         'hz:[&_svg]:pointer-events-none hz:[&_svg]:shrink-0',
-        'hz:disabled:cursor-not-allowed hz:disabled:text-muted-foreground hz:disabled:no-underline hz:disabled:active:scale-100',
+        'hz:inactive:cursor-not-allowed hz:inactive:text-muted-foreground hz:inactive:no-underline hz:inactive:active:scale-100',
         'hz:aria-busy:cursor-progress hz:aria-busy:active:scale-100',
     ],
     {
         variants: {
             variant: {
                 primary:
-                    'hz:bg-primary hz:text-primary-foreground hz:hover:bg-primary-hover hz:disabled:bg-muted',
+                    'hz:bg-primary hz:text-primary-foreground hz:hover:bg-primary-hover hz:inactive:bg-muted',
                 secondary:
-                    'hz:border-primary hz:bg-transparent hz:text-primary hz:hover:bg-primary hz:hover:text-primary-foreground hz:disabled:border-input hz:disabled:bg-transparent',
+                    'hz:border-primary hz:bg-transparent hz:text-primary hz:hover:bg-primary hz:hover:text-primary-foreground hz:inactive:border-input hz:inactive:bg-transparent',
                 tertiary:
                     'hz:bg-transparent hz:text-primary hz:hover:underline',
                 destructive:
-                    'hz:bg-destructive hz:text-destructive-foreground hz:hover:bg-destructive-hover hz:disabled:bg-muted',
-                ghost: 'hz:bg-transparent hz:text-foreground hz:hover:bg-accent hz:hover:text-accent-foreground hz:disabled:bg-transparent',
-                link: 'hz:bg-transparent hz:text-primary hz:underline hz:hover:decoration-2',
+                    'hz:bg-destructive hz:text-destructive-foreground hz:hover:bg-destructive-hover hz:inactive:bg-muted',
+                ghost: 'hz:bg-transparent hz:text-foreground hz:hover:bg-accent hz:hover:text-accent-foreground hz:inactive:bg-transparent',
+                // No inline padding, so min-w-11 keeps a 44px target for short labels.
+                link: 'hz:min-w-11 hz:bg-transparent hz:text-primary hz:underline hz:hover:decoration-2',
             },
             size: {
-                sm: 'hz:min-h-11 hz:gap-1 hz:px-4 hz:py-1 hz:text-caption hz:leading-4 hz:tablet:pointer-fine:min-h-8 hz:[&_svg]:size-4',
-                md: 'hz:min-h-11 hz:gap-2 hz:px-5 hz:py-1 hz:text-body-secondary hz:leading-5 hz:tablet:pointer-fine:min-h-9 hz:[&_svg]:size-4',
-                lg: 'hz:min-h-12 hz:gap-2 hz:px-6 hz:py-2 hz:text-body-default hz:leading-6 hz:tablet:pointer-fine:min-h-11 hz:[&_svg]:size-5',
+                sm: 'hz:min-h-11 hz:gap-1 hz:px-4 hz:py-1 hz:text-label-sm hz:tablet:pointer-fine:min-h-8 hz:[&_svg]:size-4',
+                md: 'hz:min-h-11 hz:gap-2 hz:px-5 hz:py-1 hz:text-label-md hz:tablet:pointer-fine:min-h-9 hz:[&_svg]:size-4',
+                lg: 'hz:min-h-12 hz:gap-2 hz:px-6 hz:py-2 hz:text-label-lg hz:tablet:pointer-fine:min-h-11 hz:[&_svg]:size-5',
             },
             fullWidth: {
                 true: 'hz:w-full',
@@ -94,19 +88,22 @@ const buttonStyles = cva(
     }
 );
 
-/** Options accepted by {@link buttonVariants}. */
-export type ButtonVariantOptions = {
-    /** Visual style. @default 'primary' */
-    variant?: ButtonVariant | null;
-    /** Size. @default 'md' */
-    size?: ButtonSize | null;
-    /** Full container width. @default false */
-    fullWidth?: boolean | null;
-};
+/** Options accepted by {@link buttonVariants}: `variant`, `size`, `fullWidth`. */
+export type ButtonVariantOptions = VariantProps<typeof buttonStyles>;
+
+/** Visual style of a {@link Button}. */
+export type ButtonVariant = NonNullable<ButtonVariantOptions['variant']>;
+
+/** Size of a {@link Button}. */
+export type ButtonSize = NonNullable<ButtonVariantOptions['size']>;
 
 /**
- * Class string for the Button look, conflict-resolved. Use it to style an
- * element that cannot be wrapped with `asChild`.
+ * Class string for the Button look. Convention for every component: the
+ * exported `*Variants` function wraps the internal cva definition in `cn()`,
+ * so its output is already conflict-resolved (for example the `link`
+ * compound's `px-0` replaces the size padding). Use it to style an element
+ * that cannot be wrapped with `asChild`; set `disabled` or
+ * `aria-disabled="true"` on that element for the inactive look.
  */
 export function buttonVariants(options?: ButtonVariantOptions): string {
     return cn(buttonStyles(options));
@@ -128,14 +125,18 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             fullWidth = false,
             className,
             type,
+            disabled = false,
             onClick,
             children,
             ...rest
         },
         ref
     ) {
+        const ariaDisabled =
+            rest['aria-disabled'] === true || rest['aria-disabled'] === 'true';
+        const blocked = loading || disabled || ariaDisabled;
         const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-            if (loading) {
+            if (blocked) {
                 event.preventDefault();
                 return;
             }
@@ -151,20 +152,37 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'data-variant': variant,
             'data-size': size,
             'aria-busy': loading || undefined,
-            'aria-disabled': loading || rest['aria-disabled'],
+            'aria-disabled': loading || ariaDisabled || undefined,
             onClick: handleClick,
         };
+
+        // A child such as <a> has no `disabled`: express it with ARIA, take it
+        // out of the tab order, and block activation in handleClick.
+        if (asChild) {
+            return (
+                <Slot
+                    {...shared}
+                    {...(disabled && {
+                        'aria-disabled': true,
+                        tabIndex: -1,
+                    })}
+                >
+                    {children}
+                </Slot>
+            );
+        }
 
         if (asChild) return <Slot {...shared}>{children}</Slot>;
 
         return (
-            <button type={type ?? 'button'} {...shared}>
+            <button type={type ?? 'button'} disabled={disabled} {...shared}>
                 {loading && (
                     <span
                         aria-hidden="true"
                         className="hz:absolute hz:inset-0 hz:m-auto hz:size-4 hz:animate-spin hz:rounded-full hz:border-2 hz:border-current hz:border-e-transparent"
                     />
                 )}
+                {/* Wraps the label so loading can hide it (opacity keeps width and name); gap is inherited so icon spacing still comes from the size. */}
                 <span
                     className={cn(
                         'hz:inline-flex hz:min-w-0 hz:items-center hz:justify-center hz:[gap:inherit]',

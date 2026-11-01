@@ -173,9 +173,9 @@ describe('dist/styles.css', () => {
         expect(css).not.toMatch(/(^|[\s,}])\.text-body-default\b/m);
     });
 
-    it('defines all 11 typography utilities', () => {
+    it('defines all 14 typography utilities', () => {
         const roles = Object.keys(typeScale);
-        expect(roles).toHaveLength(11);
+        expect(roles).toHaveLength(14);
         for (const role of roles) {
             const name = slug(role);
             const body = styleRules.find(

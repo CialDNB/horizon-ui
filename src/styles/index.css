@@ -22,3 +22,9 @@
 @import './tokens.css' layer(theme);
 @import './base.css' layer(base);
 @import './typography.css';
+
+/*
+ * `hz:inactive:*` = natively disabled, or aria-disabled (asChild links,
+ * consumer-set) but not merely busy: a loading control keeps its colours.
+ */
+@custom-variant inactive (&:is(:disabled, [aria-disabled='true']:not([aria-busy='true'])));

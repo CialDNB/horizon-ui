@@ -9,6 +9,8 @@ declare module 'vitest' {
     export interface ProvidedContext {
         /** `styles.css` emitted by a real `vite build` for this test run. */
         stylesCssPath: string;
+        /** Output directory of that build (the would-be `dist/`). */
+        buildOutDir: string;
     }
 }
 
@@ -27,5 +29,6 @@ export default async function setup(project: TestProject) {
         build: { outDir, emptyOutDir: true },
     });
     project.provide('stylesCssPath', join(outDir, 'styles.css'));
+    project.provide('buildOutDir', outDir);
     return () => rmSync(outDir, { recursive: true, force: true });
 }

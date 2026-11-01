@@ -48,7 +48,8 @@ export const fontWeight = {
 // Semantic scale — domain/size/weight pattern per Horizon DS
 // All 4 weight variants available: bold, semibold, regular, light
 /**
- * Semantic type scale: 11 roles in `{role}/{size}` notation.
+ * Semantic type scale: 14 roles in `{role}/{size}` notation (11 from Horizon DS
+ * plus the `label/*` roles added for interactive controls).
  * Values here are rem (16px root); the generated CSS (`tokens.css`, the
  * `text-<role>` utilities) emits them as px so a 14px host root cannot shrink
  * them (ADR 0001).
@@ -108,5 +109,22 @@ export const typeScale = {
         fontSize: fontSize[10],
         lineHeight: lineHeight[10],
         fontWeight: fontWeight.regular,
+    },
+    // Interactive labels (buttons, tabs, chips). Horizon DS `button` is 14px
+    // semibold; sm/lg extend it, with leading roomy enough for wrapped labels.
+    'label/sm': {
+        fontSize: fontSize[12],
+        lineHeight: lineHeight[16],
+        fontWeight: fontWeight.semibold,
+    },
+    'label/md': {
+        fontSize: fontSize[14],
+        lineHeight: lineHeight[20],
+        fontWeight: fontWeight.semibold,
+    },
+    'label/lg': {
+        fontSize: fontSize[16],
+        lineHeight: lineHeight[24],
+        fontWeight: fontWeight.semibold,
     },
 } as const;

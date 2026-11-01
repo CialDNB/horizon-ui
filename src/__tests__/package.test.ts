@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, inject, it } from 'vitest';
 
 const root = join(__dirname, '..', '..');
 const forbidden = /@mui|@emotion/;
@@ -32,5 +32,31 @@ describe('package', () => {
             .filter((f) => !f.endsWith('package.test.ts'))
             .filter((f) => forbidden.test(readFileSync(f, 'utf8')));
         expect(offenders).toEqual([]);
+    });
+});
+
+describe('built package (real vite build, scripts/vitest-global-setup.ts)', () => {
+    const outDir = inject('buildOutDir');
+    const imports = (rel: string) =>
+        [
+            ...readFileSync(join(outDir, rel), 'utf8').matchAll(
+                /\bfrom\s*['"]([^'"]+)['"]/g
+            ),
+        ].map((m) => m[1]);
+
+    it('does not vendor dependencies into the output', () => {
+        expect(existsSync(join(outDir, 'node_modules'))).toBe(false);
+    });
+
+    it('imports runtime dependencies by bare specifier', () => {
+        expect(imports('components/Button/Button.js')).toEqual(
+            expect.arrayContaining([
+                'class-variance-authority',
+                '@radix-ui/react-slot',
+            ])
+        );
+        expect(imports('lib/cn.js')).toEqual(
+            expect.arrayContaining(['clsx', 'tailwind-merge'])
+        );
     });
 });

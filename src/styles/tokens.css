@@ -261,6 +261,15 @@
     --text-micro-size: 10px;
     --text-micro-line-height: 10px;
     --text-micro-weight: 400;
+    --text-label-sm-size: 12px;
+    --text-label-sm-line-height: 16px;
+    --text-label-sm-weight: 600;
+    --text-label-md-size: 14px;
+    --text-label-md-line-height: 20px;
+    --text-label-md-weight: 600;
+    --text-label-lg-size: 16px;
+    --text-label-lg-line-height: 24px;
+    --text-label-lg-weight: 600;
 }
 
 .hz-root[data-brand='dnb'] {

@@ -47,7 +47,7 @@ Contrast of every Button variant per brand is listed in `.superpowers/sdd/2026-1
 
 ## Typography without a home
 
-Only the 11 `typeScale` roles are ported. Not ported: MUI variants `h5`, `h6`, `subtitle1`, `subtitle2`, `overline` (uppercase, 0.08em tracking), `button`; legacy `title`, `bannerTitle`, `cardTitle`, `mainTitle`, `thead`; `letterSpacing`; x-core's IL typography (14px base, excluded from Horizon DS; IL uses cial typography by decision).
+The 11 Horizon `typeScale` roles are ported, plus `label/sm|md|lg` (added in Task 6: semibold 12/16, 14/20, 16/24px; generalises the DS `button` style, 14px semibold, for buttons and other controls). Not ported: MUI variants `h5`, `h6`, `subtitle1`, `subtitle2`, `overline` (uppercase, 0.08em tracking), `button` (covered by `label/md`); legacy `title`, `bannerTitle`, `cardTitle`, `mainTitle`, `thead`; `letterSpacing`; x-core's IL typography (14px base, excluded from Horizon DS; IL uses cial typography by decision).
 
 ## Other
 

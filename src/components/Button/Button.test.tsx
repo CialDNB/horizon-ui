@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -88,6 +88,50 @@ describe('Button', () => {
         }).split(' ')) {
             expect(link).toHaveClass(cls);
         }
+    });
+
+    it('asChild disabled maps to aria-disabled and blocks the link', () => {
+        const onClick = vi.fn();
+        render(
+            <Button asChild disabled onClick={onClick}>
+                <a href="/reports">Open reports</a>
+            </Button>
+        );
+        const link = screen.getByRole('link', { name: 'Open reports' });
+        expect(link).not.toHaveAttribute('disabled');
+        expect(link).toHaveAttribute('aria-disabled', 'true');
+        expect(link).toHaveAttribute('tabindex', '-1');
+        // fireEvent returns false when the default action was prevented.
+        expect(fireEvent.click(link)).toBe(false);
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('asChild loading blocks navigation', () => {
+        const onClick = vi.fn();
+        render(
+            <Button asChild loading onClick={onClick}>
+                <a href="/reports">Open reports</a>
+            </Button>
+        );
+        const link = screen.getByRole('link');
+        expect(link).toHaveAttribute('aria-busy', 'true');
+        expect(fireEvent.click(link)).toBe(false);
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('consumer aria-disabled blocks onClick but keeps the button focusable', async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        render(
+            <Button aria-disabled="true" onClick={onClick}>
+                Save changes
+            </Button>
+        );
+        const button = screen.getByRole('button');
+        await user.tab();
+        expect(button).toHaveFocus();
+        await user.click(button);
+        expect(onClick).not.toHaveBeenCalled();
     });
 
     it('displayName is Button', () => {

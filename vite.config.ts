@@ -1,6 +1,20 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
 import { buildStylesCss } from './scripts/build-styles';
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8')) as {
+    dependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+};
+// Runtime and peer dependencies stay bare imports so consumers dedupe them
+// (and share React/Radix context); never vendor them into dist.
+const deps = [
+    ...Object.keys(pkg.dependencies ?? {}),
+    ...Object.keys(pkg.peerDependencies ?? {}),
+];
+const isExternal = (id: string) =>
+    deps.some((dep) => id === dep || id.startsWith(`${dep}/`));
 
 /** Emits the precompiled, scoped stylesheet as `dist/styles.css`. */
 const horizonStyles = (): Plugin => ({
@@ -39,7 +53,7 @@ export default defineConfig({
         },
         sourcemap: true,
         rollupOptions: {
-            external: ['react', 'react-dom', 'react/jsx-runtime'],
+            external: isExternal,
             output: {
                 preserveModules: true,
                 preserveModulesRoot: 'src',

@@ -85,9 +85,9 @@ const meta = {
                 component: [
                     'Triggers an action. Ported from x-core `ButtonV2` (contained -> `primary`, outlined -> `secondary`, text -> `tertiary`, `color="error"` -> `destructive`; `ghost` and `link` are new).',
                     '',
-                    '**Sizes (min-height, px).** Base (mobile, and any touch pointer at any width): sm 44, md 44, lg 48. Tablet and up with a fine pointer: sm 32, md 36, lg 44. Type: sm caption 12/16, md body-secondary 14/20, lg body-default 16/24, all semibold. Inline padding: sm 16, md 20, lg 24. Radius `lg` (20px) everywhere.',
+                    '**Sizes (min-height, px).** Base (mobile, and any touch pointer at any width): sm 44, md 44, lg 48. Tablet and up with a fine pointer: sm 32, md 36, lg 44. Type: type-scale roles `label/sm` 12/16, `label/md` 14/20, `label/lg` 16/24 (semibold). Inline padding: sm 16, md 20, lg 24 (`link`: none, min-width 44). Radius `lg` (20px) everywhere.',
                     '',
-                    '**States.** Hover (pointer devices only): primary/destructive darken to `*-hover`; secondary fills with `primary`; tertiary underlines; ghost tints to `accent`; link thickens its underline. Press: scale 0.98. Focus-visible: 2px `ring` outline, 2px offset. Disabled: `muted` surface and `muted-foreground` text, not focusable. Loading: label kept for width and accessible name but hidden, spinner in `currentColor`, `aria-busy` and `aria-disabled`, still focusable, clicks blocked.',
+                    '**States.** Hover (pointer devices only): primary/destructive darken to `*-hover`; secondary fills with `primary`; tertiary underlines; ghost tints to `accent`; link thickens its underline. Press: scale 0.98. Focus-visible: 2px `ring` outline, 2px offset. Disabled: `muted` surface and `muted-foreground` text, not focusable; with `asChild` it becomes `aria-disabled` + `tabIndex=-1` and activation is blocked (a consumer-set `aria-disabled` also blocks `onClick` and gets the same look). Loading: label kept for width and accessible name but hidden, spinner in `currentColor`, `aria-busy` and `aria-disabled`, still focusable, clicks blocked.',
                     '',
                     '**Motion.** Colour, border and transform transition over `duration.fast` (100ms) with `easing.standard`. `prefers-reduced-motion` collapses transitions and stops the spinner (the scoped base stylesheet handles it).',
                     '',
@@ -354,6 +354,16 @@ function SizeProbe() {
                         {`Size ${size}`}
                     </Button>
                 ))}
+                {sizes.map((size) => (
+                    <Button
+                        key={size}
+                        size={size}
+                        variant="link"
+                        data-testid={`link-${size}`}
+                    >
+                        Go
+                    </Button>
+                ))}
             </div>
             <div data-testid="container">
                 <Button fullWidth data-testid="full">
@@ -375,6 +385,12 @@ async function assertViewport(canvasElement: HTMLElement, viewport: Viewport) {
             await expect(rect.width).toBeGreaterThanOrEqual(44);
         }
         await expect(rect.height).toBe(expected);
+        const link = canvas.getByTestId(`link-${size}`).getBoundingClientRect();
+        if (viewport === 'mobile') {
+            // The link variant has no inline padding; min-width keeps the target.
+            await expect(link.width).toBeGreaterThanOrEqual(44);
+            await expect(link.height).toBeGreaterThanOrEqual(44);
+        }
     }
     const container = canvas.getByTestId('container').getBoundingClientRect();
     const full = canvas.getByTestId('full').getBoundingClientRect();
@@ -440,6 +456,9 @@ export const ComputedStyles: Story = {
             <Button data-testid="disabled" disabled>
                 Disabled
             </Button>
+            <Button asChild disabled data-testid="aria-disabled">
+                <a href="#reports">Disabled link</a>
+            </Button>
             <span
                 data-testid="probe"
                 style={{ background: 'var(--muted)', color: 'var(--ring)' }}
@@ -474,5 +493,14 @@ export const ComputedStyles: Story = {
         await expect(focused.outlineColor).toBe(probe.color);
         const disabled = getComputedStyle(canvas.getByTestId('disabled'));
         await expect(disabled.backgroundColor).toBe(probe.backgroundColor);
+        // aria-disabled (asChild link) mirrors the native :disabled look.
+        const ariaDisabled = getComputedStyle(
+            canvas.getByTestId('aria-disabled')
+        );
+        await expect(ariaDisabled.backgroundColor).toBe(
+            disabled.backgroundColor
+        );
+        await expect(ariaDisabled.color).toBe(disabled.color);
+        await expect(ariaDisabled.cursor).toBe('not-allowed');
     },
 };

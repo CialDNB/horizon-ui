@@ -70,13 +70,21 @@ describe('buildTokensCss', () => {
         }
     });
 
-    it('emits spacing base and the 11 type-scale roles', () => {
+    it('emits spacing base and the 14 type-scale roles', () => {
         expect(css).toContain('--spacing: 4px;');
         const roles = Object.keys(typeScale);
-        expect(roles).toHaveLength(11);
+        expect(roles).toHaveLength(14);
         for (const role of roles) {
             expect(css).toContain(`--text-${role.replace('/', '-')}-size:`);
         }
+        // Interactive label roles (Button and later controls): semibold, wrap-friendly leading.
+        expect(css).toContain('--text-label-sm-size: 12px;');
+        expect(css).toContain('--text-label-sm-line-height: 16px;');
+        expect(css).toContain('--text-label-md-size: 14px;');
+        expect(css).toContain('--text-label-md-line-height: 20px;');
+        expect(css).toContain('--text-label-lg-size: 16px;');
+        expect(css).toContain('--text-label-lg-line-height: 24px;');
+        expect(css).toContain('--text-label-md-weight: 600;');
     });
 
     it('scopes brand variables under .hz-root, never :root', () => {
@@ -184,6 +192,11 @@ describe('buildThemeCss', () => {
         expect(theme).toContain(
             `--default-transition-duration: ${duration.normal}ms;`
         );
+        // Tailwind's `duration-*` utilities read `--transition-duration-*`.
+        expect(theme).toContain('--transition-duration-*: initial;');
+        for (const [k, v] of Object.entries(duration)) {
+            expect(theme).toContain(`--transition-duration-${k}: ${v}ms;`);
+        }
         expect(theme).toContain('--shadow-1:');
         expect(theme).toContain('--font-sans: var(--font-family);');
         expect(theme).toContain('--text-*: initial;');
@@ -209,7 +222,7 @@ describe('buildTypographyCss', () => {
                 `font-size: var(--text-${name}-size);`
             );
         }
-        expect(typography.match(/@utility /g)).toHaveLength(11);
+        expect(typography.match(/@utility /g)).toHaveLength(14);
         expect(typography).toContain('font-family: var(--font-family);');
     });
 

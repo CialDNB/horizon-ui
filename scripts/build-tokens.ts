@@ -152,6 +152,9 @@ export function buildThemeCss(): string {
         ...scale('shadow', elevation),
         ['ease-*', 'initial'],
         ...scale('ease', easing),
+        // `hz:duration-fast` etc.; Tailwind reads the `transition-duration` namespace.
+        ['transition-duration-*', 'initial'],
+        ...scale('transition-duration', duration, 'ms'),
         ['default-transition-duration', `${duration.normal}ms`],
         ['default-transition-timing-function', easing.standard],
         ['font-*', 'initial'],
