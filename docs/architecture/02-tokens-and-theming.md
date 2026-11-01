@@ -12,7 +12,7 @@ Tokens are plain TS with no MUI imports (the palette files import MUI *types* on
 tokens/*.ts  (copied once into horizon-ui/src/tokens, then owned here)
       |  scripts/build-tokens.ts
       v
-src/styles/tokens.css   (generated, committed)  -> :root primitives + [data-brand] semantic vars
+src/styles/tokens.css   (generated, committed)  -> .hz-root primitives + .hz-root[data-brand] semantic vars (never :root)
 src/styles/theme.css    (hand-written)          -> Tailwind v4 @theme mapping to the vars
 ```
 
@@ -22,7 +22,7 @@ src/styles/theme.css    (hand-written)          -> Tailwind v4 @theme mapping to
 ## Layering of variables
 
 1. **Primitives** (`--hz-blue-500`, `--hz-grey-100`): from `colors.ts`. Never referenced by components (existing x-core rule).
-2. **Semantic** (`--primary`, `--primary-foreground`, `--background`, `--foreground`, `--muted`, `--border`, `--ring`, `--destructive`, plus Horizon extras like `--success`, `--warning`, `--info`): per brand. These are the names shadcn components already expect, so stock shadcn components work with minimal edits.
+2. **Semantic** (scoped to `.hz-root` / the portal container, never `:root`; `--primary`, `--primary-foreground`, `--background`, `--foreground`, `--muted`, `--border`, `--ring`, `--destructive`, plus Horizon extras like `--success`, `--warning`, `--info`): per brand. These are the names shadcn components already expect, so stock shadcn components work with minimal edits.
 3. **Tailwind theme** (`@theme`): maps `--color-primary: var(--primary)` etc. so utilities like `bg-primary` work.
 
 Non-color mappings:

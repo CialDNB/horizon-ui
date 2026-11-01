@@ -28,7 +28,10 @@ const scale = (
     tokens: Readonly<Record<string, string | number>>,
     unit = ''
 ): Decl[] =>
-    Object.entries(tokens).map(([k, v]) => [`${prefix}-${k}`, `${v}${unit}`]);
+    Object.entries(tokens).map(([k, v]) => [
+        `${prefix}-${kebab(k)}`,
+        `${v}${unit}`,
+    ]);
 
 const colorScales = [
     'grey',
@@ -74,6 +77,7 @@ const nonColor = (): Decl[] => [
     ['spacing', `${spacingBase}px`],
     ...scale('dialog-width', dialogWidth, 'px'),
     ...scale('radius', borderRadius, 'px'),
+    // shadcn --radius is the interactive-element radius: lg (20px) per spec
     ['radius', `${borderRadius.lg}px`],
     ...scale('shadow', elevation),
     ...scale('border-width', borderWidth),
