@@ -15,6 +15,7 @@
 @source not '../**/*.test.{ts,tsx}';
 @source not '../**/*.test-d.ts';
 @source not '../**/*.stories.{ts,tsx}';
+@source not '../stories';
 @source not '../__tests__';
 
 @import './theme.css';

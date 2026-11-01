@@ -23,6 +23,8 @@ export default defineConfig({
                 'src/**/*.test.*',
                 'src/**/*.test-d.ts',
                 'src/**/*.stories.*',
+                'src/stories',
+                'src/vite-env-virtual.d.ts',
                 'src/__tests__',
             ],
         }),
