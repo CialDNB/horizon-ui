@@ -18,13 +18,24 @@ x-core palettes define no `muted`, `accent`, `border`, `input` or `ring`. Decisi
 
 Also: `background` is `background.default` (grey/50); IL has no `background` and uses grey/50.
 
+## Interactive state keys (added in Task 6, Button)
+
+| Semantic key | cial | dnb | il | Source |
+|---|---|---|---|---|
+| `primary-hover` | blue/700 `#0039B2` | indigo/700 `#303F9F` | `#303F9F` | x-core `primary.hover` (CIAL, D&B); IL has no hover, uses the same indigo/700 as D&B |
+| `destructive-hover` | red/700 `#AB0722` | red/700 `#AB0722` | `#AB0722` | x-core `error.hover` is red/700 (CIAL), red/600 (D&B); one step darker than `destructive` everywhere |
+
+**`destructive` changed for dnb and il: red/400 `#ED3F48` -> red/600 `#C90A2A`.** White `destructive-foreground` on `#ED3F48` is 3.88:1, below WCAG AA 4.5:1 for button text. `#C90A2A` (D&B's own `error.hover`) gives 5.90:1. CIAL keeps red/500 `#E70D32` (4.67:1).
+
+Contrast of every Button variant per brand is listed in `.superpowers/sdd/2026-11-01-horizon-ui-foundation/task-6-report.md` and checked by Storybook a11y (`Components/Button/Brands`).
+
 ## Palette keys without a semantic home
 
 | x-core key | Brands | Note |
 |---|---|---|
 | `background.paper` | all | Needs a `card`/`popover` pair. Add `card`, `card-foreground`, `popover`, `popover-foreground` when Card/Popover are ported. |
 | `text.disabled` | all | Needs a disabled token. |
-| `<role>.light`, `<role>.dark`, `<role>.hover` for primary/secondary/error/warning/success/info | all | Hover and tint/shade variants. `primary.light`/`dark` are used only to derive `accent`. |
+| `<role>.light`, `<role>.dark`, `<role>.hover` for secondary/warning/success/info (primary/error hover now ported, see above) | all | Hover and tint/shade variants. `primary.light`/`dark` are used only to derive `accent`. |
 | `success/warning/info .contrastText` | all | No `success-foreground`, `warning-foreground`, `info-foreground` keys in the brief. Warning contrast is amber/900 (CIAL, D&B) or #5F4B14 (IL). |
 | `<role>.disable`, `option_1`, `backgroundColorLight`, `ultraDark`, `ultraLight`, `medium` | il | Alert backgrounds and disabled tints. |
 | `grey`, `blueGrey`, `blue`, `indigo`, `cyan`, `lightBlue`, `red`, `amber`, `teal`, `green`, `orange`, `pink`, `purple` scales | cial, dnb | Exposed as `--hz-*` primitives only. |

@@ -73,7 +73,9 @@ describe('architecture', () => {
         const api = await import('../index');
         expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
           [
+            "Button",
             "HorizonProvider",
+            "buttonVariants",
             "cn",
             "usePortalContainer",
           ]

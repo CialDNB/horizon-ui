@@ -19,6 +19,12 @@ export default tseslint.config(
                 { type: 'lib', pattern: 'src/lib/**' },
                 { type: 'provider', pattern: 'src/provider/**' },
                 { type: 'primitives', pattern: 'src/primitives/**' },
+                // Component stories are story code: they may use src/stories helpers.
+                {
+                    type: 'storybook',
+                    pattern: 'src/components/*/*.stories.{ts,tsx}',
+                    mode: 'file',
+                },
                 {
                     type: 'component',
                     pattern: 'src/components/*',

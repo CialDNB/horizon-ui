@@ -91,12 +91,22 @@ const styleRulesOf = (nodes: Node[]): Node[] =>
 const tree = parse(css);
 const all = walk(tree);
 const styleRules = styleRulesOf(tree);
-/** Splits a selector list on top-level commas (not those inside `:where()`). */
+/**
+ * Splits a selector list on top-level commas (not those inside `:where()`, nor
+ * escaped ones in arbitrary-value class names such as `.hz\:grid-cols-\[a\,b\]`).
+ */
 function splitSelectors(list: string): string[] {
     const out: string[] = [];
     let depth = 0;
     let current = '';
+    let escaped = false;
     for (const ch of list) {
+        if (escaped) {
+            current += ch;
+            escaped = false;
+            continue;
+        }
+        if (ch === '\\') escaped = true;
         if (ch === '(') depth++;
         if (ch === ')') depth--;
         if (ch === ',' && depth === 0) {

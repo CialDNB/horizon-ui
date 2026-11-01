@@ -78,6 +78,15 @@ describe('eslint layering rules (fixtures in a gitignored dir)', () => {
             "import { b } from '../components/B';\nexport const v = b;\n"
         );
         write('src/lib/y.ts', 'export const y = 1;\n');
+        write('src/stories/Spec.tsx', 'export const Spec = 1;\n');
+        write(
+            'src/components/B/B.stories.tsx',
+            "import { Spec } from '../../stories/Spec';\nimport { b } from '.';\nexport const v = Spec + b;\n"
+        );
+        write(
+            'src/components/C/C.ts',
+            "import { Spec } from '../../stories/Spec';\nexport const v = Spec;\n"
+        );
     });
 
     afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -98,6 +107,16 @@ describe('eslint layering rules (fixtures in a gitignored dir)', () => {
 
     it('flags lib importing a component', async () => {
         expect(await lint('src/lib/x.ts')).toContain(
+            'boundaries/element-types'
+        );
+    });
+
+    it('allows a component story to import story helpers', async () => {
+        expect(await lint('src/components/B/B.stories.tsx')).toEqual([]);
+    });
+
+    it('flags component source importing story helpers', async () => {
+        expect(await lint('src/components/C/C.ts')).toContain(
             'boundaries/element-types'
         );
     });
