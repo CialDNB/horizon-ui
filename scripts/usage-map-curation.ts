@@ -18,7 +18,8 @@ export const curation: Record<string, Curation> = {
     Typography: {
         batch: 1,
         horizon: 'Typography',
-        note: 'Planned: slash-notation `variant` keys kept; `component` becomes `as`; MUI `sx`/`color` props dropped (semantic text utilities).',
+        note: 'Done in Task 10a, see Typography section below. `variant` = the 14 slash-notation roles (MUI `h1`..`caption` map to them); `component` becomes `as`; `color` takes semantic tokens; `noWrap` becomes `truncate` (also 2-4 line clamp); `weight`, `align` added; `sx`, `gutterBottom`, `paragraph`, `display` and MUI typography props dropped.',
+        status: 'done',
     },
     Button: {
         batch: 1,

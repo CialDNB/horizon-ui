@@ -29,6 +29,21 @@ Also: `background` is `background.default` (grey/50); IL has no `background` and
 
 Contrast of every Button variant per brand is listed in `.superpowers/sdd/2026-11-01-horizon-ui-foundation/task-6-report.md` and checked by Storybook a11y (`Components/Button/Brands`).
 
+## Tone keys (added in Task 10a: Typography, Chip, Badge)
+
+`<tone>-subtle` is a tinted surface (Chip soft fill), `<tone>-strong` is the AA-legible text/icon shade of the tone: at least 4.5:1 on `background` and on its own `-subtle`, and `background`-coloured text on it (Badge count) is at least 4.5:1 too. The plain `success`/`warning`/`info`/`destructive` roles stay fills and indicators; as text on `background` they fail (`success` 3.52:1, CIAL `destructive` 4.47:1). The primary tone reuses `accent` / `accent-foreground`.
+
+| Semantic key | cial | dnb | il | Source |
+|---|---|---|---|---|
+| `neutral-subtle` | blueGrey/100 `#F1F5F9` | same | `#F1F5F9` | x-core default chip surface family (blueGrey) |
+| `neutral-strong` | blueGrey/700 `#334155` | same | `#334155` | darker than `muted-foreground` so it passes on `neutral-subtle` in every brand (dnb `foreground` on muted is 4.34:1) |
+| `info-subtle` / `info-strong` | lightBlue/50 `#E1F5FE` / lightBlue/900 `#01579B` | same | `#E1F5FE` / `#01579B` | x-core chip info: INFO[50] / INFO[900]; IL `info.light`/`info.dark` |
+| `success-subtle` / `success-strong` | teal/100 `#CCFBF1` / teal/800 `#115E59` | same | `#D9F4F1` / `#134E4A` | x-core chip success: TEAL[100] / TEAL[800]; IL `success.option_1`/`success.dark` |
+| `warning-subtle` / `warning-strong` | amber/100 `#FEF3C7` / amber/900 `#9B5403` | same | `#FDF4DB` / `#9B5403` | x-core chip warning: WARNING[100] / WARNING[900]; IL `warning.light`/`warning.dark` |
+| `destructive-subtle` / `destructive-strong` | red/100 `#FFE4E6` / red/600 `#C90A2A` | same | `#FCE0E2` / `#730314` | x-core chip error: ERROR[100] / ERROR[600]; IL `error.option_1`/`error.dark` |
+
+Ratios per brand are asserted in `src/tokens/contrast.test.ts` and listed in `.superpowers/sdd/2026-11-01-horizon-ui-foundation/task-10a-report.md`. Not added: `success-foreground`/`warning-foreground`/`info-foreground` (solid fills with text), because no component needs them yet.
+
 ## Palette keys without a semantic home
 
 | x-core key | Brands | Note |
@@ -36,7 +51,7 @@ Contrast of every Button variant per brand is listed in `.superpowers/sdd/2026-1
 | `background.paper` | all | Needs a `card`/`popover` pair. Add `card`, `card-foreground`, `popover`, `popover-foreground` when Card/Popover are ported. |
 | `text.disabled` | all | Needs a disabled token. |
 | `<role>.light`, `<role>.dark`, `<role>.hover` for secondary/warning/success/info (primary/error hover now ported, see above) | all | Hover and tint/shade variants. `primary.light`/`dark` are used only to derive `accent`. |
-| `success/warning/info .contrastText` | all | No `success-foreground`, `warning-foreground`, `info-foreground` keys in the brief. Warning contrast is amber/900 (CIAL, D&B) or #5F4B14 (IL). |
+| `success/warning/info .contrastText` | all | No `success-foreground`, `warning-foreground`, `info-foreground` keys (see Tone keys: text uses `<tone>-strong`). Warning contrast is amber/900 (CIAL, D&B) or #5F4B14 (IL). |
 | `<role>.disable`, `option_1`, `backgroundColorLight`, `ultraDark`, `ultraLight`, `medium` | il | Alert backgrounds and disabled tints. |
 | `grey`, `blueGrey`, `blue`, `indigo`, `cyan`, `lightBlue`, `red`, `amber`, `teal`, `green`, `orange`, `pink`, `purple` scales | cial, dnb | Exposed as `--hz-*` primitives only. |
 | IL-specific scales (`lightBlue`, `orange`, `grey`, `blue`, `purple`, `pink`, `yellow`, `aquamarine`, `lightRed`, `deepPurple`, `lightGreen`) | il | Differ from the shared primitives; not ported. |

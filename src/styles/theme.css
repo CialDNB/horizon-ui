@@ -23,6 +23,16 @@
     --color-success: var(--success);
     --color-warning: var(--warning);
     --color-info: var(--info);
+    --color-neutral-subtle: var(--neutral-subtle);
+    --color-neutral-strong: var(--neutral-strong);
+    --color-info-subtle: var(--info-subtle);
+    --color-info-strong: var(--info-strong);
+    --color-success-subtle: var(--success-subtle);
+    --color-success-strong: var(--success-strong);
+    --color-warning-subtle: var(--warning-subtle);
+    --color-warning-strong: var(--warning-strong);
+    --color-destructive-subtle: var(--destructive-subtle);
+    --color-destructive-strong: var(--destructive-strong);
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);

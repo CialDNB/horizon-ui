@@ -83,8 +83,10 @@ describe('architecture', () => {
               [
                 "Button",
                 "HorizonProvider",
+                "Typography",
                 "buttonVariants",
                 "cn",
+                "typographyVariants",
                 "usePortalContainer",
               ]
             `);

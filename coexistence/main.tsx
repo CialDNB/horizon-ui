@@ -2,10 +2,11 @@ import {
     Button as MuiButton,
     CssBaseline,
     ThemeProvider,
-    Typography,
+    Typography as MuiTypography,
     createTheme,
 } from '@mui/material';
-import { Button, HorizonProvider } from '@cialdnb/horizon-ui';
+import { Button, HorizonProvider, Typography } from '@cialdnb/horizon-ui';
+import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
 import hzUnlayeredStyles from '@cialdnb/horizon-ui/styles.unlayered.css?raw';
@@ -21,9 +22,14 @@ function addStyle(id: string, css: string) {
 const params = new URLSearchParams(location.search);
 // customer360 ships Bootstrap 4.4.1 UNLAYERED plus `* { box-sizing: border-box }`.
 // ?reboot=1 loads the real bootstrap-reboot.css (the global element rules of
-// Bootstrap) and that universal rule, both unlayered.
+// Bootstrap) and that universal rule, both unlayered. ?reboot=full loads the
+// full bootstrap.css instead (what customer360 imports: the reboot plus the
+// `h1..h6 { font-weight: 500; line-height: 1.2; font-size }` type rules).
 const reboot = () => {
-    addStyle('bootstrap-reboot', bootstrapReboot);
+    addStyle(
+        'bootstrap-reboot',
+        params.get('reboot') === 'full' ? bootstrapFull : bootstrapReboot
+    );
     addStyle('c360-global', '* { box-sizing: border-box; }');
 };
 // ?build=unlayered loads dist/styles.unlayered.css instead of dist/styles.css.
@@ -35,7 +41,7 @@ const horizon = () =>
 // ?styles=0 renders the page without horizon-ui's stylesheet (baseline).
 // ?order=horizon-first puts horizon's CSS before the reboot; the default is
 // legacy CSS first, the order the docs recommend.
-const withReboot = params.get('reboot') === '1';
+const withReboot = ['1', 'full'].includes(params.get('reboot') ?? '');
 const withHorizon = params.get('styles') !== '0';
 if (params.get('order') === 'horizon-first') {
     if (withHorizon) horizon();
@@ -56,15 +62,32 @@ const muiTheme = createTheme({
     palette: { primary: { main: '#0050F0' } },
 });
 
+const TYPOGRAPHY_ROLES = [
+    'display/xl',
+    'display/lg',
+    'heading/xl',
+    'heading/lg',
+    'heading/md',
+    'heading/sm',
+    'body/lg',
+    'body/default',
+    'body/secondary',
+    'caption',
+    'micro',
+    'label/sm',
+    'label/md',
+    'label/lg',
+] as const;
+
 function App() {
     return (
         <ThemeProvider theme={muiTheme}>
             <CssBaseline />
             <main style={{ padding: 16 }}>
                 <section data-testid="mui">
-                    <Typography variant="h5" data-testid="mui-typography">
+                    <MuiTypography variant="h5" data-testid="mui-typography">
                         MUI section
-                    </Typography>
+                    </MuiTypography>
                     <MuiButton variant="contained" data-testid="mui-button">
                         MUI button
                     </MuiButton>
@@ -135,6 +158,34 @@ function App() {
                         >
                             Breakpoint probe
                         </div>
+                    </HorizonProvider>
+                </section>
+                <section data-testid="hz-components">
+                    <HorizonProvider>
+                        {TYPOGRAPHY_ROLES.map((variant) => (
+                            <Typography
+                                key={variant}
+                                variant={variant}
+                                data-testid={`hz-typo-${variant}`}
+                            >
+                                {variant}
+                            </Typography>
+                        ))}
+                        <Typography
+                            variant="body/default"
+                            weight="semibold"
+                            as="h5"
+                            data-testid="hz-typo-h5"
+                        >
+                            h5 element
+                        </Typography>
+                        <Typography
+                            variant="body/secondary"
+                            as="h6"
+                            data-testid="hz-typo-h6"
+                        >
+                            h6 element
+                        </Typography>
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">
