@@ -7,6 +7,7 @@ import { typeScale } from '../tokens/typography';
 // Rule assertions run on the same function the Vite plugin emits; one smoke test
 // below checks the file `vite build` actually wrote (scripts/vitest-global-setup.ts).
 const css = await buildStylesCss();
+const unlayeredCss = await buildStylesCss([], { layered: false });
 
 interface Node {
     prelude: string;
@@ -253,5 +254,241 @@ describe('dist/styles.css', () => {
         // Tailwind defaults: sm 40rem, md 48rem, lg 64rem, xl 80rem, 2xl 96rem.
         expect(css).not.toMatch(/(40|48|64|80|96)rem\)/);
         expect(css).not.toMatch(/\.hz\\:(sm|md|lg|xl|2xl)\\:/);
+    });
+});
+
+/** Every style rule, @media/@supports block and @property/@keyframes, with
+ * enclosing @layer blocks removed from its ancestry, in document order. */
+const normalizedRules = (source: string): string[] =>
+    walk(parse(source))
+        .filter((n) => !n.prelude.startsWith('@layer'))
+        .map((n) =>
+            [
+                n.ancestors.filter((a) => !a.startsWith('@layer')).join(' > '),
+                n.prelude,
+                n.decls.join('; '),
+            ].join(' | ')
+        );
+
+/**
+ * Specificity (a, b, c) of a simple selector. `:where()` counts zero, `:is()`
+ * counts its most specific argument; enough for the selectors this build emits.
+ */
+function specificity(selector: string): [number, number, number] {
+    let s = selector.replace(/\\./g, 'x');
+    s = s.replace(/:where\((?:[^()]|\([^()]*\))*\)/g, '');
+    let b = 0;
+    let c = 0;
+    s = s.replace(/:is\(((?:[^()]|\([^()]*\))*)\)/g, (_, inner: string) => {
+        const best = splitSelectors(inner)
+            .map(specificity)
+            .sort((x, y) => y[1] - x[1] || y[2] - x[2])[0];
+        b += best?.[1] ?? 0;
+        c += best?.[2] ?? 0;
+        return '';
+    });
+    s = s.replace(/:not\(((?:[^()]|\([^()]*\))*)\)/g, (_, inner: string) => {
+        const [, nb, nc] = specificity(inner);
+        b += nb;
+        c += nc;
+        return '';
+    });
+    const a = (s.match(/#[\w-]+/g) ?? []).length;
+    b += (s.match(/\.[\w-]+/g) ?? []).length;
+    b += (s.match(/\[[^\]]*\]/g) ?? []).length;
+    s = s.replace(/\[[^\]]*\]/g, '');
+    c += (
+        s.match(
+            /::?(before|after|backdrop|placeholder|file-selector-button)\b/g
+        ) ?? []
+    ).length;
+    s = s.replace(
+        /::?(before|after|backdrop|placeholder|file-selector-button)\b/g,
+        ''
+    );
+    b += (s.match(/:[\w-]+/g) ?? []).length;
+    c += (s.replace(/[.:#][\w-]+/g, '').match(/(^|[\s>+~])[a-z][\w-]*/gi) ?? [])
+        .length;
+    return [a, b, c];
+}
+
+describe('dist/styles.unlayered.css (legacy hosts, ADR 0001)', () => {
+    const tree2 = parse(unlayeredCss);
+    const rules2 = styleRulesOf(tree2);
+    const selectors2 = rules2.flatMap((r) => splitSelectors(r.prelude));
+    const preludes = rules2.map((r) => r.prelude);
+
+    it('vite build emits the unlayered stylesheet', () => {
+        const emitted = readFileSync(inject('stylesUnlayeredCssPath'), 'utf8');
+        expect(emitted).toBe(unlayeredCss);
+    });
+
+    it('unlayered build contains no @layer', () => {
+        expect(unlayeredCss).not.toMatch(/@layer\b/);
+        expect(walk(tree2).some((n) => n.prelude.startsWith('@layer'))).toBe(
+            false
+        );
+        expect(rules2.length).toBeGreaterThan(0);
+    });
+
+    it('unlayered build has the same rule set as the layered build modulo the layer wrapper', () => {
+        const layered = normalizedRules(css);
+        expect(layered.length).toBeGreaterThan(100);
+        expect(normalizedRules(unlayeredCss)).toEqual(layered);
+        expect(unlayeredCss.startsWith('/*! tailwindcss')).toBe(true);
+    });
+
+    it('unlayered build keeps cascade order: base before utilities, breakpoints after base utilities', () => {
+        const at = (prelude: string) => {
+            const i = preludes.indexOf(prelude);
+            expect(i, prelude).toBeGreaterThanOrEqual(0);
+            return i;
+        };
+        const theme = rules2.findIndex((r) =>
+            r.decls.some((d) => d.startsWith('--hz-grey-50:'))
+        );
+        const base = at(
+            '.hz-root :where(button, input, select, optgroup, textarea)'
+        );
+        const firstUtility = preludes.findIndex((p) => p.startsWith('.hz\\:'));
+        expect(theme).toBeGreaterThanOrEqual(0);
+        expect(theme).toBeLessThan(base);
+        expect(base).toBeLessThan(firstUtility);
+        // Nothing from theme/base (all `.hz-root` rules) follows a utility.
+        expect(
+            preludes.slice(firstUtility).filter((p) => p.startsWith('.hz-root'))
+        ).toEqual([]);
+
+        // Each variant rule follows the rule of the utility it modifies.
+        const variant =
+            /^\.hz\\:((?:(?:tablet|laptop|desktop|hover|focus-visible|active|inactive|aria-busy|pointer-fine)\\:)+)([\w-]+)/;
+        const pairs = preludes.flatMap((p, i) => {
+            const m = variant.exec(p);
+            const base2 = m ? preludes.indexOf(`.hz\\:${m[2]}`) : -1;
+            return base2 >= 0 ? [{ p, i, base: base2 }] : [];
+        });
+        expect(pairs.length).toBeGreaterThanOrEqual(5);
+        for (const { p, i, base: b } of pairs)
+            expect(b, `${p} after its base utility`).toBeLessThan(i);
+
+        // Breakpoint blocks: after every unprefixed utility, in min-width order.
+        const media = walk(tree2).map((n) => n.prelude);
+        const mediaAt = (px: number) =>
+            media.findIndex((p) =>
+                new RegExp(
+                    `^@media \\((min-width: ${px}px|width >= ${px}px)\\)$`
+                ).test(p)
+            );
+        const allIdx = walk(tree2).map((n) => n.prelude);
+        const lastTypeUtility = allIdx.lastIndexOf('.hz\\:text-label-md');
+        expect(lastTypeUtility).toBeGreaterThanOrEqual(0);
+        expect(mediaAt(768)).toBeGreaterThan(lastTypeUtility);
+        expect(mediaAt(1280)).toBeGreaterThan(mediaAt(768));
+        expect(mediaAt(1920)).toBeGreaterThan(mediaAt(1280));
+    });
+
+    it('unlayered build: theme and base rules never out-rank utilities', () => {
+        // Without a layer, the reset competes with utilities by specificity:
+        // it must stay at (0,1,0), or (0,1,1) where it targets a pseudo-element.
+        const firstUtility = preludes.findIndex((p) => p.startsWith('.hz\\:'));
+        const early = rules2
+            .slice(0, firstUtility)
+            .filter((r) => !r.decls.every((d) => d.startsWith('--')));
+        expect(early.length).toBeGreaterThan(3);
+        for (const sel of early.flatMap((r) => splitSelectors(r.prelude))) {
+            const [a, b, c] = specificity(sel);
+            const pseudoElement =
+                /::?(before|after|backdrop|placeholder|file-selector-button)/.test(
+                    sel
+                );
+            expect([a, b, c], sel).toEqual([0, 1, pseudoElement ? 1 : 0]);
+        }
+        // Utilities beat Bootstrap reboot element selectors by specificity.
+        expect(specificity('.hz\\:rounded-lg')).toEqual([0, 1, 0]);
+        expect(
+            specificity('.hz\\:focus-visible\\:outline-2:focus-visible')
+        ).toEqual([0, 2, 0]);
+        expect(specificity('button:focus')).toEqual([0, 1, 1]);
+        expect(specificity('.hz-root :where(button, input)')).toEqual([
+            0, 1, 0,
+        ]);
+    });
+
+    it('unlayered build: Button state utilities out-rank Bootstrap reboot pseudo-class rules', () => {
+        // Reboot: `button:focus { outline: 5px auto -webkit-focus-ring-color }`
+        // (0,1,1) and `[type="button"]:not(:disabled) { cursor: pointer }`
+        // (0,2,0). Equal specificity would make the result depend on load order.
+        const beats = (sel: string, other: [number, number, number]) => {
+            const [a, b, c] = specificity(sel);
+            return (
+                a > other[0] ||
+                (a === other[0] &&
+                    (b > other[1] || (b === other[1] && c > other[2])))
+            );
+        };
+        const utilitySelectors = (decl: RegExp) =>
+            rules2
+                .filter((r) => r.prelude.startsWith('.hz\\:'))
+                .filter((r) => r.decls.some((d) => decl.test(d)))
+                .flatMap((r) => splitSelectors(r.prelude));
+        // Focus-state outline utilities (the unconditional `outline-ring` only
+        // pre-sets the colour so it does not transition in).
+        const outline = utilitySelectors(
+            /^outline-(color|style|width)\b/
+        ).filter((sel) => /:focus(-visible)?\b/.test(sel));
+        const cursor = utilitySelectors(/^cursor:\s*progress/);
+        for (const prop of ['color', 'style', 'width'])
+            expect(
+                utilitySelectors(new RegExp(`^outline-${prop}\\b`)).some(
+                    (sel) => sel.endsWith(':focus-visible')
+                ),
+                `focus-visible outline-${prop}`
+            ).toBe(true);
+        expect(outline.length).toBeGreaterThanOrEqual(4);
+        expect(cursor.length).toBeGreaterThanOrEqual(1);
+        for (const sel of outline)
+            expect(beats(sel, [0, 1, 1]), sel).toBe(true);
+        for (const sel of cursor) expect(beats(sel, [0, 2, 0]), sel).toBe(true);
+    });
+
+    it('unlayered build still has no preflight or global selectors', () => {
+        expect(selectors2.length).toBeGreaterThan(0);
+        const global =
+            /^(html|body|\*|:root|:host|::?before|::?after|::backdrop|button|input|h1|a)\b/;
+        expect(selectors2.filter((s) => global.test(s))).toEqual([]);
+        expect(
+            selectors2.filter(
+                (s) => !s.startsWith('.hz-root') && !s.startsWith('.hz\\:')
+            )
+        ).toEqual([]);
+        expect(unlayeredCss).not.toMatch(/:root|:host/);
+        expect(foreignVariableDeclarations(unlayeredCss)).toEqual([]);
+        expect(unlayeredCss).not.toContain('--tw-');
+        expect(unlayeredCss).toContain(`.hz\\:text-${slug('body/default')}`);
+        expect(unlayeredCss).not.toMatch(/(^|[\s,}])\.text-body-default\b/m);
+        // Type sizes stay px (a 14px host root must not shrink them).
+        const sizes = [
+            ...unlayeredCss.matchAll(/--text-[\w-]+-size:\s*([^;]+);/g),
+        ].map((m) => m[1]);
+        expect(sizes.length).toBeGreaterThanOrEqual(14);
+        for (const v of sizes) expect(v).toMatch(/^\d+(\.\d+)?px$/);
+        // @property registrations and the reduced-motion rule are kept.
+        const props = (s: string) => s.match(/@property --hz-tw-[\w-]+/g) ?? [];
+        expect(props(unlayeredCss)).toEqual(props(css));
+        expect(props(unlayeredCss).length).toBeGreaterThan(0);
+        expect(unlayeredCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\) \{\s*\.hz-root, \.hz-root \*/
+        );
+    });
+
+    it('unlayered build forced utilities keep the --hz-tw- rename and scoped fallback', async () => {
+        const withRing = await buildStylesCss(['hz:ring-2', 'hz:shadow-1'], {
+            layered: false,
+        });
+        expect(withRing).not.toMatch(/@layer\b/);
+        expect(withRing).not.toContain('--tw-');
+        expect(withRing).toMatch(/\.hz\\:ring-2 \{\s*--hz-tw-ring-shadow:/);
+        expect(foreignVariableDeclarations(withRing)).toEqual([]);
+        expect(withRing).not.toMatch(/(^\s*|,\s*)\*\s*[,{]/m);
     });
 });

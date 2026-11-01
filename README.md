@@ -18,6 +18,18 @@ npm run build-storybook
 npm run test:coexistence          # MUI + Bootstrap coexistence harness (Playwright); needs `npx playwright install chromium`; must be a CI gate (with `tsc --noEmit -p coexistence`), wired in Task 15
 ```
 
+## Using it in an app
+
+```ts
+// Modern host (no unlayered global element CSS):
+import '@cialdnb/horizon-ui/styles.css';
+// Legacy host with unlayered global element CSS such as Bootstrap's reboot
+// (customer360). Import after the legacy CSS:
+import '@cialdnb/horizon-ui/styles.unlayered.css';
+```
+
+Import exactly one of the two, once, and render components inside `HorizonProvider`. Which build to choose and why: [ADR 0001](docs/architecture/decisions/0001-css-isolation.md).
+
 ## Docs
 
 | File | Content |

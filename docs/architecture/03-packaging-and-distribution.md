@@ -24,20 +24,22 @@ Single package, not a monorepo (matches x-core; revisit only if tokens or icons 
 ## Build
 
 - Vite library mode, ESM only, `preserveModules: true`, sourcemaps, `.d.ts` emitted.
-- Tailwind v4 compiles `src/styles/index.css` to **`dist/styles.css`** at build time.
+- Tailwind v4 compiles `src/styles/index.css` at build time to **`dist/styles.css`** (layered, `@layer horizon`) and **`dist/styles.unlayered.css`** (the same rules with every `@layer` flattened away, for legacy hosts), both from `scripts/build-styles.ts`.
 - `dist/` is published; `src/` is not.
-- `exports` map: `.` (JS), `./styles.css`, `./tokens` (TS tokens for non-CSS use), `./package.json`. Per-component subpath exports are a builder option if tree-shaking proves insufficient.
+- `exports` map: `.` (JS), `./styles.css`, `./styles.unlayered.css`, `./tokens` (TS tokens for non-CSS use), `./package.json`. Per-component subpath exports are a builder option if tree-shaking proves insufficient.
 - `sideEffects: ["**/*.css"]`.
 
 ## CSS delivery (the key constraint)
 
 Consumers must not need Tailwind. Therefore:
 
-- Ship precompiled `dist/styles.css`; consumer imports once: `import '@cialdnb/horizon-ui/styles.css'`.
+- Ship precompiled CSS; consumer imports exactly one build, once:
+  - `import '@cialdnb/horizon-ui/styles.css'` (layered): modern hosts, where the host's own unlayered CSS should be able to override horizon and the host has no unlayered global element CSS (or wraps it in a layer).
+  - `import '@cialdnb/horizon-ui/styles.unlayered.css'`: legacy hosts with unlayered global element CSS such as Bootstrap's reboot (customer360). Load it after the legacy CSS. Horizon utilities then win over element selectors by specificity; consumers override by specificity and order. Measurements and rules in [ADR 0001](decisions/0001-css-isolation.md#two-builds-layered-and-unlayered-task-7b-controller-ruling).
 - Coexistence safety (see 05):
   - **No global preflight.** Tailwind's reset is not emitted globally; a minimal reset is applied only inside `.hz-root` (provider wrapper) and to portal content roots.
   - Tailwind utilities use a **prefix** (`hz:`) in the compiled output so they cannot collide with consumer Tailwind or other classes. Authors write the prefix in source (`hz:flex`, `hz:tablet:px-6`); Tailwind's `--tw-*` internals are renamed to `--hz-tw-*` at build time. Decided in [ADR 0001](decisions/0001-css-isolation.md) after a spike showed scoping under `.hz-root` collides with consumer utility classes.
-  - All output in `@layer horizon` so consumers can order it relative to MUI/Emotion styles.
+  - Layered build: all output in `@layer horizon` so consumers can order it relative to MUI/Emotion styles. Unlayered build: the same rules without layers, same scoping and prefix guarantees.
 - Radix portals (Dialog, Popover, Select, Tooltip) render at `document.body`; provider re-targets the portal container to a `.hz-root` element so scoped styles/vars apply.
 - Consumers *with* Tailwind v4 can optionally import `@cialdnb/horizon-ui/theme.css` to get tokens as `@theme` and use `bg-primary` in their own code. Optional, not required for v1.
 

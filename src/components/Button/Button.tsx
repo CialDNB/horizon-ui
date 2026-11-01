@@ -48,11 +48,16 @@ const buttonStyles = cva(
         'hz:rounded-lg hz:border hz:border-transparent hz:text-center hz:text-balance hz:wrap-anywhere',
         'hz:cursor-pointer hz:select-none hz:no-underline hz:underline-offset-4',
         'hz:transition hz:duration-fast hz:ease-standard',
-        'hz:focus-visible:outline-2 hz:focus-visible:outline-offset-2 hz:focus-visible:outline-solid hz:outline-ring',
+        // Focus ring and busy cursor are also written as state variants so they
+        // out-rank Bootstrap reboot's `button:focus` (0,1,1) and
+        // `[type="button"]:not(:disabled)` (0,2,0) when a legacy host loads
+        // styles.unlayered.css (ADR 0001). The unconditional `outline-ring`
+        // stays so the colour does not transition in on focus.
+        'hz:outline-ring hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:outline-offset-2 hz:focus-visible:outline-solid hz:focus-visible:outline-ring',
         'hz:active:scale-[0.98]',
         'hz:[&_svg]:pointer-events-none hz:[&_svg]:shrink-0',
         'hz:inactive:cursor-not-allowed hz:inactive:text-muted-foreground hz:inactive:no-underline hz:inactive:active:scale-100',
-        'hz:aria-busy:cursor-progress hz:aria-busy:active:scale-100',
+        'hz:aria-busy:not-disabled:cursor-progress hz:aria-busy:active:scale-100',
     ],
     {
         variants: {

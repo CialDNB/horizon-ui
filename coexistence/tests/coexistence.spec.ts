@@ -100,47 +100,75 @@ const plainSnapshot = (page: Page): Promise<PlainStyles> =>
         return out;
     }, PLAIN_PROPS);
 
-for (const root of ROOTS) {
-    test.describe(root.label, () => {
-        test('importing horizon styles does not change MUI Button computed styles', async ({
-            page,
-        }) => {
-            await page.goto('/?styles=0');
-            await setRoot(page, root.px);
-            await expect(page.getByTestId('mui-button')).toBeVisible();
-            expect(await page.locator('#hz-styles').count()).toBe(0);
-            const without = await muiSnapshots(page);
+const BUILDS = ['layered', 'unlayered'] as const;
+type Build = (typeof BUILDS)[number];
 
-            await page.goto('/');
-            await setRoot(page, root.px);
-            await expect(page.getByTestId('mui-button')).toBeVisible();
-            expect(await page.locator('#hz-styles').count()).toBe(1);
-            const withStyles = await muiSnapshots(page);
+/** Harness URL: which horizon build, whether the reboot loads, in what order. */
+const url = (
+    build: Build,
+    opts: { styles?: boolean; reboot?: boolean; horizonFirst?: boolean } = {}
+) => {
+    const q = new URLSearchParams();
+    if (build === 'unlayered') q.set('build', 'unlayered');
+    if (opts.styles === false) q.set('styles', '0');
+    if (opts.reboot) q.set('reboot', '1');
+    if (opts.horizonFirst) q.set('order', 'horizon-first');
+    const qs = q.toString();
+    return qs ? `/?${qs}` : '/';
+};
 
-            // Sanity: MUI htmlFontSize 14 means 1rem for the button, so the
-            // baseline follows the root (16px in customer360), not a fixed 14px.
-            expect(without.button.fontSize).toBe(`${root.px}px`);
-            expect(without.button.backgroundColor).toBe('rgb(0, 80, 240)');
-            expect(withStyles).toEqual(without);
+for (const build of BUILDS)
+    for (const root of ROOTS) {
+        test.describe(`${build} build, ${root.label}`, () => {
+            test('importing horizon styles does not change MUI Button computed styles', async ({
+                page,
+            }) => {
+                await page.goto(url(build, { styles: false }));
+                await setRoot(page, root.px);
+                await expect(page.getByTestId('mui-button')).toBeVisible();
+                expect(await page.locator('#hz-styles').count()).toBe(0);
+                const without = await muiSnapshots(page);
+
+                await page.goto(url(build));
+                await setRoot(page, root.px);
+                await expect(page.getByTestId('mui-button')).toBeVisible();
+                expect(await page.locator('#hz-styles').count()).toBe(1);
+                const withStyles = await muiSnapshots(page);
+
+                // Sanity: MUI htmlFontSize 14 means 1rem for the button, so the
+                // baseline follows the root (16px in customer360), not a fixed 14px.
+                expect(without.button.fontSize).toBe(`${root.px}px`);
+                expect(without.button.backgroundColor).toBe('rgb(0, 80, 240)');
+                expect(withStyles).toEqual(without);
+            });
+
+            for (const reboot of [
+                { label: 'no reboot', reboot: false, horizonFirst: false },
+                { label: 'reboot first', reboot: true, horizonFirst: false },
+                { label: 'horizon first', reboot: true, horizonFirst: true },
+            ])
+                test(`plain elements outside .hz-root are unchanged by horizon styles (${reboot.label})`, async ({
+                    page,
+                }) => {
+                    await page.goto(
+                        url(build, { styles: false, reboot: reboot.reboot })
+                    );
+                    await setRoot(page, root.px);
+                    expect(
+                        await page.locator('#bootstrap-reboot').count()
+                    ).toBe(reboot.reboot ? 1 : 0);
+                    const without = await plainSnapshot(page);
+                    await page.goto(url(build, reboot));
+                    await setRoot(page, root.px);
+                    expect(await page.locator('#hz-styles').count()).toBe(1);
+                    const withStyles = await plainSnapshot(page);
+                    // Sanity: the probes are real browser-default (or reboot) elements.
+                    expect(without['button']?.['borderRadius']).toBe('0px');
+                    expect(without['ul']?.['listStyleType']).toBe('disc');
+                    expect(withStyles).toEqual(without);
+                });
         });
-
-        test('plain elements outside .hz-root are unchanged by horizon styles', async ({
-            page,
-        }) => {
-            await page.goto('/?styles=0');
-            await setRoot(page, root.px);
-            const without = await plainSnapshot(page);
-            await page.goto('/');
-            await setRoot(page, root.px);
-            expect(await page.locator('#hz-styles').count()).toBe(1);
-            const withStyles = await plainSnapshot(page);
-            // Sanity: the probes are real browser-default elements.
-            expect(without['button']?.['borderRadius']).toBe('0px');
-            expect(without['ul']?.['listStyleType']).toBe('disc');
-            expect(withStyles).toEqual(without);
-        });
-    });
-}
+    }
 
 test('horizon Button renders identically at html font-size 14px and 16px', async ({
     page,
@@ -298,79 +326,122 @@ test('breakpoint variants switch exactly at 768, 1280 and 1919/1920px', async ({
     expect(new Set([w767, w768, w1280, w1920]).size).toBe(4);
 });
 
-// KNOWN LIMIT (documented in ADR 0001, mitigation decision pending): customer360
-// ships Bootstrap 4.4.1 UNLAYERED. Layered horizon utilities always lose to
-// unlayered element rules, so the reboot's `button { border-radius: 0;
-// font-size: inherit; line-height: inherit }` beats `hz:rounded-lg` and the
-// type-scale utilities. These tests assert today's measured behaviour (they are
-// not a statement of desired behaviour); when the mitigation lands they must be
-// inverted to assert zero differences.
-test.describe('known limit: unlayered Bootstrap reboot overrides horizon Button', () => {
-    const VARIANTS = [
-        'primary',
-        'secondary',
-        'tertiary',
-        'destructive',
-        'ghost',
-        'link',
-    ] as const;
-    const BUTTON_PROPS = [
-        'borderRadius',
-        'fontFamily',
-        'fontSize',
-        'fontWeight',
-        'lineHeight',
-        'textTransform',
-        'outlineStyle',
-        'outlineWidth',
-        'boxShadow',
-        'backgroundColor',
-        'cursor',
-        'padding',
-        'margin',
-        'boxSizing',
-        'color',
-        'display',
-    ] as const;
-    type Styles = Record<string, Record<string, string>>;
+const VARIANTS = [
+    'primary',
+    'secondary',
+    'tertiary',
+    'destructive',
+    'ghost',
+    'link',
+] as const;
+const BUTTON_PROPS = [
+    'borderRadius',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'textTransform',
+    'outlineStyle',
+    'outlineWidth',
+    'outlineColor',
+    'outlineOffset',
+    'boxShadow',
+    'backgroundColor',
+    'cursor',
+    'padding',
+    'margin',
+    'boxSizing',
+    'color',
+    'display',
+] as const;
+type Styles = Record<string, Record<string, string>>;
 
-    const measure = async (page: Page, reboot: boolean): Promise<Styles> => {
-        await page.goto(reboot ? '/?reboot=1' : '/');
-        await expect(page.getByTestId('hz-variant-primary')).toBeVisible();
-        const out: Styles = {};
-        for (const variant of VARIANTS) {
-            const button = page.getByTestId(`hz-variant-${variant}`);
-            // Keyboard modality first, so the focused button matches :focus-visible.
-            await page.keyboard.press('Shift');
-            await button.focus();
-            out[variant] = await button.evaluate((el, props) => {
-                const cs = getComputedStyle(el);
-                return Object.fromEntries(
-                    props.map((p) => [
-                        p,
-                        cs[p as keyof CSSStyleDeclaration] as string,
-                    ])
-                );
-            }, BUTTON_PROPS);
-        }
-        return out;
-    };
+/**
+ * Computed styles of the six Button variants, each focused with the keyboard
+ * (so `:focus-visible` and Bootstrap's `button:focus` both match), plus the
+ * loading button (aria-busy; the reboot's `[type="button"]:not(:disabled) {
+ * cursor: pointer }` competes with its progress cursor).
+ */
+const measureButtons = async (page: Page, path: string): Promise<Styles> => {
+    await page.goto(path);
+    await expect(page.getByTestId('hz-variant-primary')).toBeVisible();
+    const out: Styles = {};
+    for (const id of [
+        ...VARIANTS.map((v) => `hz-variant-${v}`),
+        'hz-ltr-loading',
+    ]) {
+        const button = page.getByTestId(id);
+        // Keyboard modality first, so the focused button matches :focus-visible.
+        await page.keyboard.press('Shift');
+        await button.focus();
+        out[id] = await button.evaluate(async (el, props) => {
+            // `hz:transition` animates colours (outline-color included) for
+            // 100ms after focus; read the settled values, not a midpoint.
+            await Promise.all(el.getAnimations().map((a) => a.finished));
+            const cs = getComputedStyle(el);
+            return Object.fromEntries(
+                props.map((p) => [
+                    p,
+                    cs[p as keyof CSSStyleDeclaration] as string,
+                ])
+            );
+        }, BUTTON_PROPS);
+    }
+    return out;
+};
 
+/**
+ * Outline of each variant after a mouse click: focused but not
+ * `:focus-visible`, so Horizon shows no ring while Bootstrap's `button:focus`
+ * would draw its 5px auto ring.
+ */
+const pointerFocusOutline = async (page: Page, path: string) => {
+    await page.goto(path);
+    const out: Record<string, string> = {};
+    for (const variant of VARIANTS) {
+        const button = page.getByTestId(`hz-variant-${variant}`);
+        await button.click();
+        out[variant] = await button.evaluate((el) =>
+            [
+                el === document.activeElement,
+                el.matches(':focus-visible'),
+                getComputedStyle(el).outlineStyle,
+            ].join(' ')
+        );
+    }
+    return out;
+};
+
+const changedProps = (a: Styles, b: Styles, id: string) =>
+    BUTTON_PROPS.filter((p) => a[id]?.[p] !== b[id]?.[p]);
+
+// KNOWN LIMIT of the LAYERED build (ADR 0001): customer360 ships Bootstrap
+// 4.4.1 UNLAYERED. Layered horizon utilities always lose to unlayered element
+// rules, so the reboot's `button { border-radius: 0; font-size: inherit;
+// line-height: inherit }` and `button:focus { outline: 5px auto }` beat
+// `hz:rounded-lg`, the type-scale utilities and the focus ring. These tests
+// assert the measured behaviour of `styles.css`; legacy hosts use
+// `styles.unlayered.css` instead (next group).
+test.describe('layered build (known limit): unlayered Bootstrap reboot overrides horizon Button', () => {
     test('reboot overrides exactly border-radius, font-size, line-height and the focus outline', async ({
         page,
     }) => {
-        const without = await measure(page, false);
-        const withReboot = await measure(page, true);
+        const without = await measureButtons(page, url('layered'));
+        const withReboot = await measureButtons(
+            page,
+            url('layered', { reboot: true })
+        );
         for (const variant of VARIANTS) {
-            const a = without[variant] ?? {};
-            const b = withReboot[variant] ?? {};
-            const changed = BUTTON_PROPS.filter((p) => a[p] !== b[p]);
-            expect(changed, variant).toEqual([
+            const id = `hz-variant-${variant}`;
+            const a = without[id] ?? {};
+            const b = withReboot[id] ?? {};
+            expect(changedProps(without, withReboot, id), variant).toEqual([
                 'borderRadius',
                 'fontSize',
                 'lineHeight',
                 'outlineStyle',
                 'outlineWidth',
+                'outlineColor',
             ]);
             // Focus ring: hz 2px solid -> Bootstrap `button:focus` 5px auto.
             expect(a['outlineStyle']).toBe('solid');
@@ -383,13 +454,27 @@ test.describe('known limit: unlayered Bootstrap reboot overrides horizon Button'
             expect(a['lineHeight']).toBe('20px');
             expect(b['lineHeight']).toBe('24px');
         }
+        // A mouse click (focus without :focus-visible) gets Bootstrap's ring.
+        const pointer = await pointerFocusOutline(
+            page,
+            url('layered', { reboot: true })
+        );
+        for (const variant of VARIANTS)
+            expect(pointer[variant], variant).toBe('true false auto');
+        // The loading button's progress cursor loses to the reboot's
+        // `[type="button"]:not(:disabled) { cursor: pointer }` as well.
+        expect(without['hz-ltr-loading']?.['cursor']).toBe('progress');
+        expect(withReboot['hz-ltr-loading']?.['cursor']).toBe('pointer');
     });
 
     test('reboot leaves background, cursor, padding, margin, box-sizing, family, weight, transform, shadow and colour intact', async ({
         page,
     }) => {
-        const without = await measure(page, false);
-        const withReboot = await measure(page, true);
+        const without = await measureButtons(page, url('layered'));
+        const withReboot = await measureButtons(
+            page,
+            url('layered', { reboot: true })
+        );
         const intact = [
             'backgroundColor',
             'cursor',
@@ -405,8 +490,138 @@ test.describe('known limit: unlayered Bootstrap reboot overrides horizon Button'
         ] as const;
         for (const variant of VARIANTS)
             for (const p of intact)
-                expect(withReboot[variant]?.[p], `${variant}.${p}`).toBe(
-                    without[variant]?.[p]
+                expect(
+                    withReboot[`hz-variant-${variant}`]?.[p],
+                    `${variant}.${p}`
+                ).toBe(without[`hz-variant-${variant}`]?.[p]);
+    });
+});
+
+test.describe('unlayered build: Bootstrap reboot does not override horizon Button', () => {
+    test('unlayered build renders horizon Button identically to the layered build', async ({
+        page,
+    }) => {
+        const layered = await measureButtons(page, url('layered'));
+        const unlayered = await measureButtons(page, url('unlayered'));
+        expect(unlayered).toEqual(layered);
+        expect(layered['hz-ltr-loading']?.['cursor']).toBe('progress');
+    });
+
+    for (const order of [
+        { label: 'reboot before horizon CSS', horizonFirst: false },
+        { label: 'horizon CSS before reboot', horizonFirst: true },
+    ])
+        test(`radius, type, focus outline and every other measured property are preserved (${order.label})`, async ({
+            page,
+        }) => {
+            const without = await measureButtons(page, url('unlayered'));
+            const withReboot = await measureButtons(
+                page,
+                url('unlayered', { reboot: true, ...order })
+            );
+            expect(await page.locator('#bootstrap-reboot').count()).toBe(1);
+            const overridden = Object.fromEntries(
+                Object.keys(without)
+                    .map((id) => [id, changedProps(without, withReboot, id)])
+                    .filter(([, changed]) => (changed?.length ?? 0) > 0)
+            );
+            expect(overridden).toEqual({});
+            for (const variant of VARIANTS) {
+                const b = withReboot[`hz-variant-${variant}`] ?? {};
+                expect(b['borderRadius'], variant).toBe('20px');
+                expect(b['fontSize'], variant).toBe('14px');
+                expect(b['lineHeight'], variant).toBe('20px');
+                expect(b['outlineStyle'], variant).toBe('solid');
+                expect(b['outlineWidth'], variant).toBe('2px');
+            }
+            expect(withReboot['hz-ltr-loading']?.['cursor']).toBe('progress');
+            expect(withReboot['hz-variant-primary']?.['outlineColor']).toBe(
+                without['hz-variant-primary']?.['outlineColor']
+            );
+            // Mouse focus: no ring, as without the reboot.
+            const pointer = await pointerFocusOutline(
+                page,
+                url('unlayered', { reboot: true, ...order })
+            );
+            for (const variant of VARIANTS)
+                expect(pointer[variant], variant).toBe('true false none');
+        });
+});
+
+// KNOWN LIMIT of both builds for `Button asChild` + `<a href>` (ADR 0001):
+// the reboot's `a:hover { color: #0056b3; text-decoration: underline }` has
+// specificity (0,1,1), above a plain utility such as `hz:text-primary-foreground`
+// (0,1,0). At rest the unlayered build keeps every Horizon value; on hover the
+// link takes Bootstrap's colour and underline. Asserts measured behaviour;
+// invert when Button gains hover-state colour/decoration utilities.
+test.describe('known limit: reboot a:hover restyles Button asChild links', () => {
+    const linkStyles = async (page: Page, path: string, hover: boolean) => {
+        await page.goto(path);
+        await expect(page.getByTestId('hz-link-primary')).toBeVisible();
+        const out: Record<string, string> = {};
+        for (const variant of VARIANTS) {
+            const link = page.getByTestId(`hz-link-${variant}`);
+            if (hover) await link.hover();
+            else await page.mouse.move(0, 0);
+            out[variant] = await link.evaluate(async (el) => {
+                await Promise.all(el.getAnimations().map((a) => a.finished));
+                const cs = getComputedStyle(el);
+                return [
+                    cs.color,
+                    cs.backgroundColor,
+                    cs.textDecorationLine,
+                    cs.borderRadius,
+                    cs.fontSize,
+                ].join(' / ');
+            });
+        }
+        return out;
+    };
+
+    test('unlayered build: rest state preserved, hover colour and underline overridden', async ({
+        page,
+    }) => {
+        const rest = await linkStyles(page, url('unlayered'), false);
+        const hover = await linkStyles(page, url('unlayered'), true);
+        for (const order of [false, true]) {
+            const path = url('unlayered', {
+                reboot: true,
+                horizonFirst: order,
+            });
+            expect(await linkStyles(page, path, false)).toEqual(rest);
+            const rebootHover = await linkStyles(page, path, true);
+            for (const variant of VARIANTS) {
+                const [, bg, , radius, size] = (hover[variant] ?? '').split(
+                    ' / '
                 );
+                const [color, rbg, deco, rradius, rsize] = (
+                    rebootHover[variant] ?? ''
+                ).split(' / ');
+                // Background, radius and type stay Horizon's on hover too.
+                expect([rbg, rradius, rsize], variant).toEqual([
+                    bg,
+                    radius,
+                    size,
+                ]);
+                expect(deco, variant).toBe('underline');
+                // Secondary and ghost set a hover colour, so theirs holds.
+                if (variant !== 'secondary' && variant !== 'ghost')
+                    expect(color, variant).toBe('rgb(0, 86, 179)');
+            }
+        }
+    });
+
+    test('layered build: reboot a { colour, background } overrides links at rest', async ({
+        page,
+    }) => {
+        const rest = await linkStyles(
+            page,
+            url('layered', { reboot: true }),
+            false
+        );
+        for (const variant of VARIANTS)
+            expect(rest[variant], variant).toMatch(
+                /^rgb\(0, 123, 255\) \/ rgba\(0, 0, 0, 0\) \/ none \/ 20px/
+            );
     });
 });

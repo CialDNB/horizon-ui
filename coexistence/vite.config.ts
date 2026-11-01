@@ -35,6 +35,10 @@ export default defineConfig(async () => {
         resolve: {
             alias: [
                 {
+                    find: /^@cialdnb\/horizon-ui\/styles\.unlayered\.css/,
+                    replacement: join(libDir, 'styles.unlayered.css'),
+                },
+                {
                     find: /^@cialdnb\/horizon-ui\/styles\.css/,
                     replacement: join(libDir, 'styles.css'),
                 },

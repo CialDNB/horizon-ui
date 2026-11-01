@@ -16,7 +16,11 @@ const deps = [
 const isExternal = (id: string) =>
     deps.some((dep) => id === dep || id.startsWith(`${dep}/`));
 
-/** Emits the precompiled, scoped stylesheet as `dist/styles.css`. */
+/**
+ * Emits the precompiled, scoped stylesheets: `dist/styles.css` (in
+ * `@layer horizon`) and `dist/styles.unlayered.css` (same rules, no layers,
+ * for legacy hosts with unlayered global CSS; ADR 0001).
+ */
 const horizonStyles = (): Plugin => ({
     name: 'horizon-styles',
     async generateBundle() {
@@ -24,6 +28,11 @@ const horizonStyles = (): Plugin => ({
             type: 'asset',
             fileName: 'styles.css',
             source: await buildStylesCss(),
+        });
+        this.emitFile({
+            type: 'asset',
+            fileName: 'styles.unlayered.css',
+            source: await buildStylesCss([], { layered: false }),
         });
     },
 });

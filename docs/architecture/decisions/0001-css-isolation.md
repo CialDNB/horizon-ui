@@ -1,4 +1,4 @@
-# ADR 0001: CSS isolation — `hz:` prefix + `@layer horizon`
+# ADR 0001: CSS isolation — `hz:` prefix + `@layer horizon` (and an unlayered build for legacy hosts)
 
 - Status: Accepted
 - Date: 2026-11-01
@@ -84,11 +84,67 @@ The harness loads the real `bootstrap/dist/css/bootstrap-reboot.css` (4.4.1, a d
 
 Unchanged (so not overridden): background, colour, cursor, padding, margin, box-sizing, font-family, font-weight, text-transform, box-shadow, display. These are asserted by the test group `known limit: unlayered Bootstrap reboot overrides horizon Button`, which asserts today's measured behaviour, not desired behaviour; invert it when a mitigation lands. The same mechanism will affect any Horizon element that Bootstrap restyles by element selector (inputs, links, tables, headings), so each new component needs the same check.
 
-Mitigation options (decision pending, no library change made in Task 7):
+Mitigation options (decided in Task 7b: option 3, shipped as a second build next to the layered one; see "Two builds" below):
 
 1. **Consumer layers its legacy CSS.** customer360 wraps the Bootstrap import (and other global element CSS) in `@layer legacy { ... }` (in Sass: `@layer legacy { @include meta.load-css("bootstrap/scss/bootstrap"); }`) and declares `@layer legacy, horizon;` first. Declaring the order alone does nothing for bare unlayered Bootstrap: only CSS that is actually inside a layer ranks below `horizon`. No library change, and it fixes the whole class of problem, but it is real work for customer360 and it changes cascade precedence of Bootstrap against MUI/Emotion (unlayered) and the app's own unlayered CSS, so the whole app needs a visual regression pass.
 2. **Library ships a small set of properties as `!important` inside the layer** (`hz:rounded-lg!`, `hz:text-label-md!`, outline) for elements Bootstrap resets. Important declarations in a layer beat unlayered normal ones, so no consumer change is needed. Costs: consumers and `className` overrides can no longer win with normal CSS, `tailwind-merge` conflict resolution must account for `!`, it must be repeated for every element-level conflict, and it hides the problem rather than isolating it.
 3. **Drop the layer for utilities** (emit them unlayered). `.hz\:rounded-lg` (specificity 0,1,0) beats `button` (0,0,1) by specificity, with no consumer change. Costs: loses the ordering guarantee of `@layer horizon` (consumer layers can no longer be placed above it deliberately), and consumer element-plus-class rules (`button.btn`) win by specificity; the `.hz-root` reset would no longer be a low-priority base.
+
+## Two builds: layered and unlayered (Task 7b, controller ruling)
+
+The measurement above makes the layered build unusable as-is in customer360, and wrapping customer360's Bootstrap in a layer is an app-wide cascade change. The library therefore ships two stylesheets from the same pipeline (`buildStylesCss(extra, { layered })` in `scripts/build-styles.ts`, both emitted by the `horizon-styles` Vite plugin):
+
+| Export | File | Shape | Use when |
+|---|---|---|---|
+| `@cialdnb/horizon-ui/styles.css` | `dist/styles.css` | everything in `@layer horizon` | Modern hosts: no unlayered global element CSS, or the host wraps it in a layer, and wants its own unlayered CSS to override horizon. |
+| `@cialdnb/horizon-ui/styles.unlayered.css` | `dist/styles.unlayered.css` | the same rules, no `@layer` at all | Legacy hosts with unlayered global element CSS (Bootstrap reboot, `button { ... }`, `a { ... }`). customer360 uses this one. |
+
+Import exactly one of them. Both keep every isolation invariant: no preflight, every selector is `.hz-root`-scoped or a `.hz\:` utility, no `:root`/`:host`/`html`/`*` custom-property declarations, `--tw-*` renamed `--hz-tw-*` with the `@property` fallback scoped to `.hz-root`, px type sizes, `hz:` prefix, `@property` registrations and the reduced-motion rule kept (asserted for both in `src/__tests__/styles.test.ts`).
+
+### How the unlayered file is made (cascade order)
+
+The lowered layered stylesheet is passed through `flattenLayers()`, which removes every `@layer` block and statement and keeps the cascade the layers expressed:
+
+- Layer contents are emitted in **layer order** (first declaration), not text position. This matters: Tailwind's raw output declares `@layer properties; @layer theme, base, components, utilities;` but writes the `utilities` block *before* `theme` and `base`. Flattening by text position would put the `.hz-root` reset after the utilities and let it win. (Lightning CSS already reorders the layered output by declaration; the flattener does not rely on that, see `scripts/__tests__/build-styles.test.ts`.)
+- Repeated blocks of one layer join at its first position; nested layers (`horizon` > `theme`...) flatten recursively; non-layer statements of a scope (`@property`, `@keyframes`) follow its layers, where the cascade ranked them.
+- Result: properties fallback, theme variables, `.hz-root` base, then utilities in Tailwind's own sort (unprefixed utilities, then variants: `hover` in `@media (hover: hover)`, `focus`, `focus-visible`, `active`, `aria-*`, `tablet:`/`laptop:`/`desktop:` media in min-width order, `inactive`, arbitrary). Tests assert the normalized rule list equals the layered build's (same rules, same order, only the wrapper gone), that no `.hz-root` rule follows a utility, and that every variant rule follows its base utility.
+
+Without layers, rules compete by **specificity, then order**. Two consequences are guarded by tests:
+
+- The reset must not out-rank utilities. Every theme/base rule that is not a pure variable declaration has specificity (0,1,0) (`.hz-root`, `.hz-root :where(...)`) or (0,1,1) where it targets a pseudo-element (`::placeholder`, `::file-selector-button`, `:before`/`:after`); utilities are (0,1,0) or more and come later, so they win as they did in the layer.
+- Horizon beats Bootstrap's element selectors by specificity, not by order. `.hz\:rounded-lg` (0,1,0) > `button` (0,0,1). Bootstrap's **pseudo-class** rules are higher and need state utilities: `button:focus { outline: 1px dotted; outline: 5px auto -webkit-focus-ring-color }` is (0,1,1) and `[type="button"]:not(:disabled) { cursor: pointer }` is (0,2,0). A plain utility loses to the first; an `aria-busy:` utility (0,2,0) ties with the second and then depends on load order.
+
+### Button changes (no visual change)
+
+Measured on the first unlayered build, with the reboot loaded, Button lost: `outline-color` while keyboard-focused (`hz:outline-ring` (0,1,0) < `button:focus`; ring `rgb(0, 80, 240)` became `-webkit-focus-ring-color` `rgb(0, 95, 204)`), the 5px auto Bootstrap ring on mouse focus (Horizon shows none), and, only when horizon CSS loads before the reboot, the loading button's `progress` cursor (tie at (0,2,0), later reboot wins). Class changes in `Button.tsx`:
+
+- `hz:focus-visible:outline-ring` (0,2,0) added; `hz:outline-ring` kept, so the outline colour is already the ring before focus and does not transition in (Tailwind's `transition` includes `outline-color`; dropping it made the ring fade from `currentColor` for 100ms and failed the `ComputedStyles` story).
+- `hz:focus:outline-none` (0,2,0): no ring on mouse focus, as without the reboot; `focus-visible:` utilities sort after `focus:` and restore the 2px solid ring for keyboard focus.
+- `hz:aria-busy:cursor-progress` -> `hz:aria-busy:not-disabled:cursor-progress` (0,3,0), mirroring the reboot selector's `:not(:disabled)` plus a class. A disabled + loading button still gets `not-allowed` from `inactive:` as before.
+
+### Measured (coexistence harness, Chromium, all six variants keyboard-focused plus the loading button)
+
+| Property | no reboot (both builds) | layered + reboot | unlayered + reboot, reboot loaded first | unlayered + reboot, horizon loaded first |
+|---|---|---|---|---|
+| `border-radius` | 20px | **0px** | 20px | 20px |
+| `font-size` / `line-height` (`md`) | 14px / 20px | **16px / 24px** | 14px / 20px | 14px / 20px |
+| keyboard focus outline | 2px solid `rgb(0, 80, 240)`, offset 2px | **5px auto `-webkit-focus-ring-color`** (`rgb(0, 95, 204)` in the harness Chromium) | 2px solid `rgb(0, 80, 240)` | 2px solid `rgb(0, 80, 240)` |
+| mouse focus outline | none | **auto** | none | none |
+| loading cursor | progress | **pointer** | progress | progress |
+| background, colour, padding, margin, family, weight, box-sizing, shadow, display, cursor | Horizon | Horizon | Horizon | Horizon |
+
+All 18 measured properties are identical with and without the reboot for the unlayered build in both load orders, and the unlayered build renders the Button identically to the layered build without the reboot. MUI Button/Typography/body and the plain-element probes (`button`, `h1`, `a`, `input`, `table`, `p`, `ul`, `body`) are unchanged by either build, at 16px and 14px roots, without the reboot and with it in both orders. The layered build's known-limit tests stay and assert the override (the truth for `styles.css`).
+
+### Still overridden (known limit, both builds): `Button asChild` + `<a href>` on hover
+
+Bootstrap's `a:hover { color: #0056b3; text-decoration: underline }` is (0,1,1), above the variants' plain text-colour and `no-underline` utilities (0,1,0). Measured with the unlayered build and the reboot (both orders): at rest every link variant keeps Horizon's colour, background, decoration, radius and type; **on hover** every variant gets an underline, and primary, tertiary, destructive and link get text colour `rgb(0, 86, 179)` (primary: dark blue text on the `primary-hover` background, an unreadable state). Secondary and ghost keep their colour because they already set a `hover:` text colour (0,2,0). With the layered build it is worse: at rest the reboot's `a { color: #007bff; background-color: transparent }` already wins (link-styled Buttons lose their fill). Not fixed in Task 7b: it needs hover-state colour and decoration utilities on every variant, and on touch devices Bootstrap's unguarded `a:hover` still applies where Horizon's `hover:` variant sits in `@media (hover: hover)`, so the fix is a Button design decision (owner: Button/Link task). Encoded as `known limit: reboot a:hover restyles Button asChild links` in the harness, to be inverted with the fix.
+
+### Rules for the unlayered build
+
+- **Load order:** load horizon CSS after the legacy CSS (the documented order). The tests pass in both orders today, but any future tie in specificity resolves in favour of whichever loads last.
+- **Consumer overrides:** with `styles.unlayered.css`, consumer CSS wins by normal specificity and order: a consumer class rule of (0,1,0) placed after horizon, or anything more specific, overrides a utility. `@layer` cannot be used to put consumer CSS above horizon (layered consumer CSS always loses to unlayered horizon). `hz:`-prefixed class names cannot collide with consumer class names, so accidental overrides need a selector that targets horizon's DOM (`.my-page button`, (0,1,1), beats `.hz\:rounded-lg`). Prefer `className` on the component (merged by `cn()`) over global selectors.
+- **`!important`:** inside one layer, earlier-layer `!important` beat later-layer ones; flattened, they compete by specificity and order. The only `!important` declarations are the reduced-motion rule and `[hidden]` in the base; no component uses `!` utilities. Against consumer `!important` rules, the layered build's reduced-motion rule always wins (layered important beats unlayered important); the unlayered one wins only by specificity/order.
+- **New components** that render elements Bootstrap restyles by element or pseudo-class selector (`a`, `input`, `select`, `table`, headings, `:focus`, `:hover`) must add their elements to the harness and check both builds; state styles that must survive the reboot need a state variant, not a plain utility.
 
 Note for harness authors: a layered `button { font-size: 40px }` inside horizon-ui would not change a MUI button (MUI's class selectors are unlayered and also more specific); leakage that matters is root-level (`html`/`:root` font-size, variables), which is why the root font-size case is the one measured.
 
@@ -109,7 +165,7 @@ Build shape (`src/styles/index.css`, compiled by `scripts/build-styles.ts`, emit
 @import './typography.css';            /* generated @utility type scale */
 ```
 
-The build then: scans `src` with the oxide scanner, re-scopes Tailwind's `@property` fallback selector to `.hz-root`, renames Tailwind's internal `--tw-*` variables to `--hz-tw-*`, wraps the whole output in `@layer horizon { ... }` (Tailwind's layers become `horizon.properties`, `horizon.theme`, `horizon.base`, `horizon.components`, `horizon.utilities`), lowers it with Lightning CSS, and re-adds Tailwind's MIT banner (the only content outside the layer; a comment).
+The build then: scans `src` with the oxide scanner, re-scopes Tailwind's `@property` fallback selector to `.hz-root`, renames Tailwind's internal `--tw-*` variables to `--hz-tw-*`, wraps the whole output in `@layer horizon { ... }` (Tailwind's layers become `horizon.properties`, `horizon.theme`, `horizon.base`, `horizon.components`, `horizon.utilities`), lowers it with Lightning CSS, and re-adds Tailwind's MIT banner (the only content outside the layer; a comment). For `dist/styles.unlayered.css` the lowered output is then passed through `flattenLayers()` (see "Two builds").
 
 Related decisions made in this task:
 
@@ -140,7 +196,7 @@ Related decisions made in this task:
 ## Consequences
 
 - No class collisions with consumer CSS or a consumer's own Tailwind (v3 or v4). MUI/Emotion pages are unaffected (measured).
-- Consumers can place horizon anywhere in their layer order, e.g. `@layer mui, horizon;` Note that **unlayered consumer CSS always wins over horizon**: global element rules in a host app (`button { ... }`, `a { ... }`) will restyle horizon elements. Known limit and guidance for consumers: a host app's **unlayered global element rules** (`button { ... }`, `a { ... }`, `* { ... }`) beat any horizon layer and will restyle horizon elements; horizon-ui cannot prevent this. Host apps should wrap such legacy global element CSS in a layer ordered before `horizon` (`@layer legacy, horizon;`), or scope it away from `.hz-root`. Unlayered class rules of the host only affect horizon if they match horizon's DOM (our own classes are `hz:`-prefixed, so accidental collisions do not occur). Task 7 verified the other direction (horizon CSS does not alter MUI/CssBaseline output or plain elements). Consumers must actually wrap their legacy CSS in `@layer legacy`: the declaration `@layer legacy, horizon;` on its own does not help bare unlayered Bootstrap. For customer360 this is real migration work (see the measured Bootstrap findings above).
+- Hosts with unlayered global element CSS (customer360) import `styles.unlayered.css` instead (see "Two builds"); the rest of this bullet applies to `styles.css`. Consumers can place horizon anywhere in their layer order, e.g. `@layer mui, horizon;` Note that **unlayered consumer CSS always wins over horizon**: global element rules in a host app (`button { ... }`, `a { ... }`) will restyle horizon elements. Known limit and guidance for consumers: a host app's **unlayered global element rules** (`button { ... }`, `a { ... }`, `* { ... }`) beat any horizon layer and will restyle horizon elements; horizon-ui cannot prevent this. With `styles.css`, host apps can wrap such legacy global element CSS in a layer ordered before `horizon` (`@layer legacy, horizon;`), or scope it away from `.hz-root`; this is optional, since `styles.unlayered.css` covers hosts that cannot. Unlayered class rules of the host only affect horizon if they match horizon's DOM (our own classes are `hz:`-prefixed, so accidental collisions do not occur). Task 7 verified the other direction (horizon CSS does not alter MUI/CssBaseline output or plain elements). A consumer that chooses that route must actually wrap its legacy CSS in `@layer legacy`: the declaration `@layer legacy, horizon;` on its own does not help bare unlayered Bootstrap. customer360 does not take that route; it uses the unlayered build.
 - Tailwind's internal variables are renamed `--tw-*` -> `--hz-tw-*`, so neither a consumer Tailwind v3 (which sets `--tw-*` on `*`, unlayered) nor a consumer Tailwind v4 of another version (own unlayered `@property --tw-*`) can change horizon rings, shadows, borders or transforms, and our registrations cannot affect theirs. `@property --hz-tw-*` registrations are still global by nature but use a horizon-only name. Only the `@supports` fallback (browsers without `@property`) declares them as values, and only inside `.hz-root`.
 - Everything outside `.hz-root` is unstyled by our base; the provider and portal container must carry `hz-root` (Task 4, Review Focus 1 and 3).
 - `prefers-reduced-motion: reduce` collapses animation/transition durations inside `.hz-root` with `!important`; inside a layer, important declarations beat unlayered normal ones, so this holds even against consumer styles on content rendered inside horizon.

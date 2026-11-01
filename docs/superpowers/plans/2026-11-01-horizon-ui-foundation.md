@@ -14,7 +14,7 @@
 
 - Package name `@cialdnb/horizon-ui`; GitHub Packages registry; versions start `0.x`, `1.0.0` after first consumer integration.
 - Horizon DS only. No Legacy DS. No MUI/Emotion dependency anywhere (a test asserts no `@mui` or `@emotion` import in `src/`).
-- Consumers must not need Tailwind. No global preflight/reset. Classes prefixed `hz:`; all output in `@layer horizon`; reset scoped to `.hz-root`.
+- Consumers must not need Tailwind. No global preflight/reset. Classes prefixed `hz:`; layered build (`styles.css`) in `@layer horizon`; unlayered build (`styles.unlayered.css`) for legacy hosts with unlayered global CSS (Task 7b); reset scoped to `.hz-root`.
 - Tokens: spacing base 4px; borderRadius `none 0, xs 4, sm 8, md 16, lg 20, xl 40, full 100`; motion durations `instant 0, fast 100, normal 200, slow 300, slower 500`; easings `standard cubic-bezier(0.2, 0, 0, 1)`, `enter cubic-bezier(0, 0, 0.2, 1)`, `exit cubic-bezier(0.4, 0, 1, 1)`, `spring cubic-bezier(0.34, 1.56, 0.64, 1)`; never animate width/height/top/left; respect `prefers-reduced-motion`.
 - Brands `cial` (default), `dnb`, `il` via `data-brand`; IL uses cial typography. Direction via `dir="rtl"`; logical properties only (`ms-*`, `ps-*`, `start-*`).
 - Components use semantic tokens only, never primitives.
@@ -208,6 +208,17 @@ Design quality (this is UI work; use the Impeccable skill, as the workspace inst
 - [ ] **Step 3: Build the harness page rendering MUI and horizon components side by side; fix any leakage found by adjusting `base.css`/layer ordering (document in the ADR).**
 - [ ] **Step 4: Run; expected PASS**
 - [ ] **Step 5: Commit (only after user approval)** `test: coexistence harness with MUI`
+
+### Task 7b: Unlayered CSS build for legacy hosts (plan amendment, controller ruling)
+
+Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot beats every `@layer`, overriding the Button's radius, type and focus ring.
+
+**Files:**
+- Modify: `scripts/build-styles.ts` (`buildStylesCss(extra, { layered })`, `flattenLayers()`), `vite.config.ts` (emit `dist/styles.unlayered.css`), `scripts/vitest-global-setup.ts`, `package.json` (`exports["./styles.unlayered.css"]`), `src/components/Button/Button.tsx` (focus/busy state variants, no visual change), `coexistence/*` (`?build=unlayered`, `?order=horizon-first`), ADR 0001, docs 03 and 05, README.
+
+- [x] **Step 1: Failing tests:** `src/__tests__/styles.test.ts` (`'unlayered build contains no @layer'`, `'unlayered build has the same rule set as the layered build modulo the layer wrapper'`, `'unlayered build keeps cascade order: base before utilities, breakpoints after base utilities'`, `'unlayered build still has no preflight or global selectors'`, specificity guards), `flattenLayers` unit tests, coexistence: unlayered build with the reboot in both load orders preserves all measured Button properties; plain-element and MUI probes for both builds; layered group keeps asserting the override.
+- [x] **Step 2: Implement:** flatten by layer declaration order (Tailwind's raw text order differs), keep the `.hz-root` reset at (0,1,0) so utilities still win; Button state utilities out-rank the reboot's `button:focus` and `[type="button"]:not(:disabled)`.
+- [x] **Step 3: Docs** (two builds, when to use which, measurements, load order, consumer overrides) and commit `feat(styles): unlayered build for legacy hosts`.
 
 ---
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildStylesCss } from '../build-styles';
+import { buildStylesCss, flattenLayers } from '../build-styles';
 
 describe('buildStylesCss', () => {
     it('re-scopes the @property fallback Tailwind targets at every element', async () => {
@@ -57,5 +57,44 @@ describe('buildStylesCss', () => {
         expect(css).toMatch(/\.hz\\:ring-2 \{\s*--hz-tw-ring-shadow:/);
         expect(css).toContain('var(--hz-tw-ring-shadow)');
         expect(css).toContain('@property --hz-tw-ring-offset-width');
+    });
+});
+
+describe('flattenLayers', () => {
+    const squash = (css: string) => css.replace(/\s+/g, ' ').trim();
+
+    it('orders layer contents by layer declaration, not by text position', () => {
+        // Tailwind's raw output: `@layer utilities` text comes before `@layer
+        // theme`, but the statement declares theme first, so theme ranks lower.
+        const out = flattenLayers(
+            '@layer theme, base, utilities;\n@layer utilities { .u { a: 1 } }\n@layer theme { .t { a: 2 } }\n@layer base { .b { a: 3 } }\n'
+        );
+        expect(squash(out)).toBe('.t { a: 2 } .b { a: 3 } .u { a: 1 }');
+    });
+
+    it('drops layer statements and empty layers, flattens nested layers, keeps unlayered rules last', () => {
+        const out = flattenLayers(
+            '@layer horizon {\n  @layer x { .x { a: 1 } }\n  @layer components;\n  @property --p { syntax: "*"; inherits: false }\n  @layer y { @media (min-width: 768px) { .y { a: 2 } } }\n}\n'
+        );
+        expect(out).not.toMatch(/@layer/);
+        expect(squash(out)).toBe(
+            '.x { a: 1 } @media (min-width: 768px) { .y { a: 2 } } @property --p { syntax: "*"; inherits: false }'
+        );
+    });
+
+    it('merges repeated blocks of the same layer at its first declaration', () => {
+        const out = flattenLayers(
+            '@layer a { .a1 { x: 1 } }\n@layer b { .b { x: 2 } }\n@layer a { .a2 { x: 3 } }\n'
+        );
+        expect(squash(out)).toBe('.a1 { x: 1 } .a2 { x: 3 } .b { x: 2 }');
+    });
+
+    it('ignores braces and semicolons inside strings and comments', () => {
+        const out = flattenLayers(
+            '@layer a { .a { content: "}"; } /* @layer z { */ }\n@layer b { .b { content: \'{;\' } }\n'
+        );
+        expect(squash(out)).toBe(
+            '.a { content: "}"; } /* @layer z { */ .b { content: \'{;\' }'
+        );
     });
 });

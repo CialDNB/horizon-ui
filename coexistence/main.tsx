@@ -8,6 +8,7 @@ import {
 import { Button, HorizonProvider } from '@cialdnb/horizon-ui';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
+import hzUnlayeredStyles from '@cialdnb/horizon-ui/styles.unlayered.css?raw';
 import { createRoot } from 'react-dom/client';
 
 function addStyle(id: string, css: string) {
@@ -20,13 +21,29 @@ function addStyle(id: string, css: string) {
 const params = new URLSearchParams(location.search);
 // customer360 ships Bootstrap 4.4.1 UNLAYERED plus `* { box-sizing: border-box }`.
 // ?reboot=1 loads the real bootstrap-reboot.css (the global element rules of
-// Bootstrap) and that universal rule, both unlayered, before horizon's CSS.
-if (params.get('reboot') === '1') {
+// Bootstrap) and that universal rule, both unlayered.
+const reboot = () => {
     addStyle('bootstrap-reboot', bootstrapReboot);
     addStyle('c360-global', '* { box-sizing: border-box; }');
-}
+};
+// ?build=unlayered loads dist/styles.unlayered.css instead of dist/styles.css.
+const horizon = () =>
+    addStyle(
+        'hz-styles',
+        params.get('build') === 'unlayered' ? hzUnlayeredStyles : hzStyles
+    );
 // ?styles=0 renders the page without horizon-ui's stylesheet (baseline).
-if (params.get('styles') !== '0') addStyle('hz-styles', hzStyles);
+// ?order=horizon-first puts horizon's CSS before the reboot; the default is
+// legacy CSS first, the order the docs recommend.
+const withReboot = params.get('reboot') === '1';
+const withHorizon = params.get('styles') !== '0';
+if (params.get('order') === 'horizon-first') {
+    if (withHorizon) horizon();
+    if (withReboot) reboot();
+} else {
+    if (withReboot) reboot();
+    if (withHorizon) horizon();
+}
 
 // Mirrors x-core Legacy: MUI htmlFontSize 14 against the browser-default 16px
 // root, as in customer360 (it sets no html font-size). Tests also stress 14px.
@@ -87,6 +104,25 @@ function App() {
                                 data-testid={`hz-variant-${variant}`}
                             >
                                 {variant}
+                            </Button>
+                        ))}
+                        {(
+                            [
+                                'primary',
+                                'secondary',
+                                'tertiary',
+                                'destructive',
+                                'ghost',
+                                'link',
+                            ] as const
+                        ).map((variant) => (
+                            <Button
+                                key={variant}
+                                asChild
+                                variant={variant}
+                                data-testid={`hz-link-${variant}`}
+                            >
+                                <a href="#reports">{variant} link</a>
                             </Button>
                         ))}
                         <Button data-testid="hz-button">Horizon button</Button>
