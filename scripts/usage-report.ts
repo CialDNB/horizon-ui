@@ -9,7 +9,21 @@ import ts from 'typescript';
  * re-exports and dynamic import() calls are all seen. Run:
  *   tsx scripts/usage-report.ts <client-dir> [--x-core <x-core-dir>] [--json]
  * With --x-core, names imported from the `components` barrel are mapped to
- * their owning component folder (types, hooks and enums included).
+ * their owning component folder (types, hooks and enums included), and names
+ * that x-core only exports as types (interfaces, type aliases) are recognised
+ * as type-only even when imported without the `type` keyword.
+ *
+ * Runtime and type-only imports are reported separately because types vanish
+ * at build time and inflate headline numbers (`ChipProps`, `ColumnDataType`).
+ * An import is type-only when its declaration or specifier carries `type`
+ * (`import type {..}`, `import { type X }`, `export type {..} from`) or the
+ * imported name is a type in x-core. Row shape (`--json`, `{ components, other }`):
+ *   name, count (runtime imports), files (distinct runtime files),
+ *   typeCount (type-only imports), typeFiles (distinct type-only files),
+ *   kinds / imports (runtime only), typeImports (type-only names);
+ *   component rows also carry horizon, status, familyCount and familyFiles
+ *   (runtime, summed over the family).
+ * Rows are sorted by runtime files, then runtime imports, then name.
  */
 
 const PACKAGE = '@cialdnb/x-core';
@@ -33,19 +47,27 @@ export interface UsageRecord {
     imported: string;
     kind: Kind;
     file: string;
+    /** True for `import type`, `import { type X }`, `export type` or a name x-core only exports as a type. */
+    typeOnly: boolean;
     /** Owning x-core component folder, or null when not attributable. */
     owner: string | null;
 }
 
 export interface ReportRow {
     name: string;
+    /** Runtime imports (type-only imports are in `typeCount`). */
     count: number;
+    /** Distinct files with a runtime import. */
     files: number;
+    typeCount: number;
+    typeFiles: number;
+    typeImports: Record<string, number>;
     kinds: Partial<Record<Kind, number>>;
     imports: Record<string, number>;
     horizon?: string;
     status?: Status;
     familyCount?: number;
+    familyFiles?: number;
 }
 
 export interface Report {
@@ -56,6 +78,8 @@ export interface Report {
 export interface CollectOptions {
     /** Barrel export name -> owning component folder. */
     owners?: ReadonlyMap<string, string>;
+    /** Names x-core exports only as types. */
+    types?: ReadonlySet<string>;
 }
 
 function isXCoreSpecifier(spec: string): boolean {
@@ -114,7 +138,8 @@ function* walk(dir: string): Generator<string> {
 function recordsOfFile(
     file: string,
     root: string,
-    owners: ReadonlyMap<string, string> | undefined
+    owners: ReadonlyMap<string, string> | undefined,
+    types: ReadonlySet<string> | undefined
 ): UsageRecord[] {
     const source = ts.createSourceFile(
         file,
@@ -125,12 +150,21 @@ function recordsOfFile(
     );
     const rel = file.slice(root.length + 1);
     const out: UsageRecord[] = [];
-    const add = (specifier: string, imported: string, kind: Kind) =>
+    const add = (
+        specifier: string,
+        imported: string,
+        kind: Kind,
+        syntacticType = false
+    ) =>
         out.push({
             specifier,
             imported,
             kind,
             file: rel,
+            typeOnly:
+                syntacticType ||
+                ((kind === 'named' || kind === 'reexport') &&
+                    types?.has(imported) === true),
             owner: ownerFor(specifier, imported, kind, owners),
         });
 
@@ -142,13 +176,19 @@ function recordsOfFile(
         ) {
             const spec = node.moduleSpecifier.text;
             const clause = node.importClause;
-            if (clause?.name) add(spec, 'default', 'default');
+            const clauseType = clause?.isTypeOnly === true;
+            if (clause?.name) add(spec, 'default', 'default', clauseType);
             const bindings = clause?.namedBindings;
             if (bindings && ts.isNamespaceImport(bindings)) {
-                add(spec, '*', 'namespace');
+                add(spec, '*', 'namespace', clauseType);
             } else if (bindings) {
                 for (const el of bindings.elements)
-                    add(spec, (el.propertyName ?? el.name).text, 'named');
+                    add(
+                        spec,
+                        (el.propertyName ?? el.name).text,
+                        'named',
+                        clauseType || el.isTypeOnly
+                    );
             }
         } else if (
             ts.isExportDeclaration(node) &&
@@ -160,9 +200,14 @@ function recordsOfFile(
             const clause = node.exportClause;
             if (clause && ts.isNamedExports(clause)) {
                 for (const el of clause.elements)
-                    add(spec, (el.propertyName ?? el.name).text, 'reexport');
+                    add(
+                        spec,
+                        (el.propertyName ?? el.name).text,
+                        'reexport',
+                        node.isTypeOnly || el.isTypeOnly
+                    );
             } else {
-                add(spec, '*', 'reexport');
+                add(spec, '*', 'reexport', node.isTypeOnly);
             }
         } else if (
             ts.isCallExpression(node) &&
@@ -188,16 +233,25 @@ export function collectUsage(
 ): UsageRecord[] {
     const root = resolve(dir);
     return [...walk(root)].flatMap((f) =>
-        recordsOfFile(f, root, options.owners)
+        recordsOfFile(f, root, options.owners, options.types)
     );
+}
+
+/** Barrel export name -> owning folder, plus the names x-core only exports as types. */
+export interface OwnerInfo {
+    owners: Map<string, string>;
+    types: Set<string>;
 }
 
 /**
  * Names are exported by x-core's `components` barrel; map each exported name
- * (component, type, hook, enum) to the folder that declares it.
+ * (component, type, hook, enum) to the folder that declares it. `types` holds
+ * every name that no x-core module exports as a value (interfaces, type
+ * aliases), so `import { ChipProps }` is known to be type-only.
  */
-export function loadOwners(xCoreDir: string): Map<string, string> {
-    const barrel = join(resolve(xCoreDir), 'src/components/index.ts');
+export function loadOwners(xCoreDir: string): OwnerInfo {
+    const root = join(resolve(xCoreDir), 'src/components');
+    const barrel = join(root, 'index.ts');
     const program = ts.createProgram([barrel], {
         noEmit: true,
         skipLibCheck: true,
@@ -209,7 +263,7 @@ export function loadOwners(xCoreDir: string): Map<string, string> {
     const checker = program.getTypeChecker();
     const owners = new Map<string, string>();
     const sf = program.getSourceFile(barrel);
-    if (!sf) return owners;
+    if (!sf) return { owners, types: new Set() };
     for (const stmt of sf.statements) {
         if (
             !ts.isExportDeclaration(stmt) ||
@@ -230,7 +284,24 @@ export function loadOwners(xCoreDir: string): Map<string, string> {
             if (exp.name !== 'default' && !owners.has(exp.name))
                 owners.set(exp.name, folder);
     }
-    return owners;
+    const valueNames = new Set<string>();
+    const typeNames = new Set<string>();
+    for (const file of program.getSourceFiles()) {
+        if (!file.fileName.startsWith(root)) continue;
+        const moduleSymbol = checker.getSymbolAtLocation(file);
+        if (!moduleSymbol) continue;
+        for (const exp of checker.getExportsOfModule(moduleSymbol)) {
+            const target =
+                exp.flags & ts.SymbolFlags.Alias
+                    ? checker.getAliasedSymbol(exp)
+                    : exp;
+            (target.flags & ts.SymbolFlags.Value ? valueNames : typeNames).add(
+                exp.name
+            );
+        }
+    }
+    for (const name of valueNames) typeNames.delete(name);
+    return { owners, types: typeNames };
 }
 
 interface FamilyEntry {
@@ -245,7 +316,7 @@ const DRAWER_EXCEPTION: Record<string, FamilyEntry> = {
     DrawerV3: { horizon: 'Drawer', status: 'todo' },
 };
 
-function parseVersion(name: string): { base: string; version: number } {
+export function parseVersion(name: string): { base: string; version: number } {
     const m = /^(.*?)(?:[Vv](\d+))?$/.exec(name);
     return { base: m?.[1] ?? name, version: m?.[2] ? Number(m[2]) : 1 };
 }
@@ -283,10 +354,13 @@ export function groupFamilies(
 }
 
 interface Acc {
-    count: number;
-    files: Set<string>;
+    runtime: number;
+    runtimeFiles: Set<string>;
+    typeOnly: number;
+    typeFiles: Set<string>;
     kinds: Partial<Record<Kind, number>>;
     imports: Record<string, number>;
+    typeImports: Record<string, number>;
 }
 
 function aggregate(
@@ -298,68 +372,90 @@ function aggregate(
         const k = key(r);
         if (k === null) continue;
         const acc = map.get(k) ?? {
-            count: 0,
-            files: new Set<string>(),
+            runtime: 0,
+            runtimeFiles: new Set<string>(),
+            typeOnly: 0,
+            typeFiles: new Set<string>(),
             kinds: {},
             imports: {},
+            typeImports: {},
         };
-        acc.count += 1;
-        acc.files.add(r.file);
-        acc.kinds[r.kind] = (acc.kinds[r.kind] ?? 0) + 1;
-        acc.imports[r.imported] = (acc.imports[r.imported] ?? 0) + 1;
+        if (r.typeOnly) {
+            acc.typeOnly += 1;
+            acc.typeFiles.add(r.file);
+            acc.typeImports[r.imported] =
+                (acc.typeImports[r.imported] ?? 0) + 1;
+        } else {
+            acc.runtime += 1;
+            acc.runtimeFiles.add(r.file);
+            acc.kinds[r.kind] = (acc.kinds[r.kind] ?? 0) + 1;
+            acc.imports[r.imported] = (acc.imports[r.imported] ?? 0) + 1;
+        }
         map.set(k, acc);
     }
     return map;
 }
 
-const byCountDesc = (a: ReportRow, b: ReportRow) =>
-    b.count - a.count || a.name.localeCompare(b.name);
+const byRuntimeDesc = (a: ReportRow, b: ReportRow) =>
+    b.files - a.files || b.count - a.count || a.name.localeCompare(b.name);
+
+const toRow = (name: string, acc: Acc | undefined): ReportRow => ({
+    name,
+    count: acc?.runtime ?? 0,
+    files: acc?.runtimeFiles.size ?? 0,
+    typeCount: acc?.typeOnly ?? 0,
+    typeFiles: acc?.typeFiles.size ?? 0,
+    kinds: acc?.kinds ?? {},
+    imports: acc?.imports ?? {},
+    typeImports: acc?.typeImports ?? {},
+});
 
 export function buildReport(
     records: UsageRecord[],
     allComponents: readonly string[] = []
 ): Report {
-    const owned = records.map((r) => ({ ...r }));
-    const comp = aggregate(owned, (r) => r.owner);
-    const other = aggregate(owned, (r) =>
+    const comp = aggregate(records, (r) => r.owner);
+    const other = aggregate(records, (r) =>
         r.owner === null ? r.specifier : null
     );
-    const families = groupFamilies([...comp.keys(), ...allComponents]);
-    const familyCount = new Map<string, number>();
-    for (const [name, acc] of comp) {
-        const base = parseVersion(name).base;
-        familyCount.set(base, (familyCount.get(base) ?? 0) + acc.count);
-    }
     const names = new Set([...comp.keys(), ...allComponents]);
+    const families = groupFamilies(names);
+    const familyCount = new Map<string, number>();
+    const familyFiles = new Map<string, Set<string>>();
+    for (const [name, acc] of comp) {
+        const familyKey = familyOf(name);
+        familyCount.set(
+            familyKey,
+            (familyCount.get(familyKey) ?? 0) + acc.runtime
+        );
+        const files = familyFiles.get(familyKey) ?? new Set<string>();
+        for (const f of acc.runtimeFiles) files.add(f);
+        familyFiles.set(familyKey, files);
+    }
     const components: ReportRow[] = [...names].map((name) => {
-        const acc = comp.get(name);
         const fam = families.get(name);
-        const base = parseVersion(name).base;
+        const key = familyOf(name);
         return {
-            name,
-            count: acc?.count ?? 0,
-            files: acc?.files.size ?? 0,
-            kinds: acc?.kinds ?? {},
-            imports: acc?.imports ?? {},
+            ...toRow(name, comp.get(name)),
             horizon: fam?.horizon ?? name,
             status: fam?.status ?? 'todo',
-            familyCount:
-                name === 'Drawer' || name.startsWith('DrawerV')
-                    ? (comp.get(name)?.count ?? 0)
-                    : (familyCount.get(base) ?? 0),
+            familyCount: familyCount.get(key) ?? 0,
+            familyFiles: familyFiles.get(key)?.size ?? 0,
         };
     });
-    const otherRows: ReportRow[] = [...other].map(([name, acc]) => ({
-        name,
-        count: acc.count,
-        files: acc.files.size,
-        kinds: acc.kinds,
-        imports: acc.imports,
-    }));
     return {
-        components: components.sort(byCountDesc),
-        other: otherRows.sort(byCountDesc),
+        components: components.sort(byRuntimeDesc),
+        other: [...other]
+            .map(([name, acc]) => toRow(name, acc))
+            .sort(byRuntimeDesc),
     };
+}
+
+/** Drawer variants are separate components, so each is its own family. */
+export function familyOf(name: string): string {
+    return name === 'Drawer' || /^DrawerV\d+$/.test(name)
+        ? name
+        : parseVersion(name).base;
 }
 
 export function toMarkdown(report: Report): string {
@@ -367,26 +463,42 @@ export function toMarkdown(report: Report): string {
         Object.entries(r.kinds)
             .map(([k, v]) => `${k}:${v}`)
             .join(' ');
-    const lines = [
-        '| x-core component | horizon-ui | status | imports | files | family imports | kinds |',
-        '|---|---|---|---|---|---|---|',
+    return [
+        '| x-core component | horizon-ui | status | runtime imports | runtime files | type-only imports | family runtime files | kinds |',
+        '|---|---|---|---|---|---|---|---|',
         ...report.components.map(
             (r) =>
-                `| \`${r.name}\` | \`${r.horizon}\` | ${r.status} | ${r.count} | ${r.files} | ${r.familyCount} | ${kinds(r)} |`
+                `| \`${r.name}\` | \`${r.horizon}\` | ${r.status} | ${r.count} | ${r.files} | ${r.typeCount} | ${r.familyFiles} | ${kinds(r)} |`
         ),
         '',
-        '| import path (not a component) | imports | files | kinds | names |',
-        '|---|---|---|---|---|',
+        '| import path (not a component) | runtime imports | runtime files | type-only imports | kinds | names |',
+        '|---|---|---|---|---|---|',
         ...report.other.map((r) => {
             const names = Object.entries(r.imports)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 8)
                 .map(([n, c]) => `${n}:${c}`)
                 .join(' ');
-            return `| \`${r.name}\` | ${r.count} | ${r.files} | ${kinds(r)} | ${names} |`;
+            return `| \`${r.name}\` | ${r.count} | ${r.files} | ${r.typeCount} | ${kinds(r)} | ${names} |`;
         }),
-    ];
-    return lines.join('\n');
+    ].join('\n');
+}
+
+/** Full report for a client directory; `xCoreDir` enables barrel owner and type resolution. */
+export function analyze(dir: string, xCoreDir?: string): Report {
+    const info = xCoreDir ? loadOwners(xCoreDir) : undefined;
+    const all = xCoreDir ? listComponents(xCoreDir) : [];
+    return buildReport(collectUsage(dir, info ?? {}), all);
+}
+
+/** Component folder names of an x-core checkout (`inputs/*` are flattened, `shared` is internal). */
+export function listComponents(xCoreDir: string): string[] {
+    const root = join(resolve(xCoreDir), 'src/components');
+    return readdirSync(root, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && d.name !== 'shared')
+        .flatMap((d) =>
+            d.name === 'inputs' ? readdirSync(join(root, 'inputs')) : [d.name]
+        );
 }
 
 function main(argv: string[]): void {
@@ -402,24 +514,7 @@ function main(argv: string[]): void {
         );
         process.exit(1);
     }
-    const owners = xCore ? loadOwners(xCore) : undefined;
-    const all = xCore
-        ? readdirSync(join(resolve(xCore), 'src/components'), {
-              withFileTypes: true,
-          })
-              .filter((d) => d.isDirectory() && d.name !== 'shared')
-              .flatMap((d) =>
-                  d.name === 'inputs'
-                      ? readdirSync(
-                            join(resolve(xCore), 'src/components/inputs')
-                        )
-                      : [d.name]
-              )
-        : [];
-    const report = buildReport(
-        collectUsage(dir, owners ? { owners } : {}),
-        all
-    );
+    const report = analyze(dir, xCore);
     console.log(json ? JSON.stringify(report, null, 2) : toMarkdown(report));
 }
 

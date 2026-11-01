@@ -273,21 +273,21 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 
 #### Usage-ordered batch lists (from Task 9)
 
-Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+Source: `npm run usage-map` / `scripts/usage-report.ts` on customer360/client. Numbers are **runtime** files (distinct files with a runtime import; type-only imports are excluded) summed over all versions of a family; `docs/migration/component-map.md` has the per-version rows, runtime imports and type-only imports. Order within the group is by runtime files; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
 
-1. `Typography` (294, 292 files; one version)
-2. `Chip` (73)
+1. `Typography` (291 files; one version)
+2. `Chip` (57)
 3. `Spinner` (x-core `CircularProgress`, 49) *added*
 4. `Alert` (18)
-5. `Badge` (17; x-core `BadgeAI` 5 and `AIVerifiedBadge` 2 become variants, confirm with design)
+5. `Badge` (16; x-core `BadgeAI` 4 and `AIVerifiedBadge` 2 become variants, confirm with design)
 6. `Avatar` (11; `AvatarGroup` 1)
 7. `Separator` (x-core `Divider`, 8) *added*
 8. `IconButton` (3; `ActionIconButton` merges in)
 9. `Progress` (x-core `LinearProgress`, 2) *added*
-10. `Link` (no x-core component; 1 import of `Link` from Typography)
+10. `Link` (no x-core component; one import of `Link` from the Typography module)
 11. `Skeleton` (no x-core component, no usage: new; candidate to defer)
 
-`Button` is done (Task 6): customer360 imports `Button` 75x and `ButtonV2` 74x.
+`Button` is done (Task 6): customer360 imports `Button` in 75 files and `ButtonV2` in 73.
 
 ### Task 11: Batch 2 — Forms and overlays
 
@@ -307,22 +307,22 @@ Source: `scripts/usage-report.ts` on customer360/client; counts are imported bin
 
 #### Usage-ordered batch lists (from Task 9)
 
-Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+Source: `npm run usage-map` / `scripts/usage-report.ts` on customer360/client. Numbers are **runtime** files (distinct files with a runtime import; type-only imports are excluded) summed over all versions of a family; `docs/migration/component-map.md` has the per-version rows, runtime imports and type-only imports. Order within the group is by runtime files; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
 
 1. `Input` (x-core `TextField` 43 + `TextInput` 10 = 53)
 2. `Dialog` (`Dialog` 27 + `DialogV2` 17 = 44; `ConfirmationDialog` 3 *added* as a preset)
-3. `Select` (`Select` 29 + `SelectV2` 4 = 33)
+3. `Select` (`Select` 22 + `SelectV2` 4 = 26)
 4. `Tooltip` (`TooltipV2` 26)
 5. `Checkbox` (`Checkbox` 17 + `CheckboxV2` 3 = 20)
 6. `RadioGroup` (`Radio` 6 + `Radiov2` 3 + x-core `RadioGroup` 4 = 13)
 7. `Drawer` (`DrawerV3` 9; the plan's migration target)
 8. `Popover` (`PopoverV2` 7)
 9. `Switch` (`Switch` 3 + `SwitchV2` 3 = 6)
-10. `Toast` (x-core `Snackbar` 2)
-11. `Textarea` (x-core `TextArea` 2)
+10. `Textarea` (x-core `TextArea` 2)
+11. `Toast` (x-core `Snackbar`, 1 file)
 12. `Label`, `FormField`, `DropdownMenu`: no direct x-core import; required infrastructure for the above.
 
-Used by customer360 but not listed: `Combobox` (x-core `Autocomplete` 9 + `CountryAutoComplete` 2), `LabelColorActionsPopover` (11, app-specific, ask whether to keep it local), `PhoneInput` (7, needs a dependency decision), `EmailsField` (6), `Filter` (5), `SplitButton` (5), `SearchBar` (`SearchBarV2` 4; plan names it only in Interfaces), `NumberInput` (1). Proposed order after the list above: `Combobox`, `SearchBar`, `SplitButton`, `Filter`, `EmailsField`, `PhoneInput`, `LabelColorActionsPopover`.
+Used by customer360 but not listed: `Combobox` (x-core `Autocomplete` 9 + `CountryAutoComplete` 2), `PhoneInput` (7, needs a dependency decision), `EmailsField` (5 + 1), `Filter` (5), `SplitButton` (4), `SearchBar` (`SearchBarV2` 4; the plan names it only in Interfaces), `LabelColorActionsPopover` (4 runtime files, 7 type-only imports; app-specific, ask whether to keep it local), `NumberInput` (1). Proposed order after the list above: `Combobox`, `SearchBar`, `SplitButton`, `Filter`, `EmailsField`, `PhoneInput`, `LabelColorActionsPopover`.
 
 ### Task 12: Batch 3 — Navigation, layout, data display
 
@@ -340,18 +340,18 @@ Used by customer360 but not listed: `Combobox` (x-core `Autocomplete` 9 + `Count
 
 #### Usage-ordered batch lists (from Task 9)
 
-Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+Source: `npm run usage-map` / `scripts/usage-report.ts` on customer360/client. Numbers are **runtime** files (distinct files with a runtime import; type-only imports are excluded) summed over all versions of a family; `docs/migration/component-map.md` has the per-version rows, runtime imports and type-only imports. Order within the group is by runtime files; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
 
-1. `Table` (75 imports, 49 files; the most-used composite after Typography and Button)
-2. `Card` (`Card` 36 + `CardV2` 14 + `CardElevation` 2 = 52)
-3. `Timeline` (`TimelineV2` 9 + `TimeLineHistory` 2 = 11) *added to the plan's Interfaces only*
-4. `Accordion` (`Accordion` 7 + `AccordionV2` 1 = 8)
-5. `NavigationDrawer`, `AppBar` (with `AppBarActionsV3` 4), `Layout` (`LayoutEnum` 5 + `LayoutV2` 1): customer360 reaches these almost only through `LayoutV2` (1 direct import that composes AppBarV2, DrawerV2, dropdowns and UserPopover), so port them as one unit
-6. `Pagination` (3)
+1. `Card` (`Card` 35 + `CardV2` 14 + `CardElevation` 2; 49 distinct files)
+2. `Table` (42 runtime files, 46 runtime imports, 29 type-only imports; the most-used composite after Typography, Button and Chip, and needing the most design work, so schedule it first)
+3. `Accordion` (`Accordion` 7 + `AccordionV2` 1 = 8)
+4. `NavigationDrawer`, `AppBar` (with `AppBarActionsV3`, 1 file), `Layout` (`LayoutEnum` in 5 files + `LayoutV2` 1): customer360 reaches these almost only through `LayoutV2` (one direct import that composes AppBarV2, DrawerV2, dropdowns and UserPopover), so port them as one unit; the successor must export `LayoutEnum` and the drawer width constants
+5. `Timeline` (`TimelineV2` 3 files + `TimeLineHistory` 1; 6 type-only imports) *added to the plan's Interfaces only*
+6. `Pagination` (`Pagination` 2 + `PaginationV2` 1 = 3)
 7. `Tabs` (`TabsV2` 1)
-8. `Breadcrumbs` (0 in customer360; il-acl-client uses it 6x): defer unless requested
+8. `Breadcrumbs` (0 in customer360; il-acl-client uses it): defer unless requested
 
-Used by customer360 but not listed: `InsightsCard` (13), `EvaluationAccordion` (5), `LevelCard` (5), `RatingBar` (`RatingBarV2` 5), `SectionDescriptionWithIcon` (2), `StatisticCard` (1) as Card compositions. x-core `Grid` (8) maps to Tailwind utilities (`no-equivalent`).
+Used by customer360 but not listed: `InsightsCard` (13), `EvaluationAccordion` (5), `LevelCard` (3), `RatingBar` (`RatingBarV2` 3), `SectionDescriptionWithIcon` (2), `StatisticCard` (1) as Card compositions. x-core `Grid` (8) maps to Tailwind utilities (`no-equivalent`).
 
 ### Task 13: Batch 4 — Heavy components (deferred, one task per item when scheduled)
 
@@ -361,9 +361,9 @@ Used by customer360 but not listed: `InsightsCard` (13), `EvaluationAccordion` (
 
 #### Usage-ordered batch lists (from Task 9)
 
-Source: `scripts/usage-report.ts` on customer360/client; counts are imported bindings summed over all versions of a family (`docs/migration/component-map.md` has the per-version rows). Order within the group is by usage; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
+Source: `npm run usage-map` / `scripts/usage-report.ts` on customer360/client. Numbers are **runtime** files (distinct files with a runtime import; type-only imports are excluded) summed over all versions of a family; `docs/migration/component-map.md` has the per-version rows, runtime imports and type-only imports. Order within the group is by runtime files; the group boundaries and the Files/Interfaces text above are unchanged. Items marked *added* are used by customer360 but not listed above (controller decides).
 
-Live in customer360 (decide with the user, one task each): charts `AreaChart` (12), `StackedBarChart` (8), `VerticalBarChart` (6) with `CustomTooltip` (6), `MultipleBarChart` (2), `DonutChart` (2), `HorizontalBarChart` (1), `PieChart` (1); `DateRangePicker` (10) and `DatePicker` (7); `FileDropUploader` (7, plus `FileInputUploader` 1); `ClusterMap` (3), `LocationMap` (2); `DataGrid` (3, check whether `Table` covers it); `PDFViewer` (1), `JSONExplorer` (1).
+Live in customer360 (decide with the user, one task each): charts `AreaChart` (`AreaChartV2` 8 + 1), `StackedBarChart` (8), `VerticalBarChart` (5), `MultipleBarChart` (2), `DonutChart` (2), `HorizontalBarChart` (1), `PieChart` (1), plus the chart tooltip type from `CustomTooltip` (type-only, 6 imports); `DatePicker` (6 + 1) and `DateRangePicker` (4 + 5); `FileDropUploader` (6 + 1, plus `FileInputUploader` 1); `ClusterMap` (3), `LocationMap` (2); `DataGrid` (1 file, 2 type-only; check whether `Table` covers it); `PDFViewer` (1), `JSONExplorer` (1).
 
 No imports (mark `skip`, port only on request): `LineChart`, `SemiDonutChart`, `PieChart{Rounded,Thick,Thin}`, `StackedBarChart{Horizontal,Vertical}`, `WorldMapChart`, `Legend`, `LegendCustom`, `CustomLegend`, `JSONViewer`, `Palette`. x-core has no flow-diagram component, so none is needed unless a consumer asks.
 

@@ -1,9 +1,12 @@
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { END, renderRegion, replaceRegion, START } from '../usage-map';
 import {
     buildReport,
     collectUsage,
     groupFamilies,
+    loadOwners,
     type ReportRow,
 } from '../usage-report';
 
@@ -15,7 +18,11 @@ const row = (rows: ReportRow[], name: string) =>
 describe('usage-report', () => {
     it('counts named imports from @cialdnb/x-core', () => {
         const { components } = report('basic');
-        expect(row(components, 'Card')).toMatchObject({ count: 2, files: 2 });
+        expect(row(components, 'Card')).toMatchObject({
+            count: 1,
+            files: 1,
+            typeCount: 1,
+        });
         expect(row(components, 'Chip')).toMatchObject({ count: 1, files: 1 });
         expect(components.map((r) => r.name)).toEqual(['Card', 'Chip']);
     });
@@ -73,24 +80,72 @@ describe('usage-report', () => {
         ).toMatchObject({ count: 1 });
     });
 
-    it('resolves barrel names through an owner map', () => {
-        const owners = new Map([['TableColumnSettings', 'Table']]);
-        const records = collectUsage(fixture('deep'), { owners });
-        expect(records.filter((r) => r.owner === 'Table')).toHaveLength(1);
-        const barrel = buildReport(
-            [
-                {
-                    specifier: '@cialdnb/x-core/components',
-                    imported: 'TableColumnSettings',
-                    kind: 'named',
-                    file: 'x.ts',
-                    owner: owners.get('TableColumnSettings') ?? null,
-                },
-            ],
-            []
+    it('resolves barrel names and type-only names through loadOwners', () => {
+        const info = loadOwners(join(__dirname, 'fixtures', 'xcore'));
+        expect(info.owners.get('ChipProps')).toBe('Chip');
+        expect(info.owners.get('ChipColor')).toBe('Chip');
+        expect(info.types.has('ChipProps')).toBe(true);
+        expect(info.types.has('ChipColor')).toBe(false);
+        expect(info.types.has('Chip')).toBe(false);
+        const { components } = buildReport(
+            collectUsage(fixture('owned'), info)
         );
-        expect(barrel.components[0]?.name).toBe('Table');
+        expect(components).toHaveLength(1);
+        expect(row(components, 'Chip')).toMatchObject({
+            count: 2,
+            files: 1,
+            typeCount: 1,
+            typeImports: { ChipProps: 1 },
+            imports: { Chip: 1, ChipColor: 1 },
+        });
     });
+
+    it('separates type-only imports from runtime imports', () => {
+        const { components } = report('typeonly');
+        expect(row(components, 'Chip')).toMatchObject({
+            count: 1,
+            files: 1,
+            typeCount: 1,
+            typeFiles: 1,
+        });
+        expect(row(components, 'Card')).toMatchObject({
+            count: 0,
+            files: 0,
+            typeCount: 1,
+        });
+        expect(row(components, 'Table')).toMatchObject({
+            count: 1,
+            typeCount: 0,
+        });
+        expect(row(components, 'Avatar')).toMatchObject({
+            count: 0,
+            typeCount: 1,
+        });
+        expect(components[0]?.name).toBe('Chip');
+    });
+
+    it('skips .d.ts files', () => {
+        expect(collectUsage(fixture('dts'))).toEqual([]);
+    });
+
+    it('prints parseable --json from the CLI', () => {
+        const out = execFileSync(
+            join(__dirname, '..', '..', 'node_modules', '.bin', 'tsx'),
+            [
+                join(__dirname, '..', 'usage-report.ts'),
+                fixture('basic'),
+                '--json',
+            ],
+            { encoding: 'utf8' }
+        );
+        const parsed = JSON.parse(out) as { components: ReportRow[] };
+        expect(parsed.components.map((r) => r.name)).toEqual(['Card', 'Chip']);
+        expect(parsed.components[0]).toMatchObject({
+            count: 1,
+            files: 1,
+            typeCount: 1,
+        });
+    }, 30000);
 
     it('counts re-exports and dynamic imports', () => {
         const { components, other } = report('reexport-dynamic');
@@ -145,5 +200,17 @@ describe('usage-report', () => {
             horizon: 'Drawer',
         });
         expect(row(components, 'Drawer')?.status).toBe('superseded');
+    });
+
+    it('regenerates only the marked region of the map', () => {
+        const region = renderRegion(report('families'));
+        expect(region).toContain('runtime files');
+        expect(region).toContain('`ButtonV2`');
+        const doc = `before\n${START}\nSTALE-CONTENT\n${END}\nafter\n`;
+        const out = replaceRegion(doc, region);
+        expect(out.startsWith(`before\n${START}`)).toBe(true);
+        expect(out.endsWith(`${END}\nafter\n`)).toBe(true);
+        expect(out).not.toContain('STALE-CONTENT');
+        expect(replaceRegion(out, region)).toBe(out);
     });
 });

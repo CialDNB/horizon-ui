@@ -45,7 +45,9 @@
         "build:mcp-manifest": "echo \"build:mcp-manifest is implemented in a later task\" && exit 1",
         "build-storybook": "storybook build",
         "test:coexistence": "playwright test",
-        "port-illustrations": "tsx scripts/port-illustrations.ts"
+        "port-illustrations": "tsx scripts/port-illustrations.ts",
+        "usage-report": "tsx scripts/usage-report.ts",
+        "usage-map": "tsx scripts/usage-map.ts"
     },
     "peerDependencies": {
         "react": ">=18",
