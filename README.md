@@ -20,11 +20,15 @@ npm run test:coexistence          # MUI + Bootstrap coexistence harness (Playwri
 
 ## Using it in an app
 
+Modern host (no unlayered global element CSS):
+
 ```ts
-// Modern host (no unlayered global element CSS):
 import '@cialdnb/horizon-ui/styles.css';
-// Legacy host with unlayered global element CSS such as Bootstrap's reboot
-// (customer360). Import after the legacy CSS:
+```
+
+Legacy host with unlayered global element CSS such as Bootstrap's reboot (customer360), imported after the legacy CSS:
+
+```ts
 import '@cialdnb/horizon-ui/styles.unlayered.css';
 ```
 

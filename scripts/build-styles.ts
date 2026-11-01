@@ -25,6 +25,37 @@ const entry = join(
 const TAILWIND_VAR = /--tw-/g;
 const HORIZON_TAILWIND_VAR = '--hz-tw-';
 
+/**
+ * `@keyframes` names are global: a host `@keyframes spin` and Tailwind's
+ * `spin` would replace each other, whichever loads last. Every keyframes
+ * definition and every `animation`/`animation-name` reference to it is
+ * renamed `hz-<name>` (ADR 0001).
+ */
+export function namespaceKeyframes(css: string): string {
+    const names = new Set(
+        [...css.matchAll(/@keyframes\s+([\w-]+)/g)]
+            .map((m) => m[1] ?? '')
+            .filter((name) => name && !name.startsWith('hz-'))
+    );
+    if (names.size === 0) return css;
+    const rename = (name: string) => (names.has(name) ? `hz-${name}` : name);
+    return css
+        .replace(
+            /@keyframes\s+([\w-]+)/g,
+            (_, name: string) => `@keyframes ${rename(name)}`
+        )
+        .replace(
+            /(animation(?:-name)?\s*:)([^;}]*)/g,
+            (_, prop: string, value: string) =>
+                prop +
+                value.replace(
+                    /(^|[\s,])([A-Za-z_][\w-]*)(?=[\s,]|$)/g,
+                    (m: string, lead: string, name: string) =>
+                        lead + rename(name)
+                )
+        );
+}
+
 const GLOBAL_PROPERTIES_FALLBACK = '*, ::before, ::after, ::backdrop {';
 const SCOPED_PROPERTIES_FALLBACK =
     '.hz-root, .hz-root *, .hz-root ::before, .hz-root ::after, .hz-root ::backdrop {';
@@ -43,7 +74,7 @@ export interface BuildStylesOptions {
 /**
  * Compiles src/styles/index.css into the stylesheet shipped as
  * `dist/styles.css`: candidates scanned from src, Tailwind output re-scoped,
- * its `--tw-*` variables renamed to `--hz-tw-*`, wrapped in a single
+ * its `--tw-*` variables renamed to `--hz-tw-*` and keyframes to `hz-*`, wrapped in a single
  * `@layer horizon`, then lowered with Lightning CSS. With `layered: false` the
  * lowered output is passed through {@link flattenLayers}.
  * `extraCandidates` lets tests force utilities no component uses yet.
@@ -68,7 +99,8 @@ export async function buildStylesCss(
         .split(GLOBAL_PROPERTIES_FALLBACK)
         .join(SCOPED_PROPERTIES_FALLBACK)
         .replace(TAILWIND_VAR, HORIZON_TAILWIND_VAR);
-    const { code } = optimize(`@layer horizon {\n${scoped}\n}\n`, {
+    const namespaced = namespaceKeyframes(scoped);
+    const { code } = optimize(`@layer horizon {\n${namespaced}\n}\n`, {
         minify: false,
     });
     return banner + (layered ? code : flattenLayers(code));

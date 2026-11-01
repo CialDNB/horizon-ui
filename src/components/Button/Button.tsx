@@ -2,6 +2,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes, type MouseEvent } from 'react';
 import { cn } from '../../lib/cn';
+import { anchorGuard } from '../../primitives';
 import type { DnbBase } from '../../types/DnbBase';
 
 /** Props for {@link Button}. */
@@ -58,25 +59,17 @@ const buttonStyles = cva(
         'hz:[&_svg]:pointer-events-none hz:[&_svg]:shrink-0',
         'hz:inactive:cursor-not-allowed hz:inactive:text-muted-foreground hz:inactive:no-underline hz:inactive:active:scale-100',
         'hz:aria-busy:not-disabled:cursor-progress hz:aria-busy:active:scale-100',
-        // With asChild on an <a>, a host `a:hover { color; text-decoration }`
-        // (0,1,1) beats plain utilities, so every variant states its hover
-        // colour and decoration (0,2,0), for hover and touch (sticky) hover.
-        'hz:hover:no-underline hz:touch-hover:no-underline',
     ],
     {
         variants: {
             variant: {
-                primary:
-                    'hz:bg-primary hz:text-primary-foreground hz:hover:bg-primary-hover hz:hover:text-primary-foreground hz:touch-hover:text-primary-foreground hz:inactive:bg-muted',
-                secondary:
-                    'hz:border-primary hz:bg-transparent hz:text-primary hz:hover:bg-primary hz:hover:text-primary-foreground hz:touch-hover:text-primary hz:inactive:border-input hz:inactive:bg-transparent',
-                tertiary:
-                    'hz:bg-transparent hz:text-primary hz:hover:text-primary hz:hover:underline hz:touch-hover:text-primary',
-                destructive:
-                    'hz:bg-destructive hz:text-destructive-foreground hz:hover:bg-destructive-hover hz:hover:text-destructive-foreground hz:touch-hover:text-destructive-foreground hz:inactive:bg-muted',
-                ghost: 'hz:bg-transparent hz:text-foreground hz:hover:bg-accent hz:hover:text-accent-foreground hz:touch-hover:text-foreground hz:inactive:bg-transparent',
+                primary: `hz:bg-primary hz:text-primary-foreground hz:hover:bg-primary-hover hz:inactive:bg-muted ${anchorGuard('primary-foreground')}`,
+                secondary: `hz:border-primary hz:bg-transparent hz:text-primary hz:hover:bg-primary hz:inactive:border-input hz:inactive:bg-transparent ${anchorGuard('primary', { hover: 'primary-foreground' })}`,
+                tertiary: `hz:bg-transparent hz:text-primary ${anchorGuard('primary', { hoverUnderline: true })}`,
+                destructive: `hz:bg-destructive hz:text-destructive-foreground hz:hover:bg-destructive-hover hz:inactive:bg-muted ${anchorGuard('destructive-foreground')}`,
+                ghost: `hz:bg-transparent hz:text-foreground hz:hover:bg-accent hz:inactive:bg-transparent ${anchorGuard('foreground', { hover: 'accent-foreground' })}`,
                 // No inline padding, so min-w-11 keeps a 44px target for short labels.
-                link: 'hz:min-w-11 hz:bg-transparent hz:text-primary hz:underline hz:hover:text-primary hz:hover:underline hz:hover:decoration-2 hz:touch-hover:text-primary hz:touch-hover:underline',
+                link: `hz:min-w-11 hz:bg-transparent hz:text-primary hz:underline hz:hover:decoration-2 ${anchorGuard('primary', { underline: true })}`,
             },
             size: {
                 sm: 'hz:min-h-11 hz:gap-1 hz:px-4 hz:py-1 hz:text-label-sm hz:tablet:pointer-fine:min-h-8 hz:[&_svg]:size-4',
@@ -123,6 +116,13 @@ export function buttonVariants(options?: ButtonVariantOptions): string {
  * `asChild`, the child element) styled with Horizon tokens. Put icons in
  * `children` before or after the label; an icon-only button needs
  * `aria-label`.
+ *
+ * Overriding the text colour with `className`: every variant also sets its
+ * hover and touch-hover colour (`hz:hover:text-*`, `hz:touch-hover:text-*`,
+ * so a host `a:hover` rule cannot restyle an `asChild` link), and `cn()` keeps
+ * those because their variant differs. Pass the same colour for those states
+ * too, e.g. `className="hz:text-foreground hz:hover:text-foreground
+ * hz:touch-hover:text-foreground"`.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     function Button(

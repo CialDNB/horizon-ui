@@ -725,3 +725,37 @@ test.describe('layered build (known limit): reboot anchor rules restyle Button a
         }
     });
 });
+
+for (const build of BUILDS)
+    test(`${build} build: Button spinner runs hz-spin even when the host defines @keyframes spin`, async ({
+        page,
+    }) => {
+        await page.goto(url(build));
+        // A host keyframes named like Tailwind's, loaded after horizon CSS.
+        await page.addStyleTag({
+            content: '@keyframes spin { from, to { opacity: 0.5 } }',
+        });
+        const spinner = page.locator(
+            '[data-testid="hz-ltr-loading"] span[aria-hidden="true"]'
+        );
+        const animation = await spinner.evaluate((el) => {
+            const running = el
+                .getAnimations()
+                .filter((a): a is CSSAnimation => a instanceof CSSAnimation);
+            const first = running[0];
+            const keyframes =
+                first?.effect instanceof KeyframeEffect
+                    ? first.effect.getKeyframes()
+                    : [];
+            return {
+                name: getComputedStyle(el).animationName,
+                running: running.map((a) => [a.animationName, a.playState]),
+                transforms: keyframes.map((k) => String(k['transform'] ?? '')),
+                opacity: keyframes.map((k) => String(k['opacity'] ?? '')),
+            };
+        });
+        expect(animation.name).toBe('hz-spin');
+        expect(animation.running).toEqual([['hz-spin', 'running']]);
+        expect(animation.transforms).toContain('rotate(360deg)');
+        expect(animation.opacity.filter(Boolean)).toEqual([]);
+    });

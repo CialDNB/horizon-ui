@@ -361,7 +361,7 @@ describe('dist/styles.unlayered.css (legacy hosts, ADR 0001)', () => {
 
         // Each variant rule follows the rule of the utility it modifies.
         const variant =
-            /^\.hz\\:((?:(?:tablet|laptop|desktop|hover|focus-visible|active|inactive|aria-busy|pointer-fine)\\:)+)([\w-]+)/;
+            /^\.hz\\:((?:(?:tablet|laptop|desktop|hover|touch-hover|focus-visible|focus|active|inactive|aria-busy|pointer-fine)\\:)+)([\w-]+)/;
         const pairs = preludes.flatMap((p, i) => {
             const m = variant.exec(p);
             const base2 = m ? preludes.indexOf(`.hz\\:${m[2]}`) : -1;
@@ -490,5 +490,69 @@ describe('dist/styles.unlayered.css (legacy hosts, ADR 0001)', () => {
         expect(withRing).toMatch(/\.hz\\:ring-2 \{\s*--hz-tw-ring-shadow:/);
         expect(foreignVariableDeclarations(withRing)).toEqual([]);
         expect(withRing).not.toMatch(/(^\s*|,\s*)\*\s*[,{]/m);
+    });
+});
+
+describe('keyframes are namespaced (no global animation names)', () => {
+    const keyframeNames = (source: string) =>
+        [...source.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]);
+    const builds = [
+        ['layered', css],
+        ['unlayered', unlayeredCss],
+    ] as const;
+
+    for (const [name, source] of builds) {
+        it(`${name} build: every @keyframes name starts with hz-`, () => {
+            const names = keyframeNames(source);
+            expect(names.length).toBeGreaterThan(0);
+            for (const n of names) expect(n).toMatch(/^hz-/);
+        });
+
+        it(`${name} build: animate-spin references hz-spin`, () => {
+            const rule = styleRulesOf(parse(source)).find(
+                (r) => r.prelude === '.hz\\:animate-spin'
+            );
+            // Lightning CSS may reorder the shorthand (`1s linear infinite hz-spin`).
+            expect(rule?.decls).toEqual([
+                expect.stringMatching(
+                    /^animation: (?=.*(^|\s)hz-spin(\s|$))(?!.*(^|\s)spin(\s|$))/
+                ),
+            ]);
+            expect(keyframeNames(source)).toContain('hz-spin');
+        });
+    }
+
+    it('renames every Tailwind animation (definitions and references) in both builds', async () => {
+        const extra = [
+            'hz:animate-ping',
+            'hz:animate-pulse',
+            'hz:animate-bounce',
+        ];
+        for (const layered of [true, false]) {
+            const out = await buildStylesCss(extra, { layered });
+            const names = keyframeNames(out);
+            expect(names).toEqual(
+                expect.arrayContaining([
+                    'hz-spin',
+                    'hz-ping',
+                    'hz-pulse',
+                    'hz-bounce',
+                ])
+            );
+            for (const n of names) expect(n).toMatch(/^hz-/);
+            const keywords =
+                /^(linear|infinite|ease(-in|-out|-in-out)?|normal|reverse|alternate(-reverse)?|forwards|backwards|both|none|running|paused|step-(start|end)|initial|inherit|unset)$/;
+            const animationNames = [
+                ...out.matchAll(/animation(?:-name)?:\s*([^;}]+)/g),
+            ].flatMap((m) =>
+                (m[1] ?? '')
+                    .replace(/[\w-]+\([^)]*\)/g, ' ')
+                    .split(/[\s,]+/)
+                    .filter((t) => /^[a-z_-][\w-]*$/i.test(t))
+                    .filter((t) => !keywords.test(t))
+            );
+            expect(animationNames.length).toBeGreaterThanOrEqual(4);
+            for (const n of animationNames) expect(n).toMatch(/^hz-/);
+        }
     });
 });
