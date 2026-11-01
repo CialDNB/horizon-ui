@@ -55,7 +55,7 @@ const meta = {
                     '',
                     '**Wrapping.** Headings use `text-wrap: balance`, body `pretty`; long words break instead of overflowing. `truncate` clips to one line (or clamps to 2-4).',
                     '',
-                    '**Legacy hosts.** Margin, colour, family, size, line height and weight are always set by the component, so Bootstrap\'s `h1..h6` and `p` rules do not change it with `styles.unlayered.css` (measured in the coexistence harness).',
+                    "**Legacy hosts.** Margin, colour, family, size, line height and weight are always set by the component, so Bootstrap's `h1..h6` and `p` rules do not change it with `styles.unlayered.css` (measured in the coexistence harness).",
                 ].join('\n'),
             },
         },
@@ -234,7 +234,8 @@ export const Responsive: Story = {
                 spec={{
                     mobile: {
                         size: 'display/xl 36/36, display/lg 32/32, heading/xl 32/32 (one step down the scale). Every other role at its token size.',
-                        density: 'No margin of its own (spacing belongs to the layout).',
+                        density:
+                            'No margin of its own (spacing belongs to the layout).',
                         layout: 'Block for headings/body, inline for labels. Headings balance, body uses text-wrap: pretty.',
                         contentVisibility:
                             'Long words break; truncate clips with an ellipsis or clamps to 2-4 lines.',
@@ -306,7 +307,8 @@ const viewportTest = (viewport: Viewport) => ({
         const canvas = within(canvasElement);
         await expect(window.innerWidth).toBe(viewportWidth[viewport]);
         for (const [role, sizes] of Object.entries(responsiveSize)) {
-            const [size, line] = viewport === 'mobile' ? sizes.mobile : sizes.wide;
+            const [size, line] =
+                viewport === 'mobile' ? sizes.mobile : sizes.wide;
             const style = getComputedStyle(canvas.getByTestId(role));
             await expect(style.fontSize, role).toBe(`${size}px`);
             await expect(style.lineHeight, role).toBe(`${line}px`);
@@ -351,7 +353,11 @@ export const ComputedStyles: Story = {
             <Typography weight="semibold" data-testid="weight">
                 Semibold body
             </Typography>
-            <Typography variant="heading/sm" weight="regular" data-testid="heading-regular">
+            <Typography
+                variant="heading/sm"
+                weight="regular"
+                data-testid="heading-regular"
+            >
                 Regular heading
             </Typography>
             <Typography color="muted-foreground" data-testid="muted">

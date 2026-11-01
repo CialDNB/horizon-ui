@@ -114,12 +114,8 @@ describe('Typography', () => {
             </>
         );
         expect(screen.getByText('One line')).toHaveClass('hz:truncate');
-        expect(screen.getByText('Three lines')).toHaveClass(
-            'hz:line-clamp-3'
-        );
-        expect(screen.getByText('Three lines')).not.toHaveClass(
-            'hz:truncate'
-        );
+        expect(screen.getByText('Three lines')).toHaveClass('hz:line-clamp-3');
+        expect(screen.getByText('Three lines')).not.toHaveClass('hz:truncate');
     });
 
     it('forwards ref, data-did and native attributes', () => {
