@@ -1,11 +1,19 @@
-import { render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { createRef, Profiler, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HorizonProvider } from './HorizonProvider';
-import { resetFallbackPortalRoot } from './portal-context';
-import { usePortalContainer } from './portal-context';
+import {
+    resetFallbackPortalRoot,
+    resolvePortalContainer,
+    usePortalContainer,
+} from './portal-context';
 
-function Probe({ onContainer }: { onContainer: (el: HTMLElement) => void }) {
+function Probe({
+    onContainer,
+}: {
+    onContainer: (el: HTMLElement | null) => void;
+}) {
     onContainer(usePortalContainer());
     return null;
 }
@@ -71,7 +79,7 @@ describe('HorizonProvider', () => {
     });
 
     it('usePortalContainer returns the provider element inside provider', () => {
-        const seen: HTMLElement[] = [];
+        const seen: (HTMLElement | null)[] = [];
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         render(
             <HorizonProvider data-testid="root">
@@ -88,7 +96,7 @@ describe('HorizonProvider', () => {
 
     it('usePortalContainer outside provider returns a lazily created hz-root portal root on document.body and warns once', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const seen: HTMLElement[] = [];
+        const seen: (HTMLElement | null)[] = [];
         const { rerender } = render(
             <Probe onContainer={(el) => seen.push(el)} />
         );
@@ -106,7 +114,7 @@ describe('HorizonProvider', () => {
 
     it('reset helper removes the fallback root so a new one is created', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const seen: HTMLElement[] = [];
+        const seen: (HTMLElement | null)[] = [];
         render(<Probe onContainer={(el) => seen.push(el)} />);
         resetFallbackPortalRoot();
         expect(document.body.contains(seen[0] ?? null)).toBe(false);
@@ -116,5 +124,95 @@ describe('HorizonProvider', () => {
 
     it('sets displayName', () => {
         expect(HorizonProvider.displayName).toBe('HorizonProvider');
+    });
+
+    it('returns null on the provider first render, then the wrapper element after mount', () => {
+        const seen: (HTMLElement | null)[] = [];
+        function Spy() {
+            seen.push(usePortalContainer());
+            return null;
+        }
+        render(
+            <HorizonProvider data-testid="root">
+                <Spy />
+            </HorizonProvider>
+        );
+        expect(seen[0]).toBeNull();
+        expect(seen.at(-1)).toBe(screen.getByTestId('root'));
+    });
+
+    it('never returns a detached element', () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const seen: (HTMLElement | null)[] = [];
+        function Spy() {
+            seen.push(usePortalContainer());
+            return null;
+        }
+        render(
+            <HorizonProvider>
+                <Spy />
+            </HorizonProvider>
+        );
+        render(<Spy />);
+        const values = seen.filter((v): v is HTMLElement => v !== null);
+        expect(values.length).toBeGreaterThan(1);
+        for (const el of values) expect(el.isConnected).toBe(true);
+    });
+
+    it('returns null when document is undefined', () => {
+        vi.stubGlobal('document', undefined);
+        try {
+            expect(resolvePortalContainer(undefined)).toBeNull();
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it('portal consumer renders after the container is available and keeps its state', () => {
+        function Overlay() {
+            const container = usePortalContainer();
+            const [open] = useState(true);
+            const [count, setCount] = useState(0);
+            if (!container || !open) return null;
+            return createPortal(
+                <button onClick={() => setCount((c) => c + 1)}>
+                    clicks {count}
+                </button>,
+                container
+            );
+        }
+        render(
+            <HorizonProvider data-testid="root">
+                <Overlay />
+            </HorizonProvider>
+        );
+        const btn = screen.getByRole('button');
+        expect(screen.getByTestId('root')).toContainElement(btn);
+        fireEvent.click(btn);
+        expect(screen.getByRole('button')).toHaveTextContent('clicks 1');
+    });
+
+    it('does not re-render the provider more than once per parent render with an inline ref', () => {
+        let commits = 0;
+        const refs: (HTMLDivElement | null)[] = [];
+        function Parent() {
+            const [, setN] = useState(0);
+            return (
+                <Profiler id="p" onRender={() => commits++}>
+                    <HorizonProvider
+                        ref={(n) => {
+                            refs.push(n);
+                        }}
+                    >
+                        <button onClick={() => setN((n) => n + 1)}>go</button>
+                    </HorizonProvider>
+                </Profiler>
+            );
+        }
+        render(<Parent />);
+        const before = commits;
+        fireEvent.click(screen.getByRole('button'));
+        expect(commits - before).toBe(1);
+        expect(refs.filter((r) => r === null)).toHaveLength(0);
     });
 });

@@ -8,7 +8,6 @@ export const PortalContext = createContext<HTMLElement | null | undefined>(
     undefined
 );
 
-let pendingRoot: HTMLElement | null = null;
 let fallbackRoot: HTMLElement | null = null;
 let warned = false;
 
@@ -25,26 +24,14 @@ function getFallbackRoot(): HTMLElement {
 }
 
 /**
- * Element that overlays (dialogs, popovers, tooltips) should portal into, so
- * their content keeps the `.hz-root` scope, brand and direction.
- *
- * - Inside a `HorizonProvider`: the provider's wrapper element. During the
- *   provider's very first render the wrapper is not attached yet, so the shared
- *   fallback root is returned (silently); portal content then moves to the
- *   real wrapper on the next render, which happens before any overlay can open.
- * - Outside any provider: one lazily created, reused `.hz-root` element on
- *   `document.body` (brand `cial`, `ltr`), with a single `console.warn` per page
- *   asking the developer to mount `HorizonProvider`.
- *
- * Needs `document`: call it from client-rendered overlay components only.
+ * Pure resolver behind {@link usePortalContainer}: maps the context value to a
+ * portal container. Exported for tests only (not public API).
  */
-export function usePortalContainer(): HTMLElement {
-    const container = useContext(PortalContext);
+export function resolvePortalContainer(
+    container: HTMLElement | null | undefined
+): HTMLElement | null {
     if (container) return container;
-    if (container === null) {
-        pendingRoot ??= document.createElement('div');
-        return pendingRoot;
-    }
+    if (container === null || typeof document === 'undefined') return null;
     if (!warned) {
         warned = true;
         console.warn(
@@ -52,6 +39,28 @@ export function usePortalContainer(): HTMLElement {
         );
     }
     return getFallbackRoot();
+}
+
+/**
+ * Element that overlays (dialogs, popovers, tooltips) should portal into, so
+ * their content keeps the `.hz-root` scope, brand and direction.
+ *
+ * Returns `HTMLElement | null`; a non-null value is always attached to the
+ * document.
+ * - Inside a `HorizonProvider`: `null` during the provider's first render
+ *   (its wrapper is not attached yet), then the wrapper element from the next
+ *   commit on.
+ * - Outside any provider: one lazily created, reused `.hz-root` element on
+ *   `document.body` (brand `cial`, `ltr`), plus a single `console.warn` per
+ *   page asking the developer to mount `HorizonProvider`.
+ * - Without a `document` (server rendering): `null`, never throws.
+ *
+ * Overlay wrappers must render their Portal only when the value is non-null,
+ * so content appears one commit later in the correct container instead of
+ * being mounted in a placeholder and remounted.
+ */
+export function usePortalContainer(): HTMLElement | null {
+    return resolvePortalContainer(useContext(PortalContext));
 }
 
 /** Test helper (not public API): drops the fallback root and the warn-once flag. */
