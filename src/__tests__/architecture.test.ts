@@ -69,6 +69,7 @@ describe('architecture', () => {
         expect(offenders.map(rel)).toEqual([]);
     });
 
+    // Importing the root loads every Phosphor icon, which is slow on a cold transform.
     it('public API matches snapshot', async () => {
         const api = await import('../index');
         expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
@@ -77,8 +78,10 @@ describe('architecture', () => {
             "HorizonProvider",
             "buttonVariants",
             "cn",
+            "icons",
+            "illustrations",
             "usePortalContainer",
           ]
         `);
-    });
+    }, 30_000);
 });

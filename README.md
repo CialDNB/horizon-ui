@@ -34,6 +34,20 @@ import '@cialdnb/horizon-ui/styles.unlayered.css';
 
 Import exactly one of the two, once, and render components inside `HorizonProvider`. Which build to choose and why: [ADR 0001](docs/architecture/decisions/0001-css-isolation.md).
 
+## Icons and illustrations
+
+Icons are Phosphor (`@phosphor-icons/react`, same set as x-core), re-exported with the `*Icon` names. Prefer the subpath so bundlers can tree-shake: member access on the root `icons` namespace pulls in the whole set (about 5.5 MB minified).
+
+```tsx
+import { CaretRightIcon } from '@cialdnb/horizon-ui/icons';
+import { EmptyState } from '@cialdnb/horizon-ui/illustrations';
+
+<CaretRightIcon size={20} aria-hidden="true" mirrored={dir === 'rtl'} />
+<EmptyState size={96} title="No results" />
+```
+
+Phosphor sets no `aria-*`: pass `aria-hidden="true"` on decorative icons and `aria-label` on meaningful ones. Directional icons (`ArrowLeftIcon`, `ArrowRightIcon`, `CaretLeftIcon`, `CaretRightIcon`, `ArrowBendUpLeftIcon`) need `mirrored` under `dir="rtl"`. Illustrations are decorative unless given `title` or `aria-label`. Regenerate them after changing an SVG in `src/illustrations/assets/` with `npm run port-illustrations`.
+
 ## Docs
 
 | File | Content |

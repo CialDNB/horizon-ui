@@ -48,7 +48,7 @@ Consumers must not need Tailwind. Therefore:
 | Type | Packages |
 |---|---|
 | peer | `react`, `react-dom` (>=18) |
-| dependencies | `@radix-ui/*` used, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react` (or own icons — open question) |
+| dependencies | `@radix-ui/*` used, `class-variance-authority`, `clsx`, `tailwind-merge`, `@phosphor-icons/react` (icons re-export; external in the build, never vendored) |
 | dev | tailwindcss, vite, typescript, storybook, vitest, playwright |
 
 Radix and cva as direct `dependencies` (not peers) so consumers install nothing else. x-core rule retained: new direct dependency needs a bundle-size justification in the PR.

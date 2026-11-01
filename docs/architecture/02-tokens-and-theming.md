@@ -47,7 +47,7 @@ Note: tokens are authored in rem with a 16px root (Horizon uses `htmlFontSize: 1
 
 ## Direction
 
-`dir="rtl"` on the root. Components use logical utilities (`ms-*`, `ps-*`, `start-*`, `text-start`). No stylis RTL plugin needed. Directional icons flip via `rtl:` variant.
+`dir="rtl"` on the root. Components use logical utilities (`ms-*`, `ps-*`, `start-*`, `text-start`). No stylis RTL plugin needed. Directional icons (Phosphor) flip with the `mirrored` prop under `dir="rtl"`; see `src/icons/index.ts`.
 
 ## Dark mode
 

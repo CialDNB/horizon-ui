@@ -57,6 +57,8 @@ export default defineConfig({
             entry: {
                 index: 'src/index.ts',
                 'tokens/index': 'src/tokens/index.ts',
+                'icons/index': 'src/icons/index.ts',
+                'illustrations/index': 'src/illustrations/index.ts',
             },
             formats: ['es'],
         },

@@ -19,6 +19,14 @@
             "types": "./dist/tokens/index.d.ts",
             "import": "./dist/tokens/index.js"
         },
+        "./icons": {
+            "types": "./dist/icons/index.d.ts",
+            "import": "./dist/icons/index.js"
+        },
+        "./illustrations": {
+            "types": "./dist/illustrations/index.d.ts",
+            "import": "./dist/illustrations/index.js"
+        },
         "./package.json": "./package.json"
     },
     "files": [
@@ -36,7 +44,8 @@
         "build:tokens": "tsx scripts/build-tokens.ts",
         "build:mcp-manifest": "echo \"build:mcp-manifest is implemented in a later task\" && exit 1",
         "build-storybook": "storybook build",
-        "test:coexistence": "playwright test"
+        "test:coexistence": "playwright test",
+        "port-illustrations": "tsx scripts/port-illustrations.ts"
     },
     "peerDependencies": {
         "react": ">=18",
@@ -84,6 +93,7 @@
         "vitest": "^4.1.12"
     },
     "dependencies": {
+        "@phosphor-icons/react": "^2.1.10",
         "@radix-ui/react-slot": "^1.5.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",

@@ -19,6 +19,8 @@ export default tseslint.config(
                 { type: 'lib', pattern: 'src/lib/**' },
                 { type: 'provider', pattern: 'src/provider/**' },
                 { type: 'primitives', pattern: 'src/primitives/**' },
+                { type: 'icons', pattern: 'src/icons/**' },
+                { type: 'illustrations', pattern: 'src/illustrations/**' },
                 // Component stories are story code: they may use src/stories helpers.
                 {
                     type: 'storybook',
@@ -86,9 +88,16 @@ export default tseslint.config(
                                 'lib',
                                 'provider',
                                 'primitives',
+                                'icons',
+                                'illustrations',
                                 'types',
                                 ['component', { name: '!${from.name}' }],
                             ],
+                        },
+                        { from: 'icons', allow: ['icons'] },
+                        {
+                            from: 'illustrations',
+                            allow: ['illustrations', 'types'],
                         },
                         { from: 'types', allow: ['types'] },
                         {
@@ -101,6 +110,8 @@ export default tseslint.config(
                                 'primitives',
                                 'types',
                                 'component',
+                                'icons',
+                                'illustrations',
                                 'root',
                             ],
                         },
@@ -108,6 +119,8 @@ export default tseslint.config(
                             from: 'root',
                             allow: [
                                 'component',
+                                'icons',
+                                'illustrations',
                                 'tokens',
                                 'lib',
                                 'provider',
@@ -123,13 +136,18 @@ export default tseslint.config(
                 {
                     default: 'disallow',
                     rules: [
-                        { target: ['component'], allow: ['**/index.ts'] },
+                        {
+                            target: ['component', 'icons', 'illustrations'],
+                            allow: ['**/index.ts'],
+                        },
                         {
                             target: [
                                 'tokens',
                                 'lib',
                                 'provider',
                                 'primitives',
+                                'icons',
+                                'illustrations',
                                 'types',
                                 'root',
                                 'storybook',

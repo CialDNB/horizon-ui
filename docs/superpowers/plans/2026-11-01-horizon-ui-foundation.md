@@ -225,21 +225,22 @@ Driven by Task 7's measurement: customer360's unlayered Bootstrap 4.4.1 reboot b
 
 ## Phase B — Component library
 
-### Task 8: Icons and illustrations port
+### Task 8: Icons (Phosphor re-export) and illustrations
 
 **Files:**
-- Create: `scripts/port-icons.ts`, `src/icons/**`, `src/illustrations/**`, `src/icons/index.ts`, `src/illustrations/index.ts`
-- Modify: `src/index.ts` (export namespaces `icons`, `illustrations`)
-- Test: `src/icons/icons.test.tsx`
+- Create: `src/icons/index.ts`, `src/icons/icons.test.tsx`, `scripts/port-illustrations.ts`, `scripts/__tests__/port-illustrations.test.ts`, `src/illustrations/{Illustration.types.ts,IllustrationFrame.tsx,useSvgId.ts,index.ts,illustrations.test.tsx}`, `src/illustrations/assets/{cial,il}/*.svg` (verbatim copies from x-core), `src/illustrations/generated/*` (generated, committed), `src/stories/{Icons,Illustrations}.stories.tsx`
+- Modify: `src/index.ts` (namespaces `icons`, `illustrations`), `package.json` (`@phosphor-icons/react` dependency, `./icons` and `./illustrations` subpath exports), `eslint.config.js` (boundaries elements `icons`, `illustrations`)
 
 **Interfaces:**
-- Produces: each icon as `React.forwardRef<SVGSVGElement, IconProps>` where `IconProps = React.SVGProps<SVGSVGElement> & DnbBase & { size?: number | string }`; default `aria-hidden="true"` unless `aria-label`/`title` supplied; `currentColor` fill; directional icons carry `rtl:-scale-x-100`. `scripts/port-icons.ts` reads x-core's `src/icons` (MUI `SvgIcon` wrappers), extracts SVG paths, emits plain components.
+- Icons: x-core's icons are `export * from '@phosphor-icons/react'` plus legacy aliases, so `src/icons/index.ts` re-exports `@phosphor-icons/react` and the types `Icon`, `IconProps`, `IconWeight`. Only `*Icon` names, no legacy aliases, no lucide-react. Phosphor sets no `aria-*`: consumers pass `aria-hidden`/`aria-label`; directional icons use Phosphor's `mirrored` under `dir="rtl"`. `@phosphor-icons/react` is a direct dependency and stays a bare import in `dist`.
+- Illustrations: `IllustrationProps = React.SVGProps<SVGSVGElement> & DnbBase & { size?: number | string; title?: string }`; `forwardRef` + `displayName`; names equal x-core's exports (`EmptyState`, `EmptyStateIL`, ...). `aria-hidden` unless `title`/`aria-label`; `focusable="false"`; clip/mask ids made per instance with `useId`. Artwork is never edited: the script only converts attribute spelling and fails on any element or attribute it does not know.
+- Public API: `icons` and `illustrations` namespaces from the root, and tree-shakeable `@cialdnb/horizon-ui/icons` and `@cialdnb/horizon-ui/illustrations` subpaths (root namespace member access cannot be tree-shaken).
 
-- [ ] **Step 1: Write failing tests:** `'every exported icon renders an svg'` (iterate namespace), `'icons are aria-hidden by default'`, `'icon with aria-label exposes role img'`, `'size prop sets width and height'`, `'directional icons mirror under rtl'`, `'no mui import'`.
+- [ ] **Step 1: Write failing tests:** `'every exported icon renders an svg'`, `'icon aria-hidden by default'`, `'size prop sets width and height'`, `'illustrations render an svg for every export'`, `'illustrations aria-hidden by default and expose role img with aria-label'`, `'illustration size prop sets width and height'`, `'illustration ids are unique across two instances'`, plus the existing `no mui import` package tests.
 - [ ] **Step 2: Run; expected FAIL**
-- [ ] **Step 3: Implement the port script and run it; commit generated files; list any icon that could not be converted in `docs/migration/component-map.md`.**
-- [ ] **Step 4: Run tests and `npm run build`; expected PASS**
-- [ ] **Step 5: Commit (only after user approval)** `feat(icons): port x-core icons and illustrations`
+- [ ] **Step 3: Implement; run `npm run port-illustrations` and commit the generated files; add the Illustrations section to `docs/migration/component-map.md`.**
+- [ ] **Step 4: Run tests, `npm run build`, `npm run build-storybook`; expected PASS**
+- [ ] **Step 5: Commit** `feat(icons): Phosphor icons re-export and illustrations`
 
 ### Task 9: Component port template and migration map
 
