@@ -38,7 +38,6 @@ describe('architecture', () => {
         const components = all.filter((f) =>
             /^components\/[^/]+\//.test(rel(f))
         );
-        expect(components.length).toBeGreaterThanOrEqual(0);
         const offenders = components.flatMap((f) => {
             const own = rel(f).split('/')[1];
             return importSpecifiers(readFileSync(f, 'utf8'))

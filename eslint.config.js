@@ -97,8 +97,8 @@ export default tseslint.config(
             'boundaries/entry-point': [
                 'error',
                 {
-                    default: 'allow',
-                    rules: [{ target: 'component', allow: 'index.ts' }],
+                    default: 'disallow',
+                    rules: [{ target: ['component'], allow: ['**/index.ts'] }],
                 },
             ],
         },
@@ -112,6 +112,20 @@ export default tseslint.config(
         rules: {
             'no-restricted-exports': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
+        },
+    },
+    {
+        // Type tests: `src/**/*.test-d.ts` may use @ts-expect-error with a description.
+        files: ['src/**/*.test-d.ts'],
+        rules: {
+            '@typescript-eslint/ban-ts-comment': [
+                'error',
+                {
+                    'ts-ignore': true,
+                    'ts-expect-error': 'allow-with-description',
+                    minimumDescriptionLength: 10,
+                },
+            ],
         },
     }
 );

@@ -5,7 +5,12 @@ export default defineConfig({
     plugins: [
         dts({
             include: ['src'],
-            exclude: ['src/**/*.test.*', 'src/**/*.stories.*', 'src/__tests__'],
+            exclude: [
+                'src/**/*.test.*',
+                'src/**/*.test-d.ts',
+                'src/**/*.stories.*',
+                'src/__tests__',
+            ],
         }),
     ],
     build: {

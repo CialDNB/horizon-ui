@@ -29,7 +29,7 @@
     "scripts": {
         "build": "vite build",
         "typecheck": "tsc --noEmit",
-        "lint": "eslint src/",
+        "lint": "eslint .",
         "test": "vitest run",
         "storybook": "echo \"storybook is configured in a later task\" && exit 1",
         "build:tokens": "echo \"build:tokens is implemented in a later task\" && exit 1",
