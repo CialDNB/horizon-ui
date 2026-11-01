@@ -1,6 +1,7 @@
 import {
     forwardRef,
     useCallback,
+    useLayoutEffect,
     useRef,
     useState,
     type HTMLAttributes,
@@ -41,14 +42,22 @@ export const HorizonProvider = forwardRef<HTMLDivElement, HorizonProviderProps>(
         forwardedRef
     ) {
         const [element, setElement] = useState<HTMLDivElement | null>(null);
-        const forwardedRefRef = useRef(forwardedRef);
-        forwardedRefRef.current = forwardedRef;
+        const nodeRef = useRef<HTMLDivElement | null>(null);
+        const syncedRef = useRef(forwardedRef);
         // Stable identity: an inline consumer ref must not detach/reattach
         // (and re-render) this wrapper on every parent render.
         const setRef = useCallback((node: HTMLDivElement | null) => {
+            nodeRef.current = node;
             setElement(node);
-            assignRef(forwardedRefRef.current, node);
+            assignRef(syncedRef.current, node);
         }, []);
+        // Mirror React's ref semantics when the consumer's ref changes.
+        useLayoutEffect(() => {
+            if (syncedRef.current === forwardedRef) return;
+            assignRef(syncedRef.current, null);
+            syncedRef.current = forwardedRef;
+            assignRef(forwardedRef, nodeRef.current);
+        }, [forwardedRef]);
 
         return (
             <div

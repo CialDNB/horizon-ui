@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { createRef, Profiler, useState } from 'react';
+import { createRef, Profiler, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HorizonProvider } from './HorizonProvider';
@@ -192,27 +192,89 @@ describe('HorizonProvider', () => {
         expect(screen.getByRole('button')).toHaveTextContent('clicks 1');
     });
 
-    it('does not re-render the provider more than once per parent render with an inline ref', () => {
+    it('inline callback ref swap calls old(null) then new(node) once, with one commit per parent render', () => {
+        const calls: string[] = [];
         let commits = 0;
-        const refs: (HTMLDivElement | null)[] = [];
         function Parent() {
-            const [, setN] = useState(0);
+            const [n, setN] = useState(0);
+            const label = n === 0 ? 'A' : 'B';
             return (
                 <Profiler id="p" onRender={() => commits++}>
                     <HorizonProvider
-                        ref={(n) => {
-                            refs.push(n);
+                        data-testid="root"
+                        ref={(node) => {
+                            calls.push(`${label}:${node ? 'node' : 'null'}`);
                         }}
                     >
-                        <button onClick={() => setN((n) => n + 1)}>go</button>
+                        <button onClick={() => setN((v) => v + 1)}>go</button>
                     </HorizonProvider>
                 </Profiler>
             );
         }
         render(<Parent />);
+        expect(calls).toEqual(['A:node']);
         const before = commits;
         fireEvent.click(screen.getByRole('button'));
         expect(commits - before).toBe(1);
-        expect(refs.filter((r) => r === null)).toHaveLength(0);
+        expect(calls).toEqual(['A:node', 'A:null', 'B:node']);
+        fireEvent.click(screen.getByRole('button'));
+        expect(calls.slice(3)).toEqual(['B:null', 'B:node']);
+    });
+
+    it('object ref swap clears the old ref and sets the new one', () => {
+        const a = createRef<HTMLDivElement>();
+        const b = createRef<HTMLDivElement>();
+        const { rerender } = render(
+            <HorizonProvider ref={a} data-testid="root">
+                x
+            </HorizonProvider>
+        );
+        const root = screen.getByTestId('root');
+        expect(a.current).toBe(root);
+        rerender(
+            <HorizonProvider ref={b} data-testid="root">
+                x
+            </HorizonProvider>
+        );
+        expect(a.current).toBeNull();
+        expect(b.current).toBe(root);
+    });
+
+    it('undefined to ref gets the node, ref to undefined is cleared', () => {
+        const r = createRef<HTMLDivElement>();
+        const { rerender } = render(
+            <HorizonProvider data-testid="root">x</HorizonProvider>
+        );
+        rerender(
+            <HorizonProvider ref={r} data-testid="root">
+                x
+            </HorizonProvider>
+        );
+        expect(r.current).toBe(screen.getByTestId('root'));
+        rerender(<HorizonProvider data-testid="root">x</HorizonProvider>);
+        expect(r.current).toBeNull();
+    });
+
+    it('populates a first-render ref before the parent mount effect', () => {
+        const r = createRef<HTMLDivElement>();
+        let seenInEffect: HTMLDivElement | null = null;
+        function Parent() {
+            useEffect(() => {
+                seenInEffect = r.current;
+            }, []);
+            return <HorizonProvider ref={r}>x</HorizonProvider>;
+        }
+        render(<Parent />);
+        expect(seenInEffect).not.toBeNull();
+    });
+
+    it('calls the ref with null on unmount', () => {
+        const fn = vi.fn();
+        const { unmount } = render(
+            <HorizonProvider ref={fn}>x</HorizonProvider>
+        );
+        expect(fn).toHaveBeenLastCalledWith(expect.any(HTMLDivElement));
+        unmount();
+        expect(fn).toHaveBeenLastCalledWith(null);
     });
 });
