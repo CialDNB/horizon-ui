@@ -2,7 +2,10 @@ import { fileURLToPath } from 'node:url';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
-import { phosphorDeepImports } from './.storybook/optimize-deps.ts';
+import {
+    phosphorDeepImports,
+    runtimeDependencies,
+} from './.storybook/optimize-deps.ts';
 
 const configDir = fileURLToPath(new URL('./.storybook', import.meta.url));
 
@@ -24,9 +27,16 @@ export default defineConfig({
                 plugins: [storybookTest({ configDir })],
                 // See .storybook/optimize-deps.ts (cold/stale cache reloads).
                 optimizeDeps: {
-                    include: phosphorDeepImports(
-                        fileURLToPath(new URL('./src', import.meta.url))
-                    ),
+                    include: [
+                        ...phosphorDeepImports(
+                            fileURLToPath(new URL('./src', import.meta.url))
+                        ),
+                        ...runtimeDependencies(
+                            fileURLToPath(
+                                new URL('./package.json', import.meta.url)
+                            )
+                        ),
+                    ],
                 },
                 test: {
                     name: 'storybook',

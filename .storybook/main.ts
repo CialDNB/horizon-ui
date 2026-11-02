@@ -2,7 +2,7 @@ import type { StorybookConfig } from '@storybook/react-vite';
 import type { Plugin } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { buildStylesCss } from '../scripts/build-styles';
-import { phosphorDeepImports } from './optimize-deps';
+import { phosphorDeepImports, runtimeDependencies } from './optimize-deps';
 
 const HORIZON_STYLES_ID = 'virtual:horizon-styles.css';
 
@@ -39,6 +39,9 @@ const config: StorybookConfig = {
                 ...(viteConfig.optimizeDeps?.include ?? []),
                 ...phosphorDeepImports(
                     fileURLToPath(new URL('../src', import.meta.url))
+                ),
+                ...runtimeDependencies(
+                    fileURLToPath(new URL('../package.json', import.meta.url))
                 ),
             ],
         },

@@ -27,3 +27,18 @@ export function phosphorDeepImports(srcDir: string): string[] {
             if (match[1]) found.add(match[1]);
     return [...found].sort();
 }
+
+/**
+ * The package's runtime dependencies except Phosphor (its root entry is
+ * the whole icon set; components use the deep imports above). A component
+ * that starts importing another Radix package is otherwise discovered
+ * mid-run with the same reload failure.
+ */
+export function runtimeDependencies(packageJson: string): string[] {
+    const pkg = JSON.parse(readFileSync(packageJson, 'utf8')) as {
+        dependencies?: Record<string, string>;
+    };
+    return Object.keys(pkg.dependencies ?? {})
+        .filter((name) => name !== '@phosphor-icons/react')
+        .sort();
+}
