@@ -51,6 +51,32 @@ describe('Avatar', () => {
         expect(container).toHaveTextContent('DL');
     });
 
+    it('derives initials from alt when there is no name (x-core `<Avatar alt={name} />`)', () => {
+        render(<Avatar alt="Dana Levi" />);
+        const avatar = screen.getByRole('img', { name: 'Dana Levi' });
+        expect(avatar.textContent).toBe('DL');
+        expect(avatar.querySelector('svg')).toBeNull();
+    });
+
+    it('drops x-core-only props (sx, variant, imgProps) instead of leaking them', () => {
+        const warn = vi
+            .spyOn(console, 'warn')
+            .mockImplementation(() => undefined);
+        const props = {
+            name: 'Dana Levi',
+            sx: { width: 32 },
+            variant: 'circular',
+            imgProps: { loading: 'lazy' },
+        };
+        render(<Avatar {...props} />);
+        const avatar = screen.getByRole('img');
+        for (const attr of ['sx', 'variant', 'imgprops'])
+            expect(avatar).not.toHaveAttribute(attr);
+        expect(warn).toHaveBeenCalledTimes(3);
+        resetWarnings();
+        warn.mockRestore();
+    });
+
     it('is decorative without name or alt and shows a person icon', () => {
         const { container } = render(<Avatar />);
         const root = container.firstElementChild;

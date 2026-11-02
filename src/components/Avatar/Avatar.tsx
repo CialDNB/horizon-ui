@@ -19,7 +19,7 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const avatarStyles = cva(
@@ -32,7 +32,7 @@ const avatarStyles = cva(
             // Initials step through the type scale with the box; the person
             // icon (no name) takes about 60% of it.
             size: {
-                xs: 'hz:size-4 hz:text-micro hz:font-semibold hz:[&_svg]:size-3',
+                xs: 'hz:size-4 hz:text-micro hz:[&_svg]:size-3',
                 sm: 'hz:size-6 hz:text-label-sm hz:[&_svg]:size-4',
                 md: 'hz:size-8 hz:text-label-md hz:[&_svg]:size-5',
                 lg: 'hz:size-10 hz:text-label-lg hz:[&_svg]:size-6',
@@ -122,7 +122,8 @@ export type AvatarProps = Omit<HTMLAttributes<HTMLSpanElement>, 'role'> &
         src?: string;
         /**
          * Name of the person or entity. Source of the initials and, unless
-         * `alt` is set, of the accessible name.
+         * `alt` is set, of the accessible name. Without `name`, the initials
+         * come from `alt` (as x-core).
          */
         name?: string;
         /**
@@ -160,6 +161,16 @@ export type AvatarProps = Omit<HTMLAttributes<HTMLSpanElement>, 'role'> &
         children?: ReactNode;
     };
 
+/** x-core Avatar / MUI props that are dropped (with a dev warning). */
+const legacyAvatarProps = {
+    sx: 'use size, tone or className',
+    variant: 'use shape ("circle" | "rounded")',
+    imgProps: 'not supported',
+    sizes: 'not supported',
+    srcSet: 'not supported',
+    component: 'not supported',
+} as const;
+
 type ImageStatus = 'none' | 'loading' | 'loaded' | 'error';
 
 /**
@@ -178,10 +189,11 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
         tone: toneProp,
         className,
         children,
-        ...rest
+        ...props
     },
     ref
 ) {
+    const rest = omitLegacyProps('Avatar', props, legacyAvatarProps);
     const group = useContext(AvatarGroupContext);
     // Untyped callers may pass x-core values (`size="small"`).
     const size = resolveOption(
@@ -226,7 +238,9 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
     }, [src]);
 
     const label = alt ?? name ?? '';
-    const initials = name ? getInitials(name) : '';
+    // x-core derived the initials from `alt` (`<Avatar alt={name} />`).
+    const source = name ?? alt;
+    const initials = source ? getInitials(source) : '';
     const fallback =
         children ??
         (initials ? (
