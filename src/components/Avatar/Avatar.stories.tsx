@@ -33,7 +33,10 @@ const px = { xs: 16, sm: 24, md: 32, lg: 40, xl: 64 } as const;
 const PHOTO = `data:image/svg+xml,${encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#5b7083"/><circle cx="32" cy="26" r="12" fill="#e8d5c4"/><rect x="12" y="42" width="40" height="30" rx="16" fill="#e8d5c4"/></svg>'
 )}`;
-const BROKEN = '/__missing-avatar__.png';
+// An undecodable data URI fails without a network request. A missing URL
+// (`/__missing.png`) waited on the dev server's 404, which took over 1s while
+// the full story suite runs in parallel and made ImageFallback flaky.
+const BROKEN = 'data:image/png;base64,AAAA';
 
 const row: CSSProperties = {
     display: 'flex',
@@ -168,24 +171,18 @@ export const ImageFallback: Story = {
     ),
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        // Image load/error events can take over 1s while the full suite runs
-        // in parallel (flaked from Task 11a on); wait up to 5s.
-        await waitFor(
-            () =>
-                expect(canvas.getByTestId('broken')).toHaveAttribute(
-                    'data-status',
-                    'error'
-                ),
-            { timeout: 5000 }
+        await waitFor(() =>
+            expect(canvas.getByTestId('broken')).toHaveAttribute(
+                'data-status',
+                'error'
+            )
         );
         await expect(canvas.getByTestId('broken')).toHaveTextContent('NP');
-        await waitFor(
-            () =>
-                expect(canvas.getByTestId('ok')).toHaveAttribute(
-                    'data-status',
-                    'loaded'
-                ),
-            { timeout: 5000 }
+        await waitFor(() =>
+            expect(canvas.getByTestId('ok')).toHaveAttribute(
+                'data-status',
+                'loaded'
+            )
         );
         await expect(
             canvas.getByRole('img', { name: 'Omer Katz' })
