@@ -7,6 +7,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
+import { omitLegacyProps } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const separatorStyles = cva('hz:m-0 hz:shrink-0 hz:border-0 hz:bg-border', {
@@ -59,6 +60,16 @@ export function separatorVariants(options?: SeparatorVariantOptions): string {
     return cn(separatorStyles(options));
 }
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacySeparatorProps = {
+    sx: 'use className',
+    flexItem: 'built in',
+    light: 'not supported',
+    textAlign: 'text dividers are not supported',
+    variant: 'not supported',
+    absolute: 'not supported',
+} as const;
+
 /**
  * A 1px line in the `border` token that separates content. Renders a
  * `<div>`, not `<hr>`, so host CSS for `hr` (Bootstrap reboot margins and
@@ -67,9 +78,10 @@ export function separatorVariants(options?: SeparatorVariantOptions): string {
  */
 export const Separator = forwardRef<HTMLDivElement, SeparatorProps>(
     function Separator(
-        { orientation = 'horizontal', decorative = true, className, ...rest },
+        { orientation = 'horizontal', decorative = true, className, ...props },
         ref
     ) {
+        const rest = omitLegacyProps('Separator', props, legacySeparatorProps);
         return (
             <div
                 {...rest}

@@ -7,7 +7,7 @@ import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const badgeStyles = cva(
@@ -241,6 +241,16 @@ function Marker({ variant }: { variant: BadgeVariant }) {
     );
 }
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacyBadgeProps = {
+    sx: 'use className',
+    color: 'use variant',
+    badgeContent: 'use count or children',
+    invisible: 'render conditionally',
+    anchorOrigin: 'use BadgeAnchor',
+    overlap: 'use BadgeAnchor overlap',
+} as const;
+
 /**
  * Small status indicator. Three forms: a label (tone dot + uppercase label,
  * or an AI marker + label), a count pill (`count`), or a dot alone (needs
@@ -249,9 +259,10 @@ function Marker({ variant }: { variant: BadgeVariant }) {
  * {@link BadgeAnchor} to pin a badge to its corner.
  */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
-    { variant: variantProp, count, max = 999, className, children, ...rest },
+    { variant: variantProp, count, max = 999, className, children, ...props },
     ref
 ) {
+    const rest = omitLegacyProps('Badge', props, legacyBadgeProps);
     // Untyped callers may pass x-core/MUI colours (`variant="secondary"`).
     const variant = resolveOption(
         'Badge',

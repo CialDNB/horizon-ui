@@ -12,7 +12,7 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const typographyStyles = cva(
@@ -192,6 +192,21 @@ export function typographyVariants(options?: TypographyVariantOptions): string {
     return cn(typographyStyles(options));
 }
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacyTypographyProps = {
+    sx: 'use className',
+    fontWeight: 'use weight',
+    fontSize: 'use variant',
+    lineHeight: 'use variant',
+    fontStyle: 'not supported',
+    gutterBottom: 'use margin classes',
+    noWrap: 'use truncate',
+    paragraph: 'use as="p"',
+    component: 'use as',
+    textAlign: 'use align',
+    display: 'use className',
+} as const;
+
 /**
  * Text in a Horizon type-scale role. Renders the semantic element for the
  * variant (override with `as`) and sets margin, colour, family, size, line
@@ -208,10 +223,16 @@ export const Typography = forwardRef<HTMLElement, TypographyImplProps>(
             align,
             truncate = false,
             className,
-            ...rest
+            ...props
         },
         ref
     ) {
+        // Only a DOM element gets the MUI props stripped; a component passed
+        // as `as` may accept them.
+        const rest =
+            as === undefined || typeof as === 'string'
+                ? omitLegacyProps('Typography', props, legacyTypographyProps)
+                : props;
         // Untyped callers may pass MUI names (`variant="h5"`), which would
         // leave no element to render.
         const variant = resolveOption(

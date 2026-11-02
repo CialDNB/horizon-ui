@@ -7,7 +7,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption, warnOnce } from '../../lib/options';
+import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const spinnerStyles = cva(
@@ -131,6 +131,14 @@ function resolveSize(size: unknown): SpinnerSize {
     return step;
 }
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacySpinnerProps = {
+    sx: 'use className',
+    color: 'use tone',
+    thickness: 'fixed stroke',
+    disableShrink: 'not supported',
+} as const;
+
 /**
  * Shows that something is loading. Renders `role="progressbar"` named by
  * `label` ("Loading"); with `value` it is a determinate ring with
@@ -146,10 +154,11 @@ export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(
             value,
             label = 'Loading',
             className,
-            ...rest
+            ...props
         },
         ref
     ) {
+        const rest = omitLegacyProps('Spinner', props, legacySpinnerProps);
         const size = resolveSize(sizeProp);
         const tone = resolveOption(
             'Spinner',

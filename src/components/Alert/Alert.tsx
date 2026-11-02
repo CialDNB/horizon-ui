@@ -13,7 +13,7 @@ import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const alertStyles = cva(
@@ -146,6 +146,14 @@ const dismissStyles = cn(
     'hz:outline-ring hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:-outline-offset-2 hz:tablet:pointer-fine:focus-visible:outline-offset-0 hz:focus-visible:outline-solid hz:focus-visible:outline-ring'
 );
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacyAlertProps = {
+    sx: 'use className',
+    color: 'use variant',
+    severity: 'use variant',
+    onClose: 'use onDismiss',
+} as const;
+
 /**
  * A message about the page or a task: tone surface, icon, optional title,
  * description, optional action and dismiss button. Errors and warnings are
@@ -165,10 +173,11 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
         role,
         className,
         children,
-        ...rest
+        ...props
     },
     ref
 ) {
+    const rest = omitLegacyProps('Alert', props, legacyAlertProps);
     // Untyped callers may pass x-core values (`variant="standard"`).
     const variant = resolveOption(
         'Alert',

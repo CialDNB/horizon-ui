@@ -17,7 +17,7 @@ import {
     type RefObject,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const chipStyles = cva(
@@ -336,6 +336,15 @@ function useIsTruncated(label: string) {
     return [ref, truncated] as const;
 }
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacyChipProps = {
+    sx: 'use className',
+    color: 'use variant (tone)',
+    avatar: 'pass an icon',
+    deleteIcon: 'the remove icon is fixed',
+    clickable: 'pass onClick',
+} as const;
+
 /**
  * Compact label for a status, category, filter or selected value. Static by
  * default; `onClick` makes it a button and `onDelete` adds a labelled remove
@@ -354,10 +363,11 @@ export const Chip = forwardRef<HTMLSpanElement, ChipProps>(function Chip(
         removeLabel,
         disabled = false,
         className,
-        ...rest
+        ...props
     },
     ref
 ) {
+    const rest = omitLegacyProps('Chip', props, legacyChipProps);
     // Untyped callers may pass x-core values (`size="small"`,
     // `variant="outlined"`); `size` indexes the hit-area records below.
     const variant = resolveOption(

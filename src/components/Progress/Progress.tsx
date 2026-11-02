@@ -14,7 +14,7 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const progressStyles = cva(
@@ -116,6 +116,13 @@ export function progressVariants(options?: ProgressVariantOptions): string {
 
 const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value));
 
+/** x-core / MUI props that are dropped (with a dev warning). */
+const legacyProgressProps = {
+    sx: 'use className',
+    color: 'use variant',
+    valueBuffer: 'not supported',
+} as const;
+
 /**
  * Shows how far a task has got: a bar on a `muted` track, with an optional
  * label and percentage. Without `value` it is indeterminate: a segment
@@ -136,10 +143,11 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
             'aria-valuetext': ariaValueText,
             'aria-describedby': ariaDescribedBy,
             className,
-            ...rest
+            ...props
         },
         ref
     ) {
+        const rest = omitLegacyProps('Progress', props, legacyProgressProps);
         const labelId = useId();
         // Untyped callers may pass x-core values (`variant="determinate"`).
         const variant = resolveOption(
