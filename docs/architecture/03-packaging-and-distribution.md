@@ -64,6 +64,7 @@ Sizes are minified, measured by bundling the package alone with Vite (react exte
 | `class-variance-authority` | 1.6 KB (0.8 KB) | Typed variants (shadcn default); replaces boolean-prop explosions. |
 | `@radix-ui/react-slot` | 4.3 KB (1.7 KB) | `asChild` composition (Button as link). Further Radix primitives are justified per component. |
 | `clsx` | 0.8 KB (0.5 KB) | Conditional class strings inside `cn`. |
+| `@radix-ui/react-checkbox` | 19.8 KB (6.3 KB), incl. its shared Radix internals (primitive, context, presence, use-size); most are shared with the other Radix packages, so the marginal cost after Select is far smaller | `Checkbox` (Task 11a): `role="checkbox"`, tri-state `aria-checked="mixed"`, Space toggling, label/`htmlFor` click, and a hidden native input so it submits with `<form>` and resets with `form.reset()`. Rebuilding this correctly by hand is the shadcn anti-pattern; x-core used MUI's. |
 
 ## Publishing
 

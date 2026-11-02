@@ -12,6 +12,7 @@ import {
     Badge,
     BadgeAnchor,
     Button,
+    Checkbox,
     Chip,
     FormField,
     HorizonProvider,
@@ -572,6 +573,28 @@ function App() {
                         >
                             <Input type="email" defaultValue="acme@" />
                         </FormField>
+                        <div data-testid="hz-checkboxes">
+                            <Checkbox
+                                label="Unchecked"
+                                data-testid="hz-checkbox"
+                            />
+                            <Checkbox
+                                label="Checked"
+                                defaultChecked
+                                data-testid="hz-checkbox-checked"
+                            />
+                            <Checkbox
+                                aria-label="Mixed"
+                                size="sm"
+                                checked="indeterminate"
+                                data-testid="hz-checkbox-mixed"
+                            />
+                            <Checkbox
+                                label="Disabled"
+                                disabled
+                                data-testid="hz-checkbox-disabled"
+                            />
+                        </div>
                         <Textarea
                             aria-label="Comment"
                             placeholder="Add a comment"

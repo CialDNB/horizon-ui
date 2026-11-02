@@ -196,7 +196,8 @@ export const curation: Record<string, Curation> = {
     Checkbox: {
         batch: 2,
         horizon: 'Checkbox',
-        note: 'Planned: Radix Checkbox, `onCheckedChange`.',
+        note: 'Done in Task 11a, see Checkbox section below. `onChange(event, checked)` becomes `onCheckedChange(checked)`; `indeterminate` becomes `checked="indeterminate"`; `size` small/medium becomes sm/md; MUI `FormControlLabel` becomes `label`; `color`, `sx`, `edge`, `inputProps`, `icon`/`checkedIcon`, `readOnly`, `disableRipple` dropped with a dev warning. v1 `Checkbox` call sites (17 files: `checked`, `onChange`, `size`, `value`, `color`, `sx`, `edge`, one `indeterminate`, one `readOnly`) migrate the same way.',
+        status: 'done',
     },
     Radio: {
         batch: 2,

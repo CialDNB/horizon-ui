@@ -29,6 +29,12 @@ export type {
     ButtonVariant,
     ButtonVariantOptions,
 } from './Button';
+export { Checkbox, checkboxVariants } from './Checkbox';
+export type {
+    CheckboxProps,
+    CheckboxSize,
+    CheckboxVariantOptions,
+} from './Checkbox';
 export { Chip, chipVariants } from './Chip';
 export type {
     ChipAppearance,

@@ -138,6 +138,11 @@ textPairs.push(
         text: 'destructive-strong',
         surface: 'background',
     },
+    {
+        use: 'Checkbox/Radio/Switch label',
+        text: 'foreground',
+        surface: 'background',
+    },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
 );
@@ -268,6 +273,29 @@ nonTextPairs.push(
         text: 'destructive',
         surface: 'background',
     },
+    {
+        use: 'Checkbox box (unchecked)',
+        text: 'control-border',
+        surface: 'background',
+    },
+    { use: 'Checkbox hover ring', text: 'primary', surface: 'background' },
+    { use: 'Checkbox checked fill', text: 'primary', surface: 'background' },
+    {
+        use: 'Checkbox check mark on the fill',
+        text: 'primary-foreground',
+        surface: 'primary',
+    },
+    {
+        use: 'Checkbox check mark on the hover fill',
+        text: 'primary-foreground',
+        surface: 'primary-hover',
+    },
+    {
+        use: 'Checkbox invalid ring',
+        text: 'destructive',
+        surface: 'background',
+    },
+    { use: 'Checkbox focus ring', text: 'ring', surface: 'background' },
     {
         use: 'form control boundary on a popover',
         text: 'control-border',

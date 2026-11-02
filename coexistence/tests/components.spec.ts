@@ -569,6 +569,41 @@ const PROBES: Record<string, Probe> = {
         ],
         props: [...FORM_TYPE_PROPS, 'rowGap', 'verticalAlign'],
     },
+    Checkbox: {
+        targets: [
+            ...plain(
+                ['', '-checked', '-mixed', '-disabled'].map(
+                    (v) => `hz-checkbox${v}`
+                )
+            ),
+            ...['', '-checked', '-mixed'].map((v) => ({
+                key: `hz-checkbox${v} box`,
+                selector: `${byTestId(`hz-checkbox${v}`)} > span`,
+            })),
+            {
+                key: 'box, focused',
+                selector: `${byTestId('hz-checkbox')} > span`,
+                focus: byTestId('hz-checkbox'),
+            },
+            {
+                key: 'check icon',
+                selector: `${byTestId('hz-checkbox-checked')} svg[data-checkbox-icon="checked"]`,
+            },
+            {
+                key: 'label',
+                selector: `[data-checkbox]:has(> ${byTestId('hz-checkbox')}) > label`,
+            },
+            {
+                key: 'disabled label',
+                selector: `[data-checkbox]:has(> ${byTestId('hz-checkbox-disabled')}) > label`,
+            },
+            {
+                key: 'wrapper',
+                selector: `[data-checkbox]:has(> ${byTestId('hz-checkbox')})`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1267,6 +1302,13 @@ const labelLimit = (color: string) => [
     `color: ${color} -> rgb(67, 81, 119)`,
     'display: inline-flex -> block',
 ];
+const choiceLabelLimit = (color: string) => [
+    'width: changed',
+    'marginBottom: 0px -> 8px',
+    `color: ${color} -> rgb(67, 81, 119)`,
+    'fontWeight: 400 -> 700',
+    `outlineColor: ${color} -> rgb(67, 81, 119)`,
+];
 const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // customer360 `label { display: block; color; font-weight: bold }` and
     // the reboot's `margin-bottom: .5rem` win over the layered utilities.
@@ -1287,6 +1329,18 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // Bootstrap's `textarea { line-height: inherit; resize: vertical }`.
     // `p { margin-bottom: 1rem }` on description and error, and the label
     // limit above; the error icon keeps its box (flex item).
+    // The visual box and its focus ring are spans: untouched. The label
+    // takes the host label rules; the 44px button only loses its (invisible)
+    // radius. The layered build keeps the focus ring here.
+    Checkbox: {
+        'disabled label': choiceLabelLimit('rgb(71, 85, 105)'),
+        'hz-checkbox': ['borderRadius: 4px -> 0px'],
+        'hz-checkbox-checked': ['borderRadius: 4px -> 0px'],
+        'hz-checkbox-disabled': ['borderRadius: 4px -> 0px'],
+        'hz-checkbox-mixed': ['borderRadius: 4px -> 0px'],
+        label: choiceLabelLimit('rgb(15, 23, 42)'),
+        wrapper: ['width: changed', 'height: changed'],
+    },
     FormField: {
         description: ['marginBottom: 0px -> 16px'],
         error: ['marginBottom: 0px -> 16px'],
