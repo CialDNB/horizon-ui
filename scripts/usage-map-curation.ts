@@ -95,7 +95,8 @@ export const curation: Record<string, Curation> = {
     Divider: {
         batch: 1,
         horizon: 'Separator',
-        note: 'Planned: shadcn `Separator` (orientation, decorative).',
+        note: 'Done in Task 10b, see Separator section below. `orientation` kept; `flexItem` built in (vertical always stretches to its row); new `decorative` (default true: `role="none"`; false: `role="separator"` + `aria-orientation`); renders a `<div>`, not `<hr>`; `color`, `sx`, `variant` (fullWidth/inset/middle), `textAlign`/children (text divider), `light`, `absolute`, `component` dropped.',
+        status: 'done',
     },
     CountryFlag: {
         batch: 1,

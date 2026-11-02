@@ -11,6 +11,7 @@ import {
     Button,
     Chip,
     HorizonProvider,
+    Separator,
     Spinner,
     Typography,
 } from '@cialdnb/horizon-ui';
@@ -290,6 +291,22 @@ function App() {
                         >
                             AI verified
                         </Badge>
+                        <Separator data-testid="hz-separator-h" />
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                            }}
+                        >
+                            <span>start</span>
+                            <Separator
+                                orientation="vertical"
+                                decorative={false}
+                                data-testid="hz-separator-v"
+                            />
+                            <span>end</span>
+                        </div>
                         <Spinner size="sm" data-testid="hz-spinner-sm" />
                         <Spinner
                             size="xl"

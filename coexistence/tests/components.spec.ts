@@ -177,11 +177,30 @@ const SPINNER: Target[] = [
     },
 ];
 
+const SEPARATOR_PROPS = [
+    'width',
+    'height',
+    'marginTop',
+    'marginBottom',
+    'borderTopWidth',
+    'borderTopStyle',
+    'backgroundColor',
+    'boxSizing',
+    'overflow',
+    'opacity',
+    'display',
+    'alignSelf',
+] as const;
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
     Badge: { targets: BADGE, props: BADGE_PROPS },
     Spinner: { targets: SPINNER, props: SPINNER_PROPS },
+    Separator: {
+        targets: plain(['hz-separator-h', 'hz-separator-v']),
+        props: SEPARATOR_PROPS,
+    },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -514,4 +533,22 @@ test.describe('reduced motion', () => {
                 '1e-05s'
             );
         });
+});
+
+test.describe('layered build: Separator against full Bootstrap', () => {
+    test('a div separator is untouched (Bootstrap only styles hr)', async ({
+        page,
+    }) => {
+        const probe = PROBES['Separator'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        expect(diff(without, withBootstrap)).toEqual({});
+        expect(without['hz-separator-h']?.['height']).toBe('1px');
+        expect(without['hz-separator-v']?.['width']).toBe('1px');
+    });
 });

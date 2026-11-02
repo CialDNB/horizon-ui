@@ -21,6 +21,12 @@ export type {
     ChipVariant,
     ChipVariantOptions,
 } from './Chip';
+export { Separator, separatorVariants } from './Separator';
+export type {
+    SeparatorOrientation,
+    SeparatorProps,
+    SeparatorVariantOptions,
+} from './Separator';
 export { Spinner, spinnerVariants } from './Spinner';
 export type {
     SpinnerProps,
