@@ -13,8 +13,8 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption, warnOnce } from '../../lib/options';
-import { anchorGuard } from '../../primitives';
+import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
+import { anchorGuard, blockedClick, buttonTones } from '../../primitives';
 import { Spinner } from '../Spinner';
 import type { DnbBase } from '../../types/DnbBase';
 
@@ -37,13 +37,13 @@ const iconButtonStyles = cva(
     {
         variants: {
             variant: {
-                primary: `hz:bg-primary hz:text-primary-foreground hz:hover:bg-primary-hover hz:inactive:bg-muted ${anchorGuard('primary-foreground')}`,
-                secondary: `hz:border-primary hz:bg-transparent hz:text-primary hz:hover:bg-primary hz:inactive:border-input hz:inactive:bg-transparent ${anchorGuard('primary', { hover: 'primary-foreground' })}`,
+                primary: buttonTones.primary,
+                secondary: buttonTones.secondary,
                 // Button's tertiary underlines on hover; an icon has no text
                 // to underline, so it tints to `accent` like ghost.
                 tertiary: `hz:bg-transparent hz:text-primary hz:hover:bg-accent hz:inactive:bg-transparent ${anchorGuard('primary', { hover: 'accent-foreground' })}`,
-                destructive: `hz:bg-destructive hz:text-destructive-foreground hz:hover:bg-destructive-hover hz:inactive:bg-muted ${anchorGuard('destructive-foreground')}`,
-                ghost: `hz:bg-transparent hz:text-foreground hz:hover:bg-accent hz:inactive:bg-transparent ${anchorGuard('foreground', { hover: 'accent-foreground' })}`,
+                destructive: buttonTones.destructive,
+                ghost: buttonTones.ghost,
             },
             // Square boxes: 44/44/48 at mobile and on touch pointers (the box
             // is the target); 32/36/44 from tablet with a fine pointer, as
@@ -78,6 +78,16 @@ const iconButtonVariantNames: readonly IconButtonVariant[] = [
 ];
 const iconButtonSizes: readonly IconButtonSize[] = ['sm', 'md', 'lg'];
 const spinnerSize = { sm: 'sm', md: 'md', lg: 'lg' } as const;
+
+/** x-core IconButton / MUI props that are dropped (with a dev warning). */
+const legacyIconButtonProps = {
+    color: 'use variant: default -> "primary", primary -> "tertiary", error -> "destructive"',
+    tooltipInfo: 'wrap in Tooltip (Task 11); the name is aria-label',
+    tooltipProps: 'wrap in Tooltip (Task 11)',
+    sx: 'use className',
+    edge: 'use className for negative margins',
+    disableRipple: 'IconButton has no ripple',
+} as const;
 
 /**
  * Class string for the IconButton look, conflict-resolved with `cn()`. Set
@@ -166,10 +176,15 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
             disabled = false,
             onClick,
             children,
-            ...rest
+            ...props
         },
         ref
     ) {
+        const rest = omitLegacyProps(
+            'IconButton',
+            props,
+            legacyIconButtonProps
+        );
         // Untyped callers may pass x-core values (`color`-style names).
         const variant = resolveOption(
             'IconButton',
@@ -192,14 +207,10 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         const ariaDisabled =
             rest['aria-disabled'] === true || rest['aria-disabled'] === 'true';
         const blocked = loading || disabled || ariaDisabled;
-        // Same blocking as Button (two uses: kept local, extracted at 3+).
-        const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-            if (blocked) {
-                event.preventDefault();
-                return;
-            }
-            onClick?.(event);
-        };
+        const handleClick = blockedClick<MouseEvent<HTMLButtonElement>>(
+            blocked,
+            onClick
+        );
         const shared = {
             ...rest,
             ref,

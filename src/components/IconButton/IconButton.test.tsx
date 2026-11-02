@@ -300,5 +300,28 @@ describe('IconButton', () => {
             expect(warn).toHaveBeenCalledOnce();
             expect(warn.mock.calls[0]?.[0]).toContain('aria-label');
         });
+
+        it('drops x-core-only props (palette color, tooltipInfo, sx) instead of leaking them', () => {
+            const warn = vi
+                .spyOn(console, 'warn')
+                .mockImplementation(() => undefined);
+            const error = vi.spyOn(console, 'error');
+            const props = {
+                'aria-label': 'Edit',
+                color: 'neutralDark.option_2',
+                tooltipInfo: 'Edit',
+                sx: { p: '4px' },
+            };
+            render(
+                <IconButton {...props}>
+                    <Pencil />
+                </IconButton>
+            );
+            const button = screen.getByRole('button');
+            for (const attr of ['color', 'tooltipinfo', 'sx'])
+                expect(button).not.toHaveAttribute(attr);
+            expect(warn).toHaveBeenCalledTimes(3);
+            expect(error).not.toHaveBeenCalled();
+        });
     });
 });
