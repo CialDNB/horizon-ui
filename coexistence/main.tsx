@@ -6,6 +6,7 @@ import {
     createTheme,
 } from '@mui/material';
 import {
+    Alert,
     Badge,
     BadgeAnchor,
     Button,
@@ -292,6 +293,22 @@ function App() {
                         >
                             AI verified
                         </Badge>
+                        <Alert
+                            variant="warning"
+                            title="Contract expired"
+                            onDismiss={() => undefined}
+                            action={
+                                <Button variant="tertiary" size="sm">
+                                    Renew
+                                </Button>
+                            }
+                            data-testid="hz-alert"
+                        >
+                            Renew to keep ordering reports.
+                        </Alert>
+                        <Alert variant="info" data-testid="hz-alert-plain">
+                            Few data credits left.
+                        </Alert>
                         <Separator data-testid="hz-separator-h" />
                         <div
                             style={{

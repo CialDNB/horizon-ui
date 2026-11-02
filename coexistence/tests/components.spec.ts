@@ -239,6 +239,44 @@ const PROGRESS: Target[] = [
     },
 ];
 
+const ALERT_PROPS = [
+    'width',
+    'height',
+    'paddingTop',
+    'paddingInlineStart',
+    'marginTop',
+    'marginInlineEnd',
+    'borderRadius',
+    'borderTopWidth',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'color',
+    'backgroundColor',
+    'outlineStyle',
+    'outlineWidth',
+    'outlineColor',
+    'outlineOffset',
+    'cursor',
+    'display',
+] as const;
+
+const alertPart = (part: string) => `${byTestId('hz-alert')} ${part}`;
+const ALERT: Target[] = [
+    ...plain(['hz-alert', 'hz-alert-plain']),
+    { key: 'icon', selector: alertPart('[data-alert-icon] svg') },
+    { key: 'title', selector: alertPart('[data-alert-title]') },
+    { key: 'description', selector: alertPart('[data-alert-description]') },
+    { key: 'action', selector: alertPart('[data-alert-action] button') },
+    { key: 'dismiss', selector: alertPart('button[aria-label="Dismiss"]') },
+    {
+        key: 'dismiss, focused',
+        selector: alertPart('button[aria-label="Dismiss"]'),
+        focus: alertPart('button[aria-label="Dismiss"]'),
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
@@ -249,6 +287,7 @@ const PROBES: Record<string, Probe> = {
         props: SEPARATOR_PROPS,
     },
     Progress: { targets: PROGRESS, props: PROGRESS_PROPS },
+    Alert: { targets: ALERT, props: ALERT_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -630,3 +669,49 @@ test.describe('layered build: Progress against full Bootstrap', () => {
         expect(diff(without, withBootstrap)).toEqual({});
     });
 });
+
+test.describe('layered build (known limit): Alert against full Bootstrap', () => {
+    test('the surface and text are untouched; only the buttons change', async ({
+        page,
+    }) => {
+        const probe = PROBES['Alert'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        const { widened, ...rest } = splitWidths(diff(without, withBootstrap));
+        expect(rest).toEqual(LAYERED_ALERT_DIFF);
+        // The action Button grows with Bootstrap's `button { font: inherit }`
+        // (known Button limit), so the text column narrows by as much.
+        expect(Object.keys(widened).sort()).toEqual([
+            'action',
+            'description',
+            'title',
+        ]);
+    });
+});
+
+// Measured: the surface, icon and text keep every property. The reboot's
+// `button { margin: 0; border-radius: 0 }` cancels the dismiss button's
+// negative margins and squares its hover circle, and `button:focus` adds
+// Bootstrap's ring; the action is a horizon Button (ADR 0001 known limit).
+const dismissLimit = [
+    'marginTop: -6px -> 0px',
+    'marginInlineEnd: -6px -> 0px',
+    'borderRadius: 100px -> 0px',
+];
+const LAYERED_ALERT_DIFF = {
+    action: [
+        'borderRadius: 20px -> 0px',
+        'fontSize: 12px -> 16px',
+        'lineHeight: 16px -> 20px',
+    ],
+    dismiss: dismissLimit,
+    'dismiss, focused': [
+        ...dismissLimit,
+        ...bootstrapRing('solid', '2px', 'rgb(0, 80, 240)'),
+    ],
+};

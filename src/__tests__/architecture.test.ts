@@ -81,6 +81,7 @@ describe('architecture', () => {
         it('matches snapshot', () => {
             expect(Object.keys(api).sort()).toMatchInlineSnapshot(`
               [
+                "Alert",
                 "Badge",
                 "BadgeAnchor",
                 "Button",
@@ -90,6 +91,7 @@ describe('architecture', () => {
                 "Separator",
                 "Spinner",
                 "Typography",
+                "alertVariants",
                 "badgeVariants",
                 "buttonVariants",
                 "chipVariants",

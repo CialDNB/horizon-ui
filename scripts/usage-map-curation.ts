@@ -48,7 +48,8 @@ export const curation: Record<string, Curation> = {
     Alert: {
         batch: 1,
         horizon: 'Alert',
-        note: 'Planned: role alert; `severity` becomes `variant`.',
+        note: 'Done in Task 10b, see Alert section below. `color`/`severity` become `variant` (info/success/warning/error + neutral); `AlertTitle` child becomes `title`; `onClose` becomes `onDismiss` (+ `dismissLabel`); `action` and `icon` (incl. `false`) kept; MUI `variant` standard/inline/outlined/filled/footer folded into one look; role is `alert` for warning/error and `status` otherwise (`role` overrides); `sx`, `elevation`, `closeText`, `slots` dropped.',
+        status: 'done',
     },
     Badge: {
         batch: 1,

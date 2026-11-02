@@ -15,6 +15,14 @@ const tones = [
     ['error', 'destructive-subtle', 'destructive-strong'],
 ] as const satisfies readonly (readonly [string, SemanticKey, SemanticKey])[];
 
+const alertTones = [
+    ['neutral', 'neutral-subtle', 'neutral-strong'],
+    ['info', 'info-subtle', 'info-strong'],
+    ['success', 'success-subtle', 'success-strong'],
+    ['warning', 'warning-subtle', 'warning-strong'],
+    ['error', 'destructive-subtle', 'destructive-strong'],
+] as const satisfies readonly (readonly [string, SemanticKey, SemanticKey])[];
+
 /** Every text-on-surface pair Typography, Chip and Badge render. */
 const textPairs: Pair[] = [
     ...(
@@ -53,6 +61,14 @@ const textPairs: Pair[] = [
     },
     { use: 'Badge status label', text: 'foreground', surface: 'background' },
     { use: 'Badge ai label', text: 'primary', surface: 'background' },
+    ...alertTones.flatMap(([tone, subtle, strong]): Pair[] => [
+        { use: `Alert ${tone} text and icon`, text: strong, surface: subtle },
+        {
+            use: `Alert ${tone} tertiary Button action`,
+            text: 'primary',
+            surface: subtle,
+        },
+    ]),
     { use: 'Progress label', text: 'foreground', surface: 'background' },
     {
         use: 'Progress value',
@@ -82,6 +98,11 @@ describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {
  */
 const nonTextPairs: Pair[] = [
     { use: 'focus ring (Button, Chip)', text: 'ring', surface: 'background' },
+    ...alertTones.map(([tone, subtle]) => ({
+        use: `Alert ${tone} dismiss focus ring`,
+        text: 'ring' as const,
+        surface: subtle,
+    })),
     ...(
         [
             'neutral-strong',
