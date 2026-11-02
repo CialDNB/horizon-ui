@@ -37,6 +37,32 @@ Not guaranteed (measured, see the ADR):
 
 The harness needs `npx playwright install chromium`. MUI and Emotion are devDependencies used only there; they are never in `dependencies`, `peerDependencies` or `src/`.
 
+## Horizon controls inside MUI dialogs
+
+MUI renders a Dialog (and Modal, Drawer, Popover, Menu) into `document.body`, outside the app's `HorizonProvider` element. **Wrap the dialog content in a `HorizonProvider`** (no props needed: a nested provider inherits `brand` and `dir` from its parent, also across MUI's portal):
+
+```tsx
+<HorizonProvider brand="cial" dir={dir}>      {/* app root */}
+    ...
+    <MuiDialog open={open} onClose={close}>
+        <DialogContent>
+            <HorizonProvider>                  {/* no props: inherits brand and dir */}
+                <FormField label="Company">
+                    <Select placeholder="Choose">...</Select>
+                </FormField>
+            </HorizonProvider>
+        </DialogContent>
+    </MuiDialog>
+</HorizonProvider>
+```
+
+Measured in the coexistence harness (`coexistence/tests/components.spec.ts`, unlayered build + full Bootstrap + customer360 host CSS):
+
+- **With the inner provider** the controls are inside `.hz-root` (Horizon variables and styles apply); a Select opens from the keyboard, arrows and Enter select, Escape closes only the list (the MUI dialog stays open), focus returns to the trigger, options are exposed to assistive technology (role queries find them), pointer selection works, and the list is above the dialog (`--z-dropdown` 1400 > MUI 1300).
+- **Without it the controls are not usable**: they sit outside any `.hz-root`, so `var(--primary)` resolves to Bootstrap's own `:root --primary` (#007bff) and the other variables are missing; and a Select list portals into the app-level provider inside `#root`, which MUI's ModalManager marks `aria-hidden` while the dialog is open, so screen readers cannot reach the options even though keyboard focus is on one. horizon-ui does not try to detect MUI.
+
+A `container` prop on Select was considered and not added: any container must itself be a `.hz-root` (for the variables), which is exactly what the inner provider gives; later overlays (Dialog, Popover, Tooltip) follow the same rule.
+
 ## Component porting order (proposal)
 
 Principle: foundational + most-used first so customer360 gets value early. Final ranking should come from import counts in customer360 (builder: grep x-core imports in `customer360/client`).

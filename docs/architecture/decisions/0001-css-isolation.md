@@ -206,6 +206,10 @@ Related decisions made in this task:
 - Register the theme scales that differ from Tailwind's defaults: `shadow` → `['1','2','3','4']`, `radius` → `['none','xs','sm','md','lg','xl','full']`, `breakpoint` → `['tablet','laptop','desktop']`, `ease` → `['standard','enter','exit','spring']`, `font-weight` → `['light','regular','medium','semibold','bold','extra-bold']`.
 - Required tests: `cn('hz:px-2', 'hz:px-4') === 'hz:px-4'`, `cn('hz:text-body-default', 'hz:text-heading-md') === 'hz:text-heading-md'`, `cn('hz:text-body-default', 'hz:text-primary')` keeps both, `cn('hz:shadow-1', 'hz:shadow-2') === 'hz:shadow-2'`, `cn('hz:rounded-lg', 'hz:rounded-xs') === 'hz:rounded-xs'`.
 
+## Portals rendered by the host (MUI dialogs)
+
+Scoping by `.hz-root` means a Horizon component rendered into a host portal (an MUI Dialog in `document.body`) is unstyled unless that portal content has its own `.hz-root`: wrap it in a `<HorizonProvider>` (it inherits brand and direction from the parent provider). Measured consequences without it and the snippet: `docs/architecture/05-migration-and-coexistence.md`, "Horizon controls inside MUI dialogs".
+
 ## Consequences
 
 - No class collisions with consumer CSS or a consumer's own Tailwind (v3 or v4). MUI/Emotion pages are unaffected (measured).

@@ -1666,3 +1666,154 @@ test.describe('Select inside an MUI dialog (z-index 1300)', () => {
         ).toBe('#0050F0');
     });
 });
+
+/**
+ * Keyboard and pointer use of a Select inside a real MUI Dialog, unlayered
+ * build with full Bootstrap + customer360 host CSS. `inner`: a
+ * `<HorizonProvider>` (no props, inherits) wraps the dialog content (the
+ * documented pattern). `outer`: only the app-level provider (React context
+ * crosses MUI's portal, the DOM does not).
+ */
+const DIALOG_CASES = {
+    inner: { select: 'hz-select-dialog', input: 'hz-input-dialog' },
+    outer: { select: 'hz-select-dialog-outer', input: 'hz-input-dialog-outer' },
+} as const;
+
+/**
+ * Waits until Radix has placed the open list and moved focus into it, then
+ * pauses. Measured: keys sent within a few hundred ms of opening or of an
+ * arrow move (far faster than a person types) intermittently selected the
+ * first option instead of the focused one, with or without MUI around; with
+ * the pauses the sequence is stable. Not a product issue for human input.
+ */
+const SETTLE_MS = 300;
+const listSettled = async (page: Page) => {
+    await page.waitForFunction(() => {
+        const wrapper = document.querySelector(
+            '[data-radix-popper-content-wrapper]'
+        );
+        return (
+            wrapper !== null &&
+            !(wrapper.getAttribute('style') ?? '').includes('-200%') &&
+            document.activeElement?.getAttribute('role') === 'option'
+        );
+    });
+    await page.waitForTimeout(SETTLE_MS);
+};
+
+const dialogSelect = async (page: Page, testId: string) => {
+    await page.goto(url('unlayered', { reboot: 'full', host: true }));
+    await page.getByTestId('open-mui-dialog').click();
+    // Keep the cursor off the list so a hover cannot move the highlight
+    // during the keyboard steps.
+    await page.mouse.move(1, 1);
+    const trigger = page.getByTestId(testId);
+    await expect(trigger).toBeVisible();
+    return trigger;
+};
+
+const scopeOf = (page: Page, testId: string) =>
+    page.getByTestId(testId).evaluate((el) => ({
+        inHzRoot: el.closest('.hz-root') !== null,
+        primary: getComputedStyle(el)
+            .getPropertyValue('--primary')
+            .trim()
+            .toUpperCase(),
+        radius: getComputedStyle(el.closest('[data-input-field]') ?? el)
+            .borderRadius,
+    }));
+
+test.describe('Horizon controls inside an MUI dialog (unlayered + host CSS)', () => {
+    test('inner provider: scoped and styled; keyboard opens, selects, Escape closes only the list', async ({
+        page,
+    }) => {
+        const trigger = await dialogSelect(page, DIALOG_CASES.inner.select);
+        expect(await scopeOf(page, DIALOG_CASES.inner.select)).toEqual({
+            inHzRoot: true,
+            primary: '#0050F0',
+            radius: '20px',
+        });
+        expect(await scopeOf(page, DIALOG_CASES.inner.input)).toEqual({
+            inHzRoot: true,
+            primary: '#0050F0',
+            radius: '20px',
+        });
+        await trigger.focus();
+        await page.keyboard.press('Enter');
+        // Role queries skip aria-hidden content: options must be exposed.
+        await expect(
+            page.getByRole('option', { name: 'Acme Ltd.' })
+        ).toBeFocused();
+        expect(
+            await page
+                .getByRole('listbox')
+                .evaluate((el) => el.closest('.hz-root') !== null)
+        ).toBe(true);
+        await listSettled(page);
+        await page.keyboard.press('ArrowDown');
+        await expect(
+            page.getByRole('option', { name: 'Globex' })
+        ).toBeFocused();
+        await page.waitForTimeout(SETTLE_MS);
+        await page.keyboard.press('Enter');
+        await expect(trigger).toHaveText('Globex');
+        await expect(trigger).toBeFocused();
+        await page.keyboard.press('Enter');
+        await expect(page.getByRole('listbox')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(page.getByRole('listbox')).toHaveCount(0);
+        await expect(page.getByTestId('mui-dialog-content')).toBeVisible();
+        await expect(trigger).toBeFocused();
+        // Pointer.
+        await trigger.click();
+        await page.getByRole('option', { name: 'Initech' }).click();
+        await expect(trigger).toHaveText('Initech');
+        await page.getByTestId(DIALOG_CASES.inner.input).fill('acme');
+        await expect(page.getByTestId(DIALOG_CASES.inner.input)).toHaveValue(
+            'acme'
+        );
+    });
+
+    test('outer provider only (measured, NOT usable): unstyled, and the list is aria-hidden by MUI', async ({
+        page,
+    }) => {
+        const trigger = await dialogSelect(page, DIALOG_CASES.outer.select);
+        // KNOWN LIMIT 1: the controls are outside any .hz-root, so
+        // `var(--primary)` resolves to Bootstrap's own :root `--primary`
+        // (#007bff) and the other Horizon variables are missing.
+        expect(await scopeOf(page, DIALOG_CASES.outer.select)).toEqual({
+            inHzRoot: false,
+            primary: '#007BFF',
+            radius: '20px',
+        });
+        await trigger.focus();
+        await page.keyboard.press('Enter');
+        const listbox = page.locator('[role="listbox"]');
+        await expect(listbox).toBeVisible();
+        // KNOWN LIMIT 2: the list portals into the app-level provider, inside
+        // #root, which MUI's ModalManager marks aria-hidden while the dialog
+        // is open: screen readers cannot reach the options (role queries,
+        // which skip aria-hidden content, find none) although focus is on one.
+        expect(
+            await listbox.evaluate(
+                (el) => el.closest('[aria-hidden="true"]')?.id ?? null
+            )
+        ).toBe('root');
+        await expect(page.getByRole('option')).toHaveCount(0);
+        expect(
+            await page.evaluate(
+                () => document.activeElement?.getAttribute('role') ?? null
+            )
+        ).toBe('option');
+        // Keyboard and pointer selection still work for sighted users.
+        await listSettled(page);
+        await page.keyboard.press('ArrowDown');
+        await page.waitForTimeout(SETTLE_MS);
+        await page.keyboard.press('Enter');
+        await expect(trigger).toHaveText('Globex');
+        await trigger.click();
+        await page.locator('[role="option"]', { hasText: 'Initech' }).click();
+        await expect(trigger).toHaveText('Initech');
+        await expect(page.getByTestId('mui-dialog-content')).toBeVisible();
+    });
+});

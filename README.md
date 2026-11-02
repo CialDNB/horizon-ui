@@ -34,6 +34,23 @@ import '@cialdnb/horizon-ui/styles.unlayered.css';
 
 Import exactly one of the two, once, and render components inside `HorizonProvider`. Which build to choose and why: [ADR 0001](docs/architecture/decisions/0001-css-isolation.md).
 
+**Inside MUI dialogs (and other MUI portals) wrap the content in its own `<HorizonProvider>`.** MUI renders them into `document.body`, outside your app's provider; a nested provider with no props inherits `brand` and `dir` from the parent. Without it the controls are unstyled and a Select list is hidden from screen readers (measured; see [docs/architecture/05](docs/architecture/05-migration-and-coexistence.md#horizon-controls-inside-mui-dialogs)).
+
+```tsx
+<HorizonProvider brand="cial" dir={dir}>      {/* app root */}
+    ...
+    <MuiDialog open={open} onClose={close}>
+        <DialogContent>
+            <HorizonProvider>                  {/* no props: inherits brand and dir */}
+                <FormField label="Company">
+                    <Select placeholder="Choose">...</Select>
+                </FormField>
+            </HorizonProvider>
+        </DialogContent>
+    </MuiDialog>
+</HorizonProvider>
+```
+
 ## Icons and illustrations
 
 Icons are Phosphor (`@phosphor-icons/react`, same set as x-core), re-exported with the `*Icon` names. They are only available from the subpaths `@cialdnb/horizon-ui/icons` and `@cialdnb/horizon-ui/illustrations` (not from the root entry), so named imports tree-shake (one icon is about 3 KB; the whole set is about 5.5 MB). x-core's `icons`/`illustrations` namespaces map to these subpaths.

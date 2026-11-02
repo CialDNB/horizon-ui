@@ -204,6 +204,10 @@ function SelectInMuiDialog() {
             <MuiDialog open={open} onClose={() => setOpen(false)}>
                 <MuiDialogContent data-testid="mui-dialog-content">
                     <HorizonProvider>
+                        <Input
+                            aria-label="Inner input"
+                            data-testid="hz-input-dialog"
+                        />
                         <Select
                             aria-label="Inside provider"
                             placeholder="Pick"
@@ -216,6 +220,10 @@ function SelectInMuiDialog() {
                             ))}
                         </Select>
                     </HorizonProvider>
+                    <Input
+                        aria-label="Outer input"
+                        data-testid="hz-input-dialog-outer"
+                    />
                     <Select
                         aria-label="App provider only"
                         placeholder="Pick"
