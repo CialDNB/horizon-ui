@@ -47,3 +47,27 @@ export function resolveOption<T extends string>(
     );
     return fallback;
 }
+
+/**
+ * Removes props that x-core/MUI accepted but this component does not
+ * (`sx`, `startIcon`, palette `color` ...), so plain-JS callers do not leak
+ * them to the DOM as attributes. Warns once per component and prop with the
+ * replacement in `legacy[name]`. Returns `props` itself when nothing matched.
+ */
+export function omitLegacyProps<T extends object>(
+    component: string,
+    props: T,
+    legacy: Readonly<Record<string, string>>
+): T {
+    const found = Object.keys(props).filter((key) =>
+        Object.hasOwn(legacy, key)
+    );
+    if (found.length === 0) return props;
+    for (const name of found)
+        warnOnce(
+            `${component}: x-core prop "${name}" is not supported and was ignored (${legacy[name] ?? ''}).`
+        );
+    return Object.fromEntries(
+        Object.entries(props).filter(([key]) => !Object.hasOwn(legacy, key))
+    ) as T;
+}

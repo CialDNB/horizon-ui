@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resetWarnings, resolveOption, warnOnce } from './options';
+import {
+    omitLegacyProps,
+    resetWarnings,
+    resolveOption,
+    warnOnce,
+} from './options';
 
 afterEach(() => {
     resetWarnings();
@@ -34,5 +39,31 @@ describe('resolveOption', () => {
         warnOnce('prod');
         expect(warn).not.toHaveBeenCalled();
         vi.unstubAllEnvs();
+    });
+});
+
+describe('omitLegacyProps', () => {
+    const legacy = {
+        sx: 'use className',
+        startIcon: 'pass the icon as children',
+    };
+
+    it('returns the same object when no legacy prop is present, silently', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const props = { id: 'a', title: 'b' };
+        expect(omitLegacyProps('X', props, legacy)).toBe(props);
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('drops present legacy props (even undefined ones) and warns once per prop', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const props = { id: 'a', sx: { p: 1 }, startIcon: undefined };
+        for (let i = 0; i < 2; i++)
+            expect(omitLegacyProps('X', props, legacy)).toEqual({ id: 'a' });
+        expect(props).toHaveProperty('sx');
+        expect(warn).toHaveBeenCalledTimes(2);
+        expect(warn.mock.calls[0]?.[0]).toBe(
+            '[horizon-ui] X: x-core prop "sx" is not supported and was ignored (use className).'
+        );
     });
 });
