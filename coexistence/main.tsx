@@ -298,6 +298,26 @@ function MuiFromHorizon() {
     );
 }
 
+/** Fires an action toast (customer360 showActionSnackbar with "Cancel"). */
+function ActionToastButton({ testId }: { testId: string }) {
+    return (
+        <Button
+            variant="secondary"
+            data-testid={testId}
+            onClick={() =>
+                toast({
+                    id: 'action-toast',
+                    description: 'Request sent',
+                    action: { label: 'Undo send', onClick: () => undefined },
+                    duration: Infinity,
+                })
+            }
+        >
+            Action toast
+        </Button>
+    );
+}
+
 /** Opens a ConfirmationDialog (destructive). */
 function ConfirmDelete({ scope }: { scope: string }) {
     const [open, setOpen] = useState(false);
@@ -343,10 +363,13 @@ function DetailsDrawer({ scope }: { scope: string }) {
                 width={480}
                 data-testid={`${scope}-drawer`}
                 content={
-                    <Input
-                        aria-label="Drawer field"
-                        data-testid={`${scope}-drawer-input`}
-                    />
+                    <>
+                        <Input
+                            aria-label="Drawer field"
+                            data-testid={`${scope}-drawer-input`}
+                        />
+                        <ActionToastButton testId={`${scope}-drawer-toast`} />
+                    </>
                 }
                 actions={
                     <Button
@@ -421,6 +444,7 @@ function Overlays({ scope }: { scope: string }) {
                             data-testid={`${scope}-dialog-input`}
                         />
                         {scope === 'hz' && <MuiFromHorizon />}
+                        <ActionToastButton testId={`${scope}-dialog-toast`} />
                     </DialogBody>
                     <DialogFooter>
                         <DialogClose asChild>

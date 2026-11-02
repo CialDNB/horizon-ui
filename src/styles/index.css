@@ -78,17 +78,19 @@
  * percentage) and `--hz-enter-scale`; Radix keeps exiting content mounted
  * until the exit animation ends. Durations and curves are the motion tokens
  * on `.hz-root`; reduced motion collapses them (base.css). Renamed hz-* in
- * the build.
+ * the build. Enter animations fill `backwards` only: a filling transform
+ * would keep the panel a containing block for fixed descendants (the toast
+ * list portals into an open modal) after the animation ends.
  */
 @theme inline {
     /* prettier-ignore */
-    --animate-overlay-in: overlay-in var(--duration-normal) var(--ease-enter) both;
+    --animate-overlay-in: overlay-in var(--duration-normal) var(--ease-enter) backwards;
     /* prettier-ignore */
-    --animate-overlay-out: overlay-out var(--duration-fast) var(--ease-exit) both;
+    --animate-overlay-out: overlay-out var(--duration-fast) var(--ease-exit) forwards;
     /* prettier-ignore */
-    --animate-panel-in: overlay-in var(--duration-slow) var(--ease-enter) both;
+    --animate-panel-in: overlay-in var(--duration-slow) var(--ease-enter) backwards;
     /* prettier-ignore */
-    --animate-panel-out: overlay-out var(--duration-normal) var(--ease-exit) both;
+    --animate-panel-out: overlay-out var(--duration-normal) var(--ease-exit) forwards;
 
     @keyframes overlay-in {
         from {

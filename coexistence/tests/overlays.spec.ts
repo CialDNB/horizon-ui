@@ -558,22 +558,99 @@ for (const build of ['layered', 'unlayered'] as const)
                     (el) => el.closest('[aria-hidden="true"]') === null
                 )
             ).toBe(true);
-            // KNOWN LIMIT (measured): the visible list portals into the app
-            // provider inside #root, which MUI aria-hides while its dialog
-            // is open, and MUI's focus trap keeps F8 focus in the dialog.
+            // Fixed (Task 11b review I3): while the MUI dialog is open the
+            // list portals into its inner HorizonProvider, so it is inside
+            // MUI's focus trap and not aria-hidden: role queries find the
+            // button, and the keyboard reaches it.
             expect(
                 await item.evaluate(
-                    (el) => el.closest('[aria-hidden="true"]')?.id ?? null
+                    (el) =>
+                        el.closest('[aria-hidden="true"]') === null &&
+                        el.closest('.MuiDialog-root') !== null
                 )
-            ).toBe('root');
-            // Role queries skip it (aria-hidden); the pointer still works.
-            await expect(
-                item.getByRole('button', { name: 'Dismiss' })
-            ).toHaveCount(0);
-            await item.locator('button[aria-label="Dismiss"]').click();
+            ).toBe(true);
+            const dismiss = item.getByRole('button', { name: 'Dismiss' });
+            await dismiss.focus();
+            await expect(dismiss).toBeFocused();
+            await page.keyboard.press('Enter');
             await expect(item).toHaveCount(0);
             await expect(
                 page.getByTestId('mui-overlays-content')
             ).toBeVisible();
         });
+
+        for (const kind of ['dialog', 'drawer'] as const)
+            test(`Toast while a Horizon ${kind} is open (inside the MUI dialog): action reachable by keyboard and pointer, pressing it keeps the ${kind} open`, async ({
+                page,
+            }) => {
+                await openMuiOverlays(page, build);
+                await page.getByTestId(`mui-${kind}-trigger`).click();
+                const panel = page.getByRole('dialog', {
+                    name:
+                        kind === 'dialog' ? 'Overlay dialog' : 'Overlay drawer',
+                });
+                await expect(panel).toBeVisible();
+                await panel.evaluate((el) =>
+                    Promise.all(el.getAnimations().map((a) => a.finished))
+                );
+                await page.getByTestId(`mui-${kind}-toast`).click();
+                const action = page.getByRole('button', { name: 'Undo send' });
+                await expect(action).toBeVisible();
+                await action.evaluate((el) =>
+                    Promise.all(
+                        (el.closest('[data-toast]') ?? el)
+                            .getAnimations()
+                            .map((a) => a.finished)
+                    )
+                );
+                expect(await onTop(page, action)).toBe(true);
+                await action.focus();
+                await expect(action).toBeFocused();
+                await action.click();
+                await expect(action).toHaveCount(0);
+                await expect(panel).toBeVisible();
+                await expect(
+                    page.getByTestId('mui-overlays-content')
+                ).toBeVisible();
+            });
     });
+
+test.describe('toasts while an app-level Horizon modal is open', () => {
+    for (const kind of ['dialog', 'drawer'] as const)
+        test(`Horizon ${kind}: the toast is inside the modal layer, not aria-hidden, keyboard and pointer reachable`, async ({
+            page,
+        }) => {
+            await page.goto(url('unlayered', { reboot: 'full', host: true }));
+            await page.getByTestId(`hz-${kind}-trigger`).click();
+            const panel = page.getByRole('dialog', {
+                name: kind === 'dialog' ? 'Overlay dialog' : 'Overlay drawer',
+            });
+            await expect(panel).toBeVisible();
+            await panel.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
+            await page.getByTestId(`hz-${kind}-toast`).click();
+            const action = page.getByRole('button', { name: 'Undo send' });
+            await expect(action).toBeVisible();
+            await action.evaluate((el) =>
+                Promise.all(
+                    (el.closest('[data-toast]') ?? el)
+                        .getAnimations()
+                        .map((a) => a.finished)
+                )
+            );
+            expect(await onTop(page, action)).toBe(true);
+            // Still at the page's bottom end, not confined to the panel (a
+            // filling transform would make the panel its containing block).
+            const box = await page.locator('[data-toast]').boundingBox();
+            if (!box) throw new Error('no toast box');
+            const vp = page.viewportSize();
+            expect(Math.round(box.y + box.height)).toBe((vp?.height ?? 0) - 24);
+            expect(Math.round(box.x + box.width)).toBe((vp?.width ?? 0) - 24);
+            await action.focus();
+            await expect(action).toBeFocused();
+            await page.keyboard.press('Enter');
+            await expect(action).toHaveCount(0);
+            await expect(panel).toBeVisible();
+        });
+});

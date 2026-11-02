@@ -14,6 +14,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../lib/cn';
 import { brands, type Brand } from '../tokens';
 import type { DnbBase } from '../types/DnbBase';
+import { registerLayer } from './layers';
 import { HorizonScopeContext, PortalContext } from './portal-context';
 
 /** Props for {@link HorizonProvider}. */
@@ -71,6 +72,16 @@ export const HorizonProvider = forwardRef<HTMLDivElement, HorizonProviderProps>(
             setElement(node);
             assignRef(syncedRef.current, node);
         }, []);
+        // A nested provider inside a host dialog (an MUI Dialog's content) is
+        // the only usable part of the page while that dialog is open: it
+        // becomes a layer so the toast list portals into it.
+        const nested = parent !== null;
+        useLayoutEffect(() => {
+            if (!nested || !element) return;
+            if (!element.closest('[role="dialog"], [role="alertdialog"]'))
+                return;
+            return registerLayer(element);
+        }, [nested, element]);
         // Mirror React's ref semantics when the consumer's ref changes.
         useLayoutEffect(() => {
             if (syncedRef.current === forwardedRef) return;

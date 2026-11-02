@@ -72,3 +72,34 @@ export function containEscape(
         event.stopPropagation();
     };
 }
+
+/**
+ * Whether a Radix outside-interaction event (`onPointerDownOutside`,
+ * `onFocusOutside`, `onInteractOutside`) started in the toast list: pressing
+ * a toast's action or dismiss button must not close the open dialog, menu
+ * or popover.
+ */
+export function fromToast(event: {
+    target: EventTarget | null;
+    detail?: { originalEvent?: Event };
+}): boolean {
+    const target = event.detail?.originalEvent?.target ?? event.target;
+    return (
+        target instanceof Element &&
+        target.closest('[data-toast-viewport]') !== null
+    );
+}
+
+/**
+ * Composes an outside-interaction handler: the consumer's handler runs,
+ * then interactions inside the toast list are ignored (`preventDefault`).
+ */
+export function ignoreToastPresses<
+    E extends { target: EventTarget | null; preventDefault(): void },
+>(handler?: (event: E) => void): (event: E) => void {
+    return (event) => {
+        handler?.(event);
+        if (fromToast(event as E & { detail?: { originalEvent?: Event } }))
+            event.preventDefault();
+    };
+}

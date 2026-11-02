@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 import { resolveOption, warnOnce } from '../../lib/options';
 import { forcedBorder } from '../../primitives';
-import { usePortalContainer } from '../../provider';
+import { subscribeLayers, topLayer, usePortalContainer } from '../../provider';
 import { Alert } from '../Alert';
 import { Button } from '../Button';
 import type { DnbBase } from '../../types/DnbBase';
@@ -201,9 +201,18 @@ export function ToastProvider({
     className,
 }: ToastProviderProps) {
     const items = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
-    const container = usePortalContainer();
+    const root = usePortalContainer();
+    // While a modal is open (a Horizon Dialog/Drawer, or a host dialog
+    // holding a nested HorizonProvider) the list portals into it: inside the
+    // focus trap and not aria-hidden, so its actions stay reachable.
+    const layer = useSyncExternalStore(subscribeLayers, topLayer, () => null);
+    const container = layer ?? root;
     useEffect(() => {
         mounted += 1;
+        if (mounted > 1)
+            warnOnce(
+                'More than one <ToastProvider> is mounted: every toast renders once per provider. Mount one, at the app root.'
+            );
         return () => {
             mounted -= 1;
         };

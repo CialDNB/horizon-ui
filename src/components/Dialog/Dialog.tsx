@@ -21,11 +21,13 @@ import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
 import {
     composeRefs,
     containEscape,
+    fromToast,
     overlayCloseBase,
     overlaySurface,
     panelMotion,
     scrimStyles,
     useKeptContent,
+    useModalLayer,
 } from '../../primitives';
 import { usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
@@ -206,6 +208,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
         const container = usePortalContainer();
         const { keeper, attach } = useKeptContent(keepMounted);
         const panelRef = useRef<HTMLDivElement>(null);
+        const layerRef = useModalLayer();
         // Radix returns focus to a DialogTrigger only; a controlled dialog
         // opened from any other control (customer360's usual pattern) would
         // drop focus to <body>. Remember the opener instead.
@@ -247,17 +250,19 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
                     />
                     <DialogPrimitive.Content
                         {...props}
-                        ref={composeRefs(ref, panelRef)}
+                        ref={composeRefs(ref, panelRef, layerRef)}
                         onEscapeKeyDown={containEscape((event) => {
                             onEscapeKeyDown?.(event);
                             if (!dismissible) event.preventDefault();
                         })}
                         onPointerDownOutside={(event) => {
                             onPointerDownOutside?.(event);
+                            if (fromToast(event)) event.preventDefault();
                             if (!dismissible) event.preventDefault();
                         }}
                         onInteractOutside={(event) => {
                             onInteractOutside?.(event);
+                            if (fromToast(event)) event.preventDefault();
                             if (!dismissible) event.preventDefault();
                         }}
                         onOpenAutoFocus={(event) => {

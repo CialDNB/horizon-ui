@@ -31,6 +31,8 @@ export { clearAction, inlineActionBase } from './inlineAction';
 export {
     anchoredMotion,
     containEscape,
+    fromToast,
+    ignoreToastPresses,
     overlayCloseBase,
     overlaySurface,
     panelMotion,
@@ -39,3 +41,4 @@ export {
 } from './overlay';
 export type { LogicalAlign, LogicalSide } from './overlay';
 export { useKeptContent } from './keptContent';
+export { useModalLayer } from './useModalLayer';

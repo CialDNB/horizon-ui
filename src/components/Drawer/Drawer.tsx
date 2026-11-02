@@ -18,12 +18,15 @@ import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
 import {
+    composeRefs,
     containEscape,
+    ignoreToastPresses,
     overlayCloseBase,
     overlaySurface,
     panelMotion,
     scrimStyles,
     useKeptContent,
+    useModalLayer,
 } from '../../primitives';
 import { usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
@@ -141,6 +144,7 @@ export const Drawer = forwardRef<HTMLDivElement, DrawerProps>(function Drawer(
     const container = usePortalContainer();
     const { keeper, attach: attachKeeper } = useKeptContent(keepMounted);
     const openerRef = useRef<Element | null>(null);
+    const layerRef = useModalLayer();
     return (
         <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
             {keeper && createPortal(content, keeper)}
@@ -153,8 +157,10 @@ export const Drawer = forwardRef<HTMLDivElement, DrawerProps>(function Drawer(
                     <DialogPrimitive.Content
                         aria-describedby={undefined}
                         {...rest}
-                        ref={ref}
+                        ref={composeRefs(ref, layerRef)}
                         onEscapeKeyDown={containEscape()}
+                        onPointerDownOutside={ignoreToastPresses()}
+                        onInteractOutside={ignoreToastPresses()}
                         onOpenAutoFocus={() => {
                             openerRef.current = document.activeElement;
                         }}
