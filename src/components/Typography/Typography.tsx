@@ -5,8 +5,10 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
     forwardRef,
+    type ComponentPropsWithoutRef,
+    type ComponentPropsWithRef,
     type ElementType,
-    type HTMLAttributes,
+    type ReactElement,
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
@@ -66,7 +68,7 @@ const typographyStyles = cva(
         },
         defaultVariants: {
             variant: 'body/default',
-            color: 'foreground',
+            color: 'inherit',
         },
     }
 );
@@ -88,50 +90,72 @@ export type TypographyWeight = NonNullable<TypographyVariantOptions['weight']>;
 /** Logical text alignment of a {@link Typography}. */
 export type TypographyAlign = NonNullable<TypographyVariantOptions['align']>;
 
-/** Props for {@link Typography}. */
-export type TypographyProps = Omit<HTMLAttributes<HTMLElement>, 'color'> &
-    DnbBase & {
+/** Typography's own props (everything except the rendered element's). */
+type TypographyOwnProps = DnbBase & {
+    /**
+     * Type-scale role: family, size, line height and weight from the Horizon
+     * type scale. `display/xl`, `display/lg` and `heading/xl` step down one
+     * size below the `tablet` breakpoint.
+     * @default 'body/default'
+     */
+    variant?: TypographyVariant;
+    /**
+     * Semantic text colour. `inherit` (default, as x-core/MUI) takes the
+     * parent's colour, so text inside buttons, tooltips and dark surfaces
+     * follows its container; it is still set explicitly, so host CSS cannot
+     * restyle it. Every other option is at least 4.5:1 on `background` in all
+     * brands; `primary-foreground` is for text on a `primary` surface. Plain
+     * `destructive` and `success` are not offered (below 4.5:1); use the
+     * `-strong` tokens.
+     * @default 'inherit'
+     */
+    color?: TypographyColor;
+    /** Overrides the weight of the variant (for x-core `subtitle2`/`h6`-style emphasis). */
+    weight?: TypographyWeight;
+    /** Logical text alignment (`start`/`end` follow `dir`). Inherited when unset. */
+    align?: TypographyAlign;
+    /**
+     * `true` clips to one line with an ellipsis (the element becomes a
+     * block); `2`, `3` or `4` clamp to that many lines. The full text stays in
+     * the DOM for screen readers; pass `title` if sighted users need it.
+     * (x-core `noWrap`.)
+     * @default false
+     */
+    truncate?: boolean | 2 | 3 | 4;
+    /** Text content. */
+    children?: ReactNode;
+};
+
+/**
+ * Props for {@link Typography} rendered as `E`: Typography's own props plus
+ * the props of `E` (`href` for `as="a"`, `htmlFor` for `as="label"`, a
+ * component's own props).
+ */
+export type TypographyProps<E extends ElementType = 'p'> =
+    TypographyOwnProps & {
         /**
-         * Type-scale role: family, size, line height and weight from the
-         * Horizon type scale. `display/xl`, `display/lg` and `heading/xl` step
-         * down one size below the `tablet` breakpoint.
-         * @default 'body/default'
+         * Element or component to render. Defaults to the semantic element of the
+         * variant: `p` for display, body and `heading`-less roles, `h1`..`h4` for
+         * `heading/xl`..`heading/sm`, `span` for caption, micro and labels (as
+         * MUI). Changing it never changes the look. (x-core `component`.)
          */
-        variant?: TypographyVariant;
-        /**
-         * Element or component to render. Defaults to the semantic element of
-         * the variant: `h1` for display and `heading/xl`, `h2`..`h4` for
-         * `heading/lg`..`heading/sm`, `p` for body, caption and micro, `span`
-         * for labels. Changing it never changes the look. (x-core `component`.)
-         */
-        as?: ElementType;
-        /**
-         * Semantic text colour. Every option is at least 4.5:1 on `background`
-         * in all brands; `primary-foreground` is for text on a `primary`
-         * surface. Plain `destructive` and `success` are not offered as text
-         * colours (below 4.5:1); use the `-strong` tokens.
-         * @default 'foreground'
-         */
-        color?: TypographyColor;
-        /** Overrides the weight of the variant (for x-core `subtitle2`/`h6`-style emphasis). */
-        weight?: TypographyWeight;
-        /** Logical text alignment (`start`/`end` follow `dir`). Inherited when unset. */
-        align?: TypographyAlign;
-        /**
-         * `true` clips to one line with an ellipsis (the element becomes a
-         * block); `2`, `3` or `4` clamp to that many lines. The full text stays
-         * in the DOM for screen readers; pass `title` if sighted users need it.
-         * (x-core `noWrap`.)
-         * @default false
-         */
-        truncate?: boolean | 2 | 3 | 4;
-        /** Text content. */
-        children?: ReactNode;
-    };
+        as?: E;
+    } & Omit<ComponentPropsWithoutRef<E>, keyof TypographyOwnProps | 'as'>;
+
+/** The polymorphic Typography component type (generic over `as`). */
+type TypographyComponent = (<E extends ElementType = 'p'>(
+    props: TypographyProps<E> & { ref?: ComponentPropsWithRef<E>['ref'] }
+) => ReactElement | null) & { displayName?: string };
+
+/** Props the implementation works with (the element type erased). */
+type TypographyImplProps = TypographyOwnProps & {
+    as?: ElementType;
+    className?: string;
+};
 
 const defaultElement: Record<TypographyVariant, ElementType> = {
-    'display/xl': 'h1',
-    'display/lg': 'h1',
+    'display/xl': 'p',
+    'display/lg': 'p',
     'heading/xl': 'h1',
     'heading/lg': 'h2',
     'heading/md': 'h3',
@@ -139,8 +163,8 @@ const defaultElement: Record<TypographyVariant, ElementType> = {
     'body/lg': 'p',
     'body/default': 'p',
     'body/secondary': 'p',
-    caption: 'p',
-    micro: 'p',
+    caption: 'span',
+    micro: 'span',
     'label/sm': 'span',
     'label/md': 'span',
     'label/lg': 'span',
@@ -171,12 +195,12 @@ export function typographyVariants(options?: TypographyVariantOptions): string {
  * height and weight itself, so global element CSS of a legacy host does not
  * restyle it when `styles.unlayered.css` is used.
  */
-export const Typography = forwardRef<HTMLElement, TypographyProps>(
+export const Typography = forwardRef<HTMLElement, TypographyImplProps>(
     function Typography(
         {
             variant = 'body/default',
             as,
-            color = 'foreground',
+            color = 'inherit',
             weight,
             align,
             truncate = false,
@@ -200,5 +224,5 @@ export const Typography = forwardRef<HTMLElement, TypographyProps>(
             />
         );
     }
-);
+) as TypographyComponent;
 Typography.displayName = 'Typography';

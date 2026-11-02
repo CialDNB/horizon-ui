@@ -18,7 +18,7 @@ export const curation: Record<string, Curation> = {
     Typography: {
         batch: 1,
         horizon: 'Typography',
-        note: 'Done in Task 10a, see Typography section below. `variant` = the 14 slash-notation roles (MUI `h1`..`caption` map to them); `component` becomes `as`; `color` takes semantic tokens; `noWrap` becomes `truncate` (also 2-4 line clamp); `weight`, `align` added; `sx`, `gutterBottom`, `paragraph`, `display` and MUI typography props dropped.',
+        note: 'Done in Task 10a, see Typography section below. `variant` = the 14 slash-notation roles (MUI `h1`..`caption` map to them); `component` becomes `as`; `color` takes semantic tokens; `noWrap` becomes `truncate` (also 2-4 line clamp); default colour `inherit` and default elements as MUI (`h5`/`h6`/subtitles need `as`); `weight`, `align` added; `sx`, `gutterBottom`, `paragraph`, `display` and MUI typography props dropped.',
         status: 'done',
     },
     Button: {
@@ -30,7 +30,7 @@ export const curation: Record<string, Curation> = {
     Chip: {
         batch: 1,
         horizon: 'Chip',
-        note: 'Done in Task 10a, see Chip section below. `color` becomes `variant` (neutral/primary/info/success/warning/error; palette colours dropped), `variant` filled/outlined becomes `appearance` soft/outline, `size` small/medium becomes sm/md; `label` is a required string (array labels with the +N tooltip dropped); `onDelete` renders a remove button named `Remove <label>`; `onClick` renders a real button; `avatar`, `deleteIcon`, `sx` dropped; `ChipColor` type becomes `ChipVariant`.',
+        note: 'Done in Task 10a, see Chip section below. `color` becomes `variant` (neutral/primary/info/success/warning/error; palette colours dropped), `variant` filled/outlined becomes `appearance` soft/outline, `size` small/medium becomes sm/md; `label` is a required string (array labels with the +N tooltip dropped); `onDelete` renders a remove button named `Remove <label>`; `onClick` renders a real button; `avatar`, `deleteIcon`, `sx` dropped; `ChipColor` type becomes `ChipVariant`. Known regression: 17 colours fold into 6 tones (categorical palette needs a design decision).',
         status: 'done',
     },
     CircularProgress: {
@@ -51,13 +51,13 @@ export const curation: Record<string, Curation> = {
     Badge: {
         batch: 1,
         horizon: 'Badge',
-        note: 'Done in Task 10a, see Badge section below. `color` becomes `variant` (tones); `label` becomes children (dot + uppercase label); `badgeContent` becomes `count` (max 999, hidden at 0); a dot alone needs `aria-label`; wrapping children becomes `BadgeAnchor` (`overlap` kept); `labelColor`, `sx`, `invisible`, `anchorOrigin` dropped; `BadgeColor` type becomes `BadgeTone`.',
+        note: 'Done in Task 10a, see Badge section below. `color` becomes `variant` (tones); `label` becomes children (dot + uppercase label); `badgeContent` becomes `count` (max 999, hidden at 0); a dot alone needs `aria-label`; wrapping children becomes `BadgeAnchor` (`overlap` kept); `labelColor`, `sx`, `invisible`, `anchorOrigin` dropped; `BadgeAnchor` defaults to `overlap="rectangular"` (x-core: circular); `BadgeColor` type becomes `BadgeTone`.',
         status: 'done',
     },
     BadgeAI: {
         batch: 1,
         horizon: 'Badge',
-        note: 'Done in Task 10a: `<Badge variant="ai">`. `showBorder` and `variant=FILLED` (gradient pill) not ported; confirm with design.',
+        note: 'Done in Task 10a: `<Badge variant="ai">` (plain marker). The clickable call site (`onClick` + `showBorder`) maps to `Button` with a Sparkle icon, not Badge. `variant=FILLED` (gradient pill) not ported; confirm with design.',
         status: 'done',
     },
     AIVerifiedBadge: {

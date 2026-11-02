@@ -16,8 +16,8 @@ describe('Typography', () => {
     });
 
     it.each([
-        ['display/xl', 'H1'],
-        ['display/lg', 'H1'],
+        ['display/xl', 'P'],
+        ['display/lg', 'P'],
         ['heading/xl', 'H1'],
         ['heading/lg', 'H2'],
         ['heading/md', 'H3'],
@@ -25,8 +25,8 @@ describe('Typography', () => {
         ['body/lg', 'P'],
         ['body/default', 'P'],
         ['body/secondary', 'P'],
-        ['caption', 'P'],
-        ['micro', 'P'],
+        ['caption', 'SPAN'],
+        ['micro', 'SPAN'],
         ['label/sm', 'SPAN'],
         ['label/md', 'SPAN'],
         ['label/lg', 'SPAN'],
@@ -75,7 +75,14 @@ describe('Typography', () => {
     it('sets margin, colour and alignment explicitly so host element rules cannot leak in', () => {
         render(<Typography variant="heading/xl">Title</Typography>);
         const el = screen.getByRole('heading');
-        expect(el).toHaveClass('hz:m-0', 'hz:text-foreground');
+        expect(el).toHaveClass('hz:m-0', 'hz:text-inherit');
+    });
+
+    it('inherits colour by default (x-core/MUI parity) through an explicit class', () => {
+        render(<Typography>Inherited</Typography>);
+        const el = screen.getByText('Inherited');
+        expect(el).toHaveClass('hz:text-inherit');
+        expect(el).not.toHaveClass('hz:text-foreground');
     });
 
     it.each([
@@ -119,7 +126,7 @@ describe('Typography', () => {
     });
 
     it('forwards ref, data-did and native attributes', () => {
-        const ref = createRef<HTMLElement>();
+        const ref = createRef<HTMLParagraphElement>();
         render(
             <Typography ref={ref} data-did="page-title" id="title" lang="en">
                 Title

@@ -268,9 +268,9 @@ test.describe('layered build (known limit): full Bootstrap restyles Typography h
 });
 
 // Measured: margins from `h1..h6 { margin-bottom: .5rem }` / `p { margin: 0 0
-// 1rem }`, and on headings `font-weight: 500; line-height: 1.2` plus Bootstrap's
-// per-level font-size (display/lg keeps 40px only because h1 is 2.5rem).
-// Labels (span) are untouched. Colour and family survive (Bootstrap sets
+// 1rem }` (display and body roles render <p>), and on headings `font-weight:
+// 500; line-height: 1.2` plus Bootstrap's per-level font-size. Caption, micro
+// and labels (span) are untouched. Colour and family survive (Bootstrap sets
 // neither on headings).
 const heading = (size: string | null, weight: string, line: string) => [
     'marginBottom: 0px -> 8px',
@@ -280,8 +280,8 @@ const heading = (size: string | null, weight: string, line: string) => [
 ];
 const paragraph = ['marginBottom: 0px -> 16px'];
 const LAYERED_TYPOGRAPHY_DIFF = {
-    'hz-typo-display/xl': heading('44px -> 40px', '700', '44px -> 48px'),
-    'hz-typo-display/lg': heading(null, '700', '40px -> 48px'),
+    'hz-typo-display/xl': paragraph,
+    'hz-typo-display/lg': paragraph,
     'hz-typo-heading/xl': heading('36px -> 40px', '700', '36px -> 48px'),
     'hz-typo-heading/lg': heading(null, '700', '32px -> 38.4px'),
     'hz-typo-heading/md': heading(null, '600', '28px -> 33.6px'),
@@ -291,8 +291,6 @@ const LAYERED_TYPOGRAPHY_DIFF = {
     'hz-typo-body/lg': paragraph,
     'hz-typo-body/default': paragraph,
     'hz-typo-body/secondary': paragraph,
-    'hz-typo-caption': paragraph,
-    'hz-typo-micro': paragraph,
 };
 
 test.describe('layered build (known limit): Bootstrap restyles the Chip buttons', () => {
@@ -307,7 +305,16 @@ test.describe('layered build (known limit): Bootstrap restyles the Chip buttons'
             url('layered', { reboot: 'full' }),
             probe
         );
-        expect(diff(without, withBootstrap)).toEqual(LAYERED_CHIP_DIFF);
+        const { widened, ...rest } = splitWidths(diff(without, withBootstrap));
+        expect(rest).toEqual(LAYERED_CHIP_DIFF);
+        // The reboot's `button { margin: 0 }` cancels the layered negative
+        // margins that stretch the action button over the chip padding, so
+        // chips with an action grow by that padding (8px per stretched side).
+        expect(widened).toEqual({
+            'action chip': 8,
+            'action chip, action focused': 8,
+            'hz-chip-disabled': 16,
+        });
     });
 });
 
@@ -320,6 +327,21 @@ const bootstrapRing = (style: string, width: string, color: string) => [
     `outlineWidth: ${width} -> 5px`,
     `outlineColor: ${color} -> rgb(0, 95, 204)`,
 ];
+/** Pulls `width: a -> b` entries out of a diff as `{ key: b - a }`. */
+const splitWidths = (changed: Record<string, string[]>) => {
+    const widened: Record<string, number> = {};
+    const rest: Record<string, string[]> = {};
+    for (const [key, props] of Object.entries(changed)) {
+        const others = props.filter((p) => {
+            const m = /^width: ([\d.]+)px -> ([\d.]+)px$/.exec(p);
+            if (m) widened[key] = Math.round(Number(m[2]) - Number(m[1]));
+            return !m;
+        });
+        if (others.length > 0) rest[key] = others;
+    }
+    return { widened, ...rest };
+};
+
 const LAYERED_CHIP_DIFF = {
     'action button, focused': bootstrapRing('none', '0px', 'rgba(0, 0, 0, 0)'),
     'remove button': ['borderRadius: 100px -> 0px'],

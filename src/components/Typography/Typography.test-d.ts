@@ -1,7 +1,7 @@
-import type { ComponentRef } from 'react';
-import type { Typography, TypographyProps } from '.';
+import { createElement, type ComponentRef, type ReactNode } from 'react';
+import { Typography, type TypographyProps } from '.';
 
-export const full: TypographyProps = {
+export const full: TypographyProps<'span'> = {
     variant: 'heading/md',
     as: 'span',
     color: 'muted-foreground',
@@ -12,20 +12,54 @@ export const full: TypographyProps = {
     id: 'title',
 };
 
-export const ref: ComponentRef<typeof Typography> | null =
-    null as HTMLElement | null;
+export const ref: ComponentRef<'p'> | null =
+    null as HTMLParagraphElement | null;
 
-// @ts-expect-error MUI variant names are not accepted ('h1' is now 'heading/xl')
-export const muiVariant: TypographyProps = { variant: 'h1' };
+// Polymorphic `as`: the element's own props are accepted and checked.
+export const link = createElement(Typography<'a'>, {
+    as: 'a',
+    href: '/reports',
+    target: '_blank',
+    variant: 'label/md',
+});
+export const label = createElement(Typography<'label'>, {
+    as: 'label',
+    htmlFor: 'email',
+});
+function RouterLink(props: {
+    to: string;
+    className?: string;
+    children?: ReactNode;
+}) {
+    return createElement(
+        'a',
+        { href: props.to, className: props.className },
+        props.children
+    );
+}
+export const custom = createElement(Typography<typeof RouterLink>, {
+    as: RouterLink,
+    to: '/home',
+    variant: 'body/secondary',
+});
+export const anchorRef = createElement(Typography<'a'>, {
+    as: 'a',
+    href: '#',
+    ref: { current: null as HTMLAnchorElement | null },
+});
 
-// @ts-expect-error MUI palette paths are not colours ('text.secondary' is now 'muted-foreground')
-export const muiColor: TypographyProps = { color: 'text.secondary' };
+// @ts-expect-error href is not a <p> attribute (default element)
+export const pHref: TypographyProps = { href: '/x' };
 
-// @ts-expect-error failing-contrast text colours are not offered
-export const lowContrast: TypographyProps = { color: 'success' };
+// @ts-expect-error htmlFor is not an <a> attribute
+export const aFor: TypographyProps<'a'> = { as: 'a', htmlFor: 'x' };
 
-// @ts-expect-error only 1-4 lines are supported
-export const clamp: TypographyProps = { truncate: 5 };
+// @ts-expect-error the custom component requires `to`
+export const customMissing: TypographyProps<typeof RouterLink> = {
+    as: RouterLink,
+};
 
-// @ts-expect-error MUI `sx` is not supported
-export const sx: TypographyProps = { sx: { mb: 2 } };
+export const badRef = createElement(Typography<'p'>, {
+    // @ts-expect-error a <p> ref cannot be an anchor ref
+    ref: { current: null as HTMLAnchorElement | null },
+});

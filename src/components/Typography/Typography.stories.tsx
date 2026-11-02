@@ -49,9 +49,9 @@ const meta = {
                 component: [
                     'Text in a Horizon type-scale role. Ported from x-core `Typography` (MUI). Variants are the 14 slash-notation roles (`display/xl` ... `label/lg`); MUI names map as `h1` -> `heading/xl`, `h2` -> `heading/lg`, `h3` -> `heading/md`, `h4` -> `heading/sm`, `body1` -> `body/default`, `body2` -> `body/secondary`, `caption` -> `caption`, `subtitle2` -> `body/secondary` + `weight="semibold"`, `h6`/`subtitle1` -> `body/default` (+ `weight="semibold"` for `h6`).',
                     '',
-                    '**Element.** Each role renders its semantic element (`h1` for display and `heading/xl`, `h2`..`h4` for the smaller headings, `p` for body/caption/micro, `span` for labels). `as` changes the element, never the look; choose the heading level by document outline, not by size.',
+                    '**Element.** Each role renders a default element as MUI does: `h1`..`h4` for `heading/xl`..`heading/sm`, `p` for display and body, `span` for caption, micro and labels. `as` changes the element (with its own props: `as="a" href`, `as="label" htmlFor`, `as={Link} to`), never the look; choose the heading level by document outline, not by size.',
                     '',
-                    '**Colour.** Semantic tokens only; every option is at least 4.5:1 on `background` in all three brands. Use the `-strong` tokens for status text (plain `success` is 3.52:1, `destructive` 4.47:1 in CIAL).',
+                    '**Colour.** Default `inherit` (x-core/MUI parity: text follows its container, e.g. inside buttons, tooltips or dark surfaces), set explicitly so host CSS cannot change it. The other options are semantic tokens, each at least 4.5:1 on `background` in all three brands. Use the `-strong` tokens for status text (plain `success` is 3.52:1, `destructive` 4.47:1 in CIAL).',
                     '',
                     '**Wrapping.** Headings use `text-wrap: balance`, body `pretty`; long words break instead of overflowing. `truncate` clips to one line (or clamps to 2-4).',
                     '',
@@ -360,6 +360,15 @@ export const ComputedStyles: Story = {
             >
                 Regular heading
             </Typography>
+            <span style={{ color: 'var(--primary)' }}>
+                <Typography as="span" data-testid="inherit">
+                    Inherits its container
+                </Typography>
+            </span>
+            <span
+                data-testid="primary-probe"
+                style={{ color: 'var(--primary)' }}
+            />
             <Typography color="muted-foreground" data-testid="muted">
                 Muted
             </Typography>
@@ -398,6 +407,9 @@ export const ComputedStyles: Story = {
         await expect(
             getComputedStyle(canvas.getByTestId('heading-regular')).fontWeight
         ).toBe('400');
+        await expect(
+            getComputedStyle(canvas.getByTestId('inherit')).color
+        ).toBe(getComputedStyle(canvas.getByTestId('primary-probe')).color);
         await expect(getComputedStyle(canvas.getByTestId('muted')).color).toBe(
             probe.backgroundColor
         );
