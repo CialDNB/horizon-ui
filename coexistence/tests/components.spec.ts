@@ -277,6 +277,42 @@ const ALERT: Target[] = [
     },
 ];
 
+const AVATAR_PROPS = [
+    'width',
+    'height',
+    'marginInlineStart',
+    'borderRadius',
+    'borderTopStyle',
+    'borderTopWidth',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'color',
+    'backgroundColor',
+    'boxShadow',
+    'objectFit',
+    'opacity',
+    'position',
+    'overflow',
+    'display',
+    'verticalAlign',
+] as const;
+
+const AVATAR: Target[] = [
+    ...plain(['sm', 'xl', 'photo', 'group'].map((v) => `hz-avatar-${v}`)),
+    // Bootstrap reboot styles `img { vertical-align: middle; border-style: none }`.
+    { key: 'photo img', selector: `${byTestId('hz-avatar-photo')} img` },
+    {
+        key: 'group second',
+        selector: `${byTestId('hz-avatar-group')} > :nth-child(2)`,
+    },
+    {
+        key: 'group overflow',
+        selector: `${byTestId('hz-avatar-group')} > :last-child`,
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
@@ -288,6 +324,7 @@ const PROBES: Record<string, Probe> = {
     },
     Progress: { targets: PROGRESS, props: PROGRESS_PROPS },
     Alert: { targets: ALERT, props: ALERT_PROPS },
+    Avatar: { targets: AVATAR, props: AVATAR_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -715,3 +752,27 @@ const LAYERED_ALERT_DIFF = {
         ...bootstrapRing('solid', '2px', 'rgb(0, 80, 240)'),
     ],
 };
+
+test.describe('layered build: Avatar against full Bootstrap', () => {
+    test('avatar spans are untouched; only invisible img properties follow Bootstrap', async ({
+        page,
+    }) => {
+        const probe = PROBES['Avatar'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        // `img { vertical-align: middle; border-style: none }` (unlayered)
+        // beats the layered `hz:align-top hz:border-0`; the img is absolutely
+        // positioned and its border width stays 0, so nothing moves.
+        expect(diff(without, withBootstrap)).toEqual({
+            'photo img': [
+                'borderTopStyle: solid -> none',
+                'verticalAlign: top -> middle',
+            ],
+        });
+    });
+});

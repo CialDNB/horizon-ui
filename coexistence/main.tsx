@@ -7,6 +7,8 @@ import {
 } from '@mui/material';
 import {
     Alert,
+    Avatar,
+    AvatarGroup,
     Badge,
     BadgeAnchor,
     Button,
@@ -109,6 +111,10 @@ function ChipInRow() {
         </div>
     );
 }
+
+const AVATAR_PHOTO = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8" fill="#5b7083"/></svg>'
+)}`;
 
 const CHIP_TONES = [
     'neutral',
@@ -346,6 +352,30 @@ function App() {
                             value={40}
                             data-testid="hz-spinner-ring"
                         />
+                        <Avatar name="Dana Levi" data-testid="hz-avatar-sm" />
+                        <Avatar
+                            name="Acme Trading"
+                            size="xl"
+                            shape="rounded"
+                            tone="success"
+                            data-testid="hz-avatar-xl"
+                        />
+                        <Avatar
+                            name="Omer Katz"
+                            size="lg"
+                            src={AVATAR_PHOTO}
+                            data-testid="hz-avatar-photo"
+                        />
+                        <AvatarGroup
+                            size="md"
+                            aria-label="Assignees"
+                            data-testid="hz-avatar-group"
+                        >
+                            <Avatar name="Dana Levi" />
+                            <Avatar name="Omer Katz" />
+                            <Avatar name="Noa Peretz" />
+                            <Avatar name="Tom Gil" />
+                        </AvatarGroup>
                         <BadgeAnchor
                             data-testid="hz-badge-anchor"
                             badge={

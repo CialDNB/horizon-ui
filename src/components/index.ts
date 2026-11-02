@@ -5,6 +5,15 @@ export type {
     AlertVariant,
     AlertVariantOptions,
 } from './Alert';
+export { Avatar, AvatarGroup, avatarVariants, getInitials } from './Avatar';
+export type {
+    AvatarGroupProps,
+    AvatarProps,
+    AvatarShape,
+    AvatarSize,
+    AvatarTone,
+    AvatarVariantOptions,
+} from './Avatar';
 export { Badge, BadgeAnchor, badgeVariants } from './Badge';
 export type {
     BadgeAnchorProps,

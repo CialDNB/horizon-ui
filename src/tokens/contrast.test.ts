@@ -75,6 +75,18 @@ const textPairs: Pair[] = [
         text: 'muted-foreground',
         surface: 'background',
     },
+    {
+        use: 'Avatar primary initials',
+        text: 'primary-foreground',
+        surface: 'primary',
+    },
+    ...tones
+        .filter(([tone]) => tone !== 'primary')
+        .map(([tone, subtle, strong]) => ({
+            use: `Avatar ${tone} initials`,
+            text: strong,
+            surface: subtle,
+        })),
 ];
 
 describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {

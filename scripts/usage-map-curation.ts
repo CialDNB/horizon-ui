@@ -77,12 +77,14 @@ export const curation: Record<string, Curation> = {
     Avatar: {
         batch: 1,
         horizon: 'Avatar',
-        note: 'Planned: Radix Avatar with image fallback to initials.',
+        note: 'Done in Task 10c, see Avatar section below. Native (no Radix). `alt` (initials source + name) splits into `name` (initials + default accessible name) and `alt` (`alt=""` = decorative, name visible nearby); `size` xsmall/small/medium/large/xlarge becomes xs/sm/md/lg/xl (16/24/32/40/64, default sm); custom `{ width, height }` size dropped (className); MUI `variant` circular/rounded/square becomes `shape` circle/rounded; new `tone` for the fallback surface (default primary; status tints replace `sx` colours); `sx`, `imgProps`, `sizes`, `srcSet`, `component` dropped.',
+        status: 'done',
     },
     AvatarGroup: {
         batch: 1,
-        horizon: 'Avatar',
-        note: 'Composition of Avatar (`Avatar.Group`);',
+        horizon: 'AvatarGroup',
+        note: 'Done in Task 10c, see Avatar section below. Named export `AvatarGroup` (not `Avatar.Group`, consistent with `BadgeAnchor`). `avatars` data array becomes `<Avatar>` children; `max` keeps MUI semantics (all shown when they fit; x-core always showed max-1 plus `+N` and clamped max to 3..4); new `total`, `overflowLabel`, `shape`; `+N` named "N more"; per-avatar and surplus tooltips dropped until Tooltip (Task 11); single-avatar caption mode dropped (compose Avatar + text).',
+        status: 'done',
     },
     IconButton: {
         batch: 1,
