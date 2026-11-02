@@ -224,7 +224,18 @@ describe('dist/styles.css', () => {
         );
         expect(reduced.length).toBeGreaterThan(0);
         const inner = walk(reduced).filter((n) => !n.prelude.startsWith('@'));
-        for (const n of inner) expect(n.prelude).toMatch(/^\.hz-root/);
+        // The scoped base kill switch, or prefixed `hz:motion-reduce:` utilities.
+        for (const n of inner)
+            expect(n.prelude).toMatch(/^(\.hz-root|\.hz\\:)/);
+        // Loading indicators (`data-hz-motion="essential"`) are exempt from
+        // the kill switch at (0,1,0), and slow down instead (Spinner).
+        expect(
+            inner.some((n) =>
+                n.prelude.includes(
+                    `.hz-root :where(:not([data-hz-motion="essential"]))`
+                )
+            )
+        ).toBe(true);
     });
 
     it('defines tablet, laptop, desktop breakpoints at 768, 1280, 1920px and no sm/md/lg/xl', () => {
@@ -477,7 +488,7 @@ describe('dist/styles.unlayered.css (legacy hosts, ADR 0001)', () => {
         expect(props(unlayeredCss)).toEqual(props(css));
         expect(props(unlayeredCss).length).toBeGreaterThan(0);
         expect(unlayeredCss).toMatch(
-            /@media \(prefers-reduced-motion: reduce\) \{\s*\.hz-root, \.hz-root \*/
+            /@media \(prefers-reduced-motion: reduce\) \{\s*\.hz-root, \.hz-root :where\(:not\(\[data-hz-motion="essential"\]\)\)/
         );
     });
 

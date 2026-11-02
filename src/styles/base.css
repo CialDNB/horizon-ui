@@ -73,9 +73,15 @@
     display: none !important;
 }
 
+/*
+ * Reduced motion: transitions collapse and animations run once, instantly.
+ * Elements marked `data-hz-motion="essential"` (loading indicators, whose
+ * motion is the message) are exempt; they define their own slower,
+ * non-vestibular reduced-motion animation.
+ */
 @media (prefers-reduced-motion: reduce) {
     .hz-root,
-    .hz-root *,
+    .hz-root :where(:not([data-hz-motion='essential'])),
     .hz-root ::before,
     .hz-root ::after {
         animation-duration: 0.01ms !important;

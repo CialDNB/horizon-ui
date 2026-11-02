@@ -11,6 +11,7 @@ import {
     Button,
     Chip,
     HorizonProvider,
+    Spinner,
     Typography,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
@@ -289,6 +290,17 @@ function App() {
                         >
                             AI verified
                         </Badge>
+                        <Spinner size="sm" data-testid="hz-spinner-sm" />
+                        <Spinner
+                            size="xl"
+                            tone="muted"
+                            data-testid="hz-spinner-xl"
+                        />
+                        <Spinner
+                            size="lg"
+                            value={40}
+                            data-testid="hz-spinner-ring"
+                        />
                         <BadgeAnchor
                             data-testid="hz-badge-anchor"
                             badge={

@@ -21,6 +21,13 @@ export type {
     ChipVariant,
     ChipVariantOptions,
 } from './Chip';
+export { Spinner, spinnerVariants } from './Spinner';
+export type {
+    SpinnerProps,
+    SpinnerSize,
+    SpinnerTone,
+    SpinnerVariantOptions,
+} from './Spinner';
 export { Typography, typographyVariants } from './Typography';
 export type {
     TypographyAlign,

@@ -90,6 +90,14 @@ const nonTextPairs: Pair[] = [
         text,
         surface: 'background' as const,
     })),
+    ...(['primary', 'muted-foreground'] as const).flatMap((text) => [
+        { use: `Spinner ${text} ring`, text, surface: 'background' as const },
+        {
+            use: `Spinner ${text} arc on the muted track`,
+            text,
+            surface: 'muted' as const,
+        },
+    ]),
 ];
 
 describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {

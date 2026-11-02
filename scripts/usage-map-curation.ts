@@ -36,7 +36,8 @@ export const curation: Record<string, Curation> = {
     CircularProgress: {
         batch: 1,
         horizon: 'Spinner',
-        note: 'Not in the plan. Add to Batch 1 as `Spinner` (role status, accessible name, reduced-motion safe).',
+        note: 'Done in Task 10b, see Spinner section below. `size={n}` becomes a step (`xs` 12, `sm` 16, `md` 20, `lg` 24, `xl` 40, default `xl` as x-core); `color` becomes `tone` (`primary`, `muted`, `inherit`); `variant="determinate" value` becomes `value` (ring on a built-in track); accessible name `label` (default "Loading"), `aria-hidden` makes it decorative; `thickness`, `disableShrink`, `sx`, `children` dropped. Also renders the loading Button ring.',
+        status: 'done',
     },
     LinearProgress: {
         batch: 1,

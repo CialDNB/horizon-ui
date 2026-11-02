@@ -3,6 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes, type MouseEvent } from 'react';
 import { cn } from '../../lib/cn';
 import { anchorGuard } from '../../primitives';
+import { Spinner } from '../Spinner';
 import type { DnbBase } from '../../types/DnbBase';
 
 /** Props for {@link Button}. */
@@ -186,9 +187,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         return (
             <button type={type ?? 'button'} disabled={disabled} {...shared}>
                 {loading && (
-                    <span
+                    <Spinner
                         aria-hidden="true"
-                        className="hz:absolute hz:inset-0 hz:m-auto hz:size-4 hz:animate-spin hz:rounded-full hz:border-2 hz:border-current hz:border-e-transparent"
+                        size="sm"
+                        tone="inherit"
+                        className="hz:absolute hz:inset-0 hz:m-auto"
                     />
                 )}
                 {/* Wraps the label so loading can hide it (opacity keeps width and name); gap is inherited so icon spacing still comes from the size. */}

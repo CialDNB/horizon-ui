@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /*
- * Batch 1 components (Typography, Chip, Badge) against customer360's
+ * Batch 1 components (Typography, Chip, Badge, Spinner, ...) against customer360's
  * unlayered Bootstrap 4.4.1: `?reboot=1` is bootstrap-reboot.css, `?reboot=full`
  * the full bootstrap.css customer360 imports (adds `h1..h6 { font-weight: 500;
  * line-height: 1.2; font-size }`). Each probe is measured without Bootstrap
@@ -148,10 +148,40 @@ const BADGE: Target[] = [
     },
 ];
 
+const SPINNER_PROPS = [
+    'width',
+    'height',
+    'borderTopWidth',
+    'borderTopColor',
+    'borderInlineEndColor',
+    'borderRadius',
+    'boxSizing',
+    'color',
+    'display',
+    'verticalAlign',
+    'overflow',
+    'stroke',
+    'strokeWidth',
+    'animationName',
+    'animationDuration',
+    'animationIterationCount',
+] as const;
+
+const SPINNER: Target[] = [
+    ...plain(['sm', 'xl', 'ring'].map((v) => `hz-spinner-${v}`)),
+    // Bootstrap reboot styles `svg { overflow: hidden; vertical-align: middle }`.
+    { key: 'ring svg', selector: `${byTestId('hz-spinner-ring')} svg` },
+    {
+        key: 'ring arc',
+        selector: `${byTestId('hz-spinner-ring')} [data-spinner-arc]`,
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
     Badge: { targets: BADGE, props: BADGE_PROPS },
+    Spinner: { targets: SPINNER, props: SPINNER_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -182,10 +212,14 @@ const measure = async (page: Page, path: string, probe: Probe) => {
         }
         out[target.key] = await page.locator(target.selector).evaluate(
             async (el, props) => {
-                // Read settled values, not a transition midpoint.
+                // Read settled values, not a transition midpoint (infinite
+                // animations, such as the Spinner's, never settle).
                 await Promise.all(
                     el
                         .getAnimations()
+                        .filter(
+                            (a) => a.effect?.getTiming().iterations !== Infinity
+                        )
                         .map((a) => a.finished.catch(() => undefined))
                 );
                 const cs = getComputedStyle(el);
@@ -419,5 +453,65 @@ test.describe('Chip hit layer with a real pointer', () => {
                 row: '2',
                 native: '2',
             });
+        });
+});
+
+test.describe('layered build (known limit): Spinner against full Bootstrap', () => {
+    test('spinner spans and the ring svg are untouched', async ({ page }) => {
+        const probe = PROBES['Spinner'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        // Bootstrap's `svg { vertical-align: middle }` (unlayered) beats the
+        // layered `hz:align-top`; the svg is display:block, so nothing moves.
+        expect(diff(without, withBootstrap)).toEqual({
+            'ring svg': ['verticalAlign: top -> middle'],
+        });
+    });
+});
+
+test.describe('reduced motion', () => {
+    test.use({ reducedMotion: 'reduce' });
+
+    for (const build of ['layered', 'unlayered'] as const)
+        test(`loading indicators slow down instead of stopping; other motion still collapses (${build})`, async ({
+            page,
+        }) => {
+            await page.goto(url(build, { reboot: 'full' }));
+            const timing = (selector: string) =>
+                page.locator(selector).evaluate((el) => {
+                    const cs = getComputedStyle(el);
+                    return {
+                        name: cs.animationName,
+                        duration: cs.animationDuration,
+                        iterations: cs.animationIterationCount,
+                        transition: cs.transitionDuration,
+                        running: el
+                            .getAnimations()
+                            .map((a) => a.playState)
+                            .join(),
+                    };
+                });
+            const slow = {
+                name: 'hz-spin',
+                duration: '3s',
+                iterations: 'infinite',
+                transition: '0s',
+                running: 'running',
+            };
+            expect(await timing(byTestId('hz-spinner-sm'))).toEqual(slow);
+            expect(
+                await timing(
+                    `${byTestId('hz-ltr-loading')} [data-hz-motion="essential"]`
+                )
+            ).toEqual(slow);
+            // The Button itself (not essential) keeps the kill switch.
+            expect((await timing(byTestId('hz-ltr-loading'))).transition).toBe(
+                '1e-05s'
+            );
         });
 });

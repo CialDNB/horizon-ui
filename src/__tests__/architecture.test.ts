@@ -86,11 +86,13 @@ describe('architecture', () => {
                 "Button",
                 "Chip",
                 "HorizonProvider",
+                "Spinner",
                 "Typography",
                 "badgeVariants",
                 "buttonVariants",
                 "chipVariants",
                 "cn",
+                "spinnerVariants",
                 "typographyVariants",
                 "usePortalContainer",
               ]

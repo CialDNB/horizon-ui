@@ -89,7 +89,7 @@ const meta = {
                     '',
                     '**States.** Hover (pointer devices only): primary/destructive darken to `*-hover`; secondary fills with `primary`; tertiary underlines; ghost tints to `accent`; link thickens its underline. Press: scale 0.98. Focus-visible: 2px `ring` outline, 2px offset. Disabled: `muted` surface and `muted-foreground` text, not focusable; with `asChild` it becomes `aria-disabled` + `tabIndex=-1` and activation is blocked (a consumer-set `aria-disabled` also blocks `onClick` and gets the same look). Loading: label kept for width and accessible name but hidden, spinner in `currentColor`, `aria-busy` and `aria-disabled`, still focusable, clicks blocked.',
                     '',
-                    '**Motion.** Colour, border and transform transition over `duration.fast` (100ms) with `easing.standard`. `prefers-reduced-motion` collapses transitions and stops the spinner (the scoped base stylesheet handles it).',
+                    '**Motion.** Colour, border and transform transition over `duration.fast` (100ms) with `easing.standard`. `prefers-reduced-motion` collapses transitions (the scoped base stylesheet handles it); the spinner is the shared `Spinner` ring and slows to one turn every 3s instead of stopping.',
                     '',
                     '**Long labels** wrap (balanced) inside the container instead of overflowing; the Button never exceeds its container width.',
                     '',
