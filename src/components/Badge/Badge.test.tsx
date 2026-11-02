@@ -1,7 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import { Badge, BadgeAnchor, badgeVariants } from '.';
+import { brands, type Brand, type SemanticKey } from '../../tokens/brands';
+import { contrastRatio } from '../../tokens/contrast';
+import { Badge, BadgeAnchor, badgeVariants, type BadgeTone } from '.';
+
+const tones: BadgeTone[] = [
+    'neutral',
+    'primary',
+    'info',
+    'success',
+    'warning',
+    'error',
+];
 
 describe('Badge', () => {
     it('renders a status label with a decorative tone dot', () => {
@@ -42,6 +53,33 @@ describe('Badge', () => {
         expect(ref.current?.querySelector('[data-badge-dot]')).toHaveClass(cls);
     });
 
+    it.each(tones)(
+        'a %s dot alone has a boundary of at least 3:1 on background in every brand (WCAG 1.4.11)',
+        (tone) => {
+            const tokens = badgeVariants({ variant: tone, form: 'dot' })
+                .split(' ')
+                .map((c) => /^hz:(?:bg|ring)-([a-z-]+)$/.exec(c)?.[1])
+                .filter((t): t is SemanticKey =>
+                    Boolean(t && t in brands.cial)
+                );
+            expect(tokens.length).toBeGreaterThan(0);
+            for (const brand of Object.keys(brands) as Brand[]) {
+                const best = Math.max(
+                    ...tokens.map((t) =>
+                        contrastRatio(
+                            brands[brand][t],
+                            brands[brand].background
+                        )
+                    )
+                );
+                expect(
+                    best,
+                    `${brand} ${tokens.join(',')}`
+                ).toBeGreaterThanOrEqual(3);
+            }
+        }
+    );
+
     it('a dot without text needs and exposes an accessible name', () => {
         render(<Badge variant="error" aria-label="Offline" />);
         expect(screen.getByRole('img', { name: 'Offline' })).toBeVisible();
@@ -74,7 +112,17 @@ describe('Badge', () => {
         ).toBeVisible();
     });
 
-    it('role overrides the derived role (live status)', () => {
+    it('a labelled count as an image exposes exactly the label', () => {
+        render(<Badge count={3} aria-label="3 unread notifications" />);
+        const img = screen.getByRole('img', { name: '3 unread notifications' });
+        expect(img).toHaveAttribute('aria-label', '3 unread notifications');
+        expect(within(img).getByText('3')).toHaveAttribute(
+            'aria-hidden',
+            'true'
+        );
+    });
+
+    it('a live status count announces its label once through visible-to-AT text', () => {
         render(
             <Badge
                 count={3}
@@ -82,9 +130,27 @@ describe('Badge', () => {
                 aria-label="3 unread notifications"
             />
         );
-        expect(
-            screen.getByRole('status', { name: '3 unread notifications' })
-        ).toBeVisible();
+        const status = screen.getByRole('status', {
+            name: '3 unread notifications',
+        });
+        // Live regions announce content, not the name: the label is real text.
+        const label = within(status).getByText('3 unread notifications');
+        expect(label).toHaveClass('hz:sr-only');
+        expect(label).not.toHaveAttribute('aria-hidden');
+        // The visible number is hidden so only one string is announced.
+        expect(within(status).getByText('3')).toHaveAttribute(
+            'aria-hidden',
+            'true'
+        );
+    });
+
+    it('a status count without a label keeps the number readable', () => {
+        render(<Badge count={5} role="status" />);
+        const status = screen.getByRole('status');
+        expect(status).toHaveTextContent(/^5$/);
+        expect(within(status).getByText('5')).not.toHaveAttribute(
+            'aria-hidden'
+        );
     });
 
     it('ai shows a decorative sparkle next to the label', () => {

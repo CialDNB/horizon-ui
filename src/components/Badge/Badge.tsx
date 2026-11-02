@@ -30,7 +30,9 @@ const badgeStyles = cva(
                 // x-core status badge: tone dot + 10px semibold uppercase label.
                 label: 'hz:gap-1.5 hz:text-micro hz:font-semibold hz:text-foreground hz:uppercase',
                 count: 'hz:h-5 hz:min-w-5 hz:justify-center hz:rounded-full hz:px-1.5 hz:text-label-sm hz:tabular-nums',
-                dot: 'hz:size-2 hz:rounded-full',
+                // Tone fill + 1px inset ring in the tone's AA shade: the ring is
+                // the 3:1 boundary (WCAG 1.4.11) for light fills (warning, info).
+                dot: 'hz:size-2 hz:rounded-full hz:ring-1 hz:ring-inset',
             },
         },
         compoundVariants: [
@@ -83,13 +85,33 @@ const badgeStyles = cva(
             {
                 form: 'dot',
                 variant: 'neutral',
-                class: 'hz:bg-muted-foreground',
+                class: 'hz:bg-muted-foreground hz:ring-neutral-strong',
             },
-            { form: 'dot', variant: 'primary', class: 'hz:bg-primary' },
-            { form: 'dot', variant: 'info', class: 'hz:bg-info' },
-            { form: 'dot', variant: 'success', class: 'hz:bg-success' },
-            { form: 'dot', variant: 'warning', class: 'hz:bg-warning' },
-            { form: 'dot', variant: 'error', class: 'hz:bg-destructive' },
+            {
+                form: 'dot',
+                variant: 'primary',
+                class: 'hz:bg-primary hz:ring-primary',
+            },
+            {
+                form: 'dot',
+                variant: 'info',
+                class: 'hz:bg-info hz:ring-info-strong',
+            },
+            {
+                form: 'dot',
+                variant: 'success',
+                class: 'hz:bg-success hz:ring-success-strong',
+            },
+            {
+                form: 'dot',
+                variant: 'warning',
+                class: 'hz:bg-warning hz:ring-warning-strong',
+            },
+            {
+                form: 'dot',
+                variant: 'error',
+                class: 'hz:bg-destructive hz:ring-destructive-strong',
+            },
         ],
         defaultVariants: { variant: 'primary', form: 'label' },
     }
@@ -154,12 +176,12 @@ export type BadgeProps = BadgeBase & (LabelBadge | CountBadge | DotBadge);
 
 // Complete literals: the Tailwind scanner only compiles classes it can see.
 const labelDot: Record<BadgeTone, string> = {
-    neutral: 'hz:bg-muted-foreground',
-    primary: 'hz:bg-primary',
-    info: 'hz:bg-info',
-    success: 'hz:bg-success',
-    warning: 'hz:bg-warning',
-    error: 'hz:bg-destructive',
+    neutral: 'hz:bg-muted-foreground hz:ring-neutral-strong',
+    primary: 'hz:bg-primary hz:ring-primary',
+    info: 'hz:bg-info hz:ring-info-strong',
+    success: 'hz:bg-success hz:ring-success-strong',
+    warning: 'hz:bg-warning hz:ring-warning-strong',
+    error: 'hz:bg-destructive hz:ring-destructive-strong',
 };
 
 const isTone = (variant: BadgeVariant): variant is BadgeTone =>
@@ -180,7 +202,7 @@ function Marker({ variant }: { variant: BadgeVariant }) {
                 aria-hidden="true"
                 data-badge-dot=""
                 className={cn(
-                    'hz:size-2 hz:shrink-0 hz:rounded-full',
+                    'hz:size-2 hz:shrink-0 hz:rounded-full hz:ring-1 hz:ring-inset',
                     labelDot[variant]
                 )}
             />
@@ -229,18 +251,24 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
             : children === undefined || children === null
               ? 'dot'
               : 'label';
-    const named = rest['aria-label'] !== undefined && form !== 'label';
+    const label = form === 'label' ? undefined : rest['aria-label'];
+    const role = rest.role ?? (label === undefined ? undefined : 'img');
+    // A live region announces its content, not its name: with a role other
+    // than img, the label is also rendered as screen-reader-only text and the
+    // visible number hidden, so exactly one string is read and announced.
+    const liveLabel = label !== undefined && role !== 'img';
     return (
         <span
-            role={named ? 'img' : undefined}
             {...rest}
+            role={role}
             ref={ref}
             data-variant={variant}
             className={cn(badgeStyles({ variant, form }), className)}
         >
             {form === 'label' && <Marker variant={variant} />}
+            {liveLabel && <span className="hz:sr-only">{label}</span>}
             {form === 'count' && (
-                <span aria-hidden={named || undefined}>
+                <span aria-hidden={label !== undefined || undefined}>
                     {count !== undefined && count > max ? `${max}+` : count}
                 </span>
             )}

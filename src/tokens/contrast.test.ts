@@ -1,21 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { brands, type Brand, type SemanticKey } from './brands';
+import { contrastRatio } from './contrast';
 
-/** WCAG 2.x relative luminance of a #RRGGBB colour. */
-function luminance(hex: string): number {
-    const channels = [1, 3, 5].map((i) => {
-        const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-    });
-    const [r = 0, g = 0, b = 0] = channels;
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/** WCAG contrast ratio between two #RRGGBB colours. */
-function contrast(a: string, b: string): number {
-    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-    return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05);
-}
+const contrast = contrastRatio;
 
 type Pair = { use: string; text: SemanticKey; surface: SemanticKey };
 
@@ -80,5 +67,37 @@ describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {
             expect(
                 contrast(palette[text], palette[surface])
             ).toBeGreaterThanOrEqual(4.5);
+        });
+});
+
+/**
+ * Non-text pairs (WCAG 1.4.11, 3:1): graphics that carry meaning on their own
+ * and focus indicators, against the page background.
+ */
+const nonTextPairs: Pair[] = [
+    { use: 'focus ring (Button, Chip)', text: 'ring', surface: 'background' },
+    ...(
+        [
+            'neutral-strong',
+            'primary',
+            'info-strong',
+            'success-strong',
+            'warning-strong',
+            'destructive-strong',
+        ] as const
+    ).map((text) => ({
+        use: `Badge dot boundary ${text}`,
+        text,
+        surface: 'background' as const,
+    })),
+];
+
+describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {
+    for (const brand of Object.keys(brands) as Brand[])
+        it.each(nonTextPairs)(`${brand}: $use`, ({ text, surface }) => {
+            const palette = brands[brand];
+            expect(
+                contrast(palette[text], palette[surface])
+            ).toBeGreaterThanOrEqual(3);
         });
 });

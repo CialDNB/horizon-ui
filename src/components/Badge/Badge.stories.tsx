@@ -408,6 +408,14 @@ export const ComputedStyles: Story = {
             </Badge>
             <Badge variant="error" count={4} data-testid="count" />
             <Badge variant="primary" count={4} data-testid="count-primary" />
+            <Badge
+                variant="error"
+                count={2}
+                role="status"
+                aria-label="2 new alerts"
+                data-testid="live"
+            />
+            <Badge variant="warning" aria-label="Pending" data-testid="dot" />
             <Badge variant="ai" data-testid="ai">
                 AI summary
             </Badge>
@@ -447,6 +455,16 @@ export const ComputedStyles: Story = {
         await expect(cs.fontSize).toBe('12px');
         await expect(cs.fontVariantNumeric).toBe('tabular-nums');
         await expect(cs.textTransform).toBe('none');
+
+        const live = canvas.getByTestId('live');
+        const srOnly = within(live).getByText('2 new alerts');
+        const sr = getComputedStyle(srOnly);
+        await expect(sr.position).toBe('absolute');
+        await expect(srOnly.getBoundingClientRect().width).toBeLessThanOrEqual(
+            1
+        );
+        const dotStyle = getComputedStyle(canvas.getByTestId('dot'));
+        await expect(dotStyle.boxShadow).toContain('0px 0px 0px 1px inset');
 
         const primary = getComputedStyle(canvas.getByTestId('count-primary'));
         await expect(primary.backgroundColor).toBe(probe.textDecorationColor);

@@ -1,6 +1,8 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import type { Plugin } from 'vite';
+import { fileURLToPath } from 'node:url';
 import { buildStylesCss } from '../scripts/build-styles';
+import { phosphorDeepImports } from './optimize-deps';
 
 const HORIZON_STYLES_ID = 'virtual:horizon-styles.css';
 
@@ -31,6 +33,15 @@ const config: StorybookConfig = {
     viteFinal: (viteConfig) => ({
         ...viteConfig,
         plugins: [...(viteConfig.plugins ?? []), horizonStyles()],
+        optimizeDeps: {
+            ...viteConfig.optimizeDeps,
+            include: [
+                ...(viteConfig.optimizeDeps?.include ?? []),
+                ...phosphorDeepImports(
+                    fileURLToPath(new URL('../src', import.meta.url))
+                ),
+            ],
+        },
     }),
 };
 
