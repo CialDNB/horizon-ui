@@ -37,6 +37,8 @@ export type {
     ChipVariant,
     ChipVariantOptions,
 } from './Chip';
+export { FormField } from './FormField';
+export type { FormFieldProps } from './FormField';
 export { IconButton, iconButtonVariants } from './IconButton';
 export type {
     IconButtonName,

@@ -13,6 +13,7 @@ import {
     BadgeAnchor,
     Button,
     Chip,
+    FormField,
     HorizonProvider,
     IconButton,
     Input,
@@ -562,6 +563,15 @@ function App() {
                             }
                             data-testid="hz-input-search"
                         />
+                        <FormField
+                            label="Email"
+                            description="Work address"
+                            error="Enter a valid email"
+                            required
+                            data-testid="hz-formfield"
+                        >
+                            <Input type="email" defaultValue="acme@" />
+                        </FormField>
                         <Textarea
                             aria-label="Comment"
                             placeholder="Add a comment"

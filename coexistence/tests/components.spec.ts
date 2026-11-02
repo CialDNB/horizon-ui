@@ -550,6 +550,25 @@ const PROBES: Record<string, Probe> = {
     Link: { targets: LINK, props: LINK_PROBE_PROPS },
     Label: { targets: LABEL, props: FORM_TYPE_PROPS },
     Input: { targets: INPUT, props: FIELD_PROPS },
+    FormField: {
+        targets: [
+            { key: 'field', selector: byTestId('hz-formfield') },
+            { key: 'label', selector: `${byTestId('hz-formfield')} > label` },
+            {
+                key: 'description',
+                selector: `${byTestId('hz-formfield')} > p:not([role])`,
+            },
+            {
+                key: 'error',
+                selector: `${byTestId('hz-formfield')} > p[role="alert"]`,
+            },
+            {
+                key: 'error icon',
+                selector: `${byTestId('hz-formfield')} > p[role="alert"] svg`,
+            },
+        ],
+        props: [...FORM_TYPE_PROPS, 'rowGap', 'verticalAlign'],
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1266,6 +1285,20 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // margins, and customer360's `button:focus { outline: none }` removes the
     // clear button's focus ring.
     // Bootstrap's `textarea { line-height: inherit; resize: vertical }`.
+    // `p { margin-bottom: 1rem }` on description and error, and the label
+    // limit above; the error icon keeps its box (flex item).
+    FormField: {
+        description: ['marginBottom: 0px -> 16px'],
+        error: ['marginBottom: 0px -> 16px'],
+        field: ['height: changed'],
+        label: [
+            'width: changed',
+            'marginBottom: 0px -> 8px',
+            'fontWeight: 600 -> 700',
+            'color: rgb(15, 23, 42) -> rgb(67, 81, 119)',
+            'display: flex -> block',
+        ],
+    },
     Textarea: {
         focused: ['height: changed', 'lineHeight: 20px -> 24px'],
         'hz-textarea': ['height: changed', 'lineHeight: 20px -> 24px'],

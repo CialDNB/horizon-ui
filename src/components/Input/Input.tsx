@@ -79,7 +79,7 @@ const inputElement = [
 ].join(' ');
 
 const adornment =
-    'hz:flex hz:shrink-0 hz:items-center hz:text-muted-foreground hz:[&>svg]:size-4';
+    'hz:flex hz:shrink-0 hz:items-center hz:text-muted-foreground hz:[&>svg]:size-4 hz:[&>svg]:align-middle';
 
 // A 44px target at mobile (32px with a fine pointer from tablet) that
 // reaches into the field padding; the icon is 16px. `m-0` first: host
@@ -89,7 +89,7 @@ const clearButton = [
     'hz:tablet:pointer-fine:-me-2 hz:tablet:pointer-fine:size-8',
     'hz:transition-colors hz:duration-fast hz:ease-standard hz:hover:text-foreground',
     'hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:-outline-offset-2 hz:focus-visible:outline-solid hz:focus-visible:outline-ring',
-    'hz:[&_svg]:size-4',
+    'hz:[&_svg]:size-4 hz:[&_svg]:align-middle',
 ].join(' ');
 
 /** Options accepted by {@link inputVariants}: `size`, `state`. */
@@ -294,7 +294,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
                 <WarningCircleIcon
                     aria-hidden="true"
                     data-input-invalid-icon=""
-                    className="hz:size-4 hz:shrink-0 hz:text-destructive-strong"
+                    className="hz:size-4 hz:shrink-0 hz:align-middle hz:text-destructive-strong"
                 />
             )}
             {showClear && (

@@ -128,6 +128,16 @@ textPairs.push(
         text: 'muted-foreground',
         surface: 'background',
     },
+    {
+        use: 'FormField description',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    {
+        use: 'FormField error text and icon',
+        text: 'destructive-strong',
+        surface: 'background',
+    },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
 );

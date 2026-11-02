@@ -88,6 +88,7 @@ describe('architecture', () => {
                 "BadgeAnchor",
                 "Button",
                 "Chip",
+                "FormField",
                 "HorizonProvider",
                 "IconButton",
                 "Input",
