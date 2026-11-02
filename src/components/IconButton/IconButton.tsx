@@ -131,8 +131,9 @@ export type IconButtonProps = Omit<
         /**
          * Shows the `aria-label` as a Tooltip on hover and keyboard focus
          * (x-core `tooltipInfo`), without announcing it twice. Not shown for
-         * touch or on a disabled button. For other text wrap the button in
-         * a {@link Tooltip} yourself.
+         * touch or on a disabled button. Needs `aria-label` (with
+         * `aria-labelledby` it warns and shows nothing). For other text wrap
+         * the button in a {@link Tooltip} yourself.
          * @default false
          */
         tooltip?: boolean;
@@ -234,6 +235,10 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         };
 
         const label = rest['aria-label'];
+        if (tooltip && !label)
+            warnOnce(
+                'IconButton: tooltip shows the aria-label; with aria-labelledby there is no text to show. Wrap the button in <Tooltip content=...> instead.'
+            );
         const withTooltip = (button: ReactElement) =>
             tooltip && label ? (
                 <Tooltip content={label} labelOnly>

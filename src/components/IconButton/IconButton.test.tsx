@@ -344,6 +344,25 @@ describe('IconButton tooltip', () => {
         expect(button).not.toHaveAttribute('aria-describedby');
     });
 
+    it('tooltip with aria-labelledby warns once and shows nothing', async () => {
+        const user = userEvent.setup();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        render(
+            <HorizonProvider>
+                <span id="name">Edit company</span>
+                <IconButton aria-labelledby="name" tooltip>
+                    <svg />
+                </IconButton>
+            </HorizonProvider>
+        );
+        await user.tab();
+        await new Promise((r) => setTimeout(r, 20));
+        expect(screen.queryByRole('tooltip')).toBeNull();
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining('IconButton: tooltip shows the aria-label')
+        );
+    });
+
     it('no tooltip by default', async () => {
         const user = userEvent.setup();
         render(
