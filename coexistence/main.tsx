@@ -17,6 +17,7 @@ import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
 import hzUnlayeredStyles from '@cialdnb/horizon-ui/styles.unlayered.css?raw';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 function addStyle(id: string, css: string) {
@@ -68,6 +69,42 @@ const muiTheme = createTheme({
     },
     palette: { primary: { main: '#0050F0' } },
 });
+
+/**
+ * A clickable chip inside a clickable row, counting clicks on the chip, the
+ * row's React handler and a native listener on the row (data attributes).
+ */
+function ChipInRow() {
+    const [chip, setChip] = useState(0);
+    const [row, setRow] = useState(0);
+    const [native, setNative] = useState(0);
+    const rowRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = rowRef.current;
+        if (!el) return;
+        const count = () => setNative((n) => n + 1);
+        el.addEventListener('click', count);
+        return () => el.removeEventListener('click', count);
+    }, []);
+    return (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- harness fixture: a clickable row
+        <div
+            ref={rowRef}
+            data-testid="hz-chip-row"
+            data-chip-clicks={chip}
+            data-row-clicks={row}
+            data-native-clicks={native}
+            style={{ paddingBlock: 32 }}
+            onClick={() => setRow((n) => n + 1)}
+        >
+            <Chip
+                label="row chip"
+                onClick={() => setChip((n) => n + 1)}
+                data-testid="hz-chip-in-row"
+            />
+        </div>
+    );
+}
 
 const CHIP_TONES = [
     'neutral',
@@ -229,6 +266,7 @@ function App() {
                             onClick={() => undefined}
                             data-testid="hz-chip-disabled"
                         />
+                        <ChipInRow />
                         <Badge variant="success" data-testid="hz-badge-label">
                             Approved
                         </Badge>

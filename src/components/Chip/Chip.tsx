@@ -6,6 +6,7 @@ import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
     forwardRef,
+    useEffect,
     useLayoutEffect,
     useRef,
     useState,
@@ -20,10 +21,12 @@ import type { DnbBase } from '../../types/DnbBase';
 
 const chipStyles = cva(
     [
-        // Pointer layering (a chip is NOT a stacking context): hit areas sit at
-        // z-0 and every chip's visual box at z-1, so 44px hit areas of wrapped
-        // neighbours (8px apart) can never take a click inside a chip's own
-        // box; only the gap between rows is shared (the later chip wins).
+        // Pointer layering (a chip is NOT a stacking context): hit areas at
+        // z-0; the chip body (::before) at z-1; label, icon and action button
+        // at z-2 (so hover shows the label's title and text stays selectable);
+        // the remove button and its in-chip hit layer at z-3. 44px hit areas
+        // of wrapped neighbours (8px apart) can never take a click inside a
+        // chip's own box; only the gap between rows is shared (later wins).
         'hz:relative hz:inline-flex hz:max-w-full hz:min-w-0 hz:items-center hz:gap-1 hz:align-middle',
         'hz:rounded-xs hz:text-label-sm hz:whitespace-nowrap',
         // ::before covers the visual box at z-1: it blocks neighbours' hit
@@ -154,22 +157,23 @@ const actionHit = {
 // 44x44 around the remove icon (md 16px, sm 12px) at mobile and on touch
 // pointers, 24x24 from tablet with a fine pointer. Two layers: the full box at
 // z-0 (outside the chip it never beats a neighbour's visual box), plus the
-// part inside its own chip's height at z-1, so it also wins over its own
-// chip's body (::before, z-1, earlier) without reaching any neighbour.
+// part inside its own chip's height at z-3, above its own chip's body and the
+// end of its label (z-2), without reaching any neighbour. The remove button
+// itself is z-3 too, later in the DOM, so it stays the hover target.
 const removeHit = {
     sm: {
         outer: 'hz:absolute hz:-inset-4 hz:z-0 hz:cursor-pointer hz:tablet:pointer-fine:-inset-1.5',
-        inner: 'hz:absolute hz:-inset-x-4 hz:-inset-y-1 hz:z-1 hz:cursor-pointer hz:tablet:pointer-fine:-inset-x-1.5',
+        inner: 'hz:absolute hz:-inset-x-4 hz:-inset-y-1 hz:z-3 hz:cursor-pointer hz:tablet:pointer-fine:-inset-x-1.5',
     },
     md: {
         outer: 'hz:absolute hz:-inset-3.5 hz:z-0 hz:cursor-pointer hz:tablet:pointer-fine:-inset-1',
-        inner: 'hz:absolute hz:-inset-x-3.5 hz:-inset-y-1 hz:z-1 hz:cursor-pointer hz:tablet:pointer-fine:-inset-x-1',
+        inner: 'hz:absolute hz:-inset-x-3.5 hz:-inset-y-1 hz:z-3 hz:cursor-pointer hz:tablet:pointer-fine:-inset-x-1',
     },
 } as const;
 
 const removeStyles = cn(
     buttonReset,
-    'hz:relative hz:z-2 hz:inline-flex hz:shrink-0 hz:items-center hz:justify-center hz:rounded-full',
+    'hz:relative hz:z-3 hz:inline-flex hz:shrink-0 hz:items-center hz:justify-center hz:rounded-full',
     'hz:transition-colors hz:duration-fast hz:ease-standard hz:hover:bg-current/12 hz:active:bg-current/16',
     // focus-visible:outline-ring (0,2,0) out-ranks Bootstrap's `button:focus`
     // colour (0,1,1) in styles.unlayered.css; outline-ring stays so the colour
@@ -254,8 +258,15 @@ export function chipVariants(options?: ChipVariantOptions): string {
 /**
  * Invisible, pointer-only extension of a button's target area. It is a
  * separate element (not the button's ::after) so it can sit below every
- * chip's visual box; a click on it is forwarded to the button.
+ * chip's visual box. A click on it focuses the button and is forwarded to
+ * it; the layer's own click does not bubble, so ancestors see one click.
  */
+/** Focus options for a pointer-initiated focus (`focusVisible` is not in TS's DOM lib yet). */
+const pointerFocus: FocusOptions & { focusVisible?: boolean } = {
+    preventScroll: true,
+    focusVisible: false,
+};
+
 function HitLayer({
     className,
     target,
@@ -265,12 +276,35 @@ function HitLayer({
     target: RefObject<HTMLButtonElement | null>;
     disabled: boolean;
 }) {
+    const ref = useRef<HTMLSpanElement>(null);
+    useEffect(() => {
+        const layer = ref.current;
+        if (!layer) return;
+        // Native listener: React's stopPropagation acts at the React root, so
+        // native listeners on ancestors (non-React hosts, other roots) would
+        // still see the layer click. Stopping it here keeps every ancestor at
+        // exactly one click: the forwarded button click, which bubbles.
+        const onClick = (event: Event) => {
+            event.stopPropagation();
+            const button = target.current;
+            if (!button || button.disabled) return;
+            // Focus as a native mouse click does in Chrome, Edge and Firefox
+            // (Safari does not focus buttons on click; we pick the consistent
+            // behaviour). Scripted focus would otherwise match :focus-visible
+            // and draw the keyboard ring after a mouse click; `focusVisible:
+            // false` prevents that where supported (Chromium, Firefox).
+            button.focus(pointerFocus);
+            button.click();
+        };
+        layer.addEventListener('click', onClick);
+        return () => layer.removeEventListener('click', onClick);
+    }, [target]);
     return (
         <span
+            ref={ref}
             aria-hidden="true"
             data-chip-hit=""
             className={cn(className, disabled && 'hz:cursor-not-allowed')}
-            onClick={() => target.current?.click()}
         />
     );
 }
@@ -320,14 +354,17 @@ export const Chip = forwardRef<HTMLSpanElement, ChipProps>(function Chip(
     const text = (
         <span
             ref={labelRef}
-            className="hz:min-w-0 hz:truncate"
+            className="hz:relative hz:z-2 hz:min-w-0 hz:truncate"
             title={truncated ? label : undefined}
         >
             {label}
         </span>
     );
     const iconSlot = icon && (
-        <span aria-hidden="true" className="hz:inline-flex hz:shrink-0">
+        <span
+            aria-hidden="true"
+            className="hz:relative hz:z-2 hz:inline-flex hz:shrink-0"
+        >
             {icon}
         </span>
     );

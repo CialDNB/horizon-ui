@@ -372,3 +372,52 @@ test.describe('layered build (known limit): Badge against full Bootstrap', () =>
         expect(changed['hz-badge-anchor']?.[0]).toMatch(/^width: /);
     });
 });
+
+test.describe('Chip hit layer with a real pointer', () => {
+    test.use({ viewport: { width: 375, height: 812 } });
+
+    for (const build of ['layered', 'unlayered'] as const)
+        test(`extended-area and visible clicks reach chip and row once each, and focus the button (${build})`, async ({
+            page,
+        }) => {
+            await page.goto(url(build));
+            const row = page.getByTestId('hz-chip-row');
+            const chip = page.getByTestId('hz-chip-in-row');
+            await chip.scrollIntoViewIfNeeded();
+            const box = await chip.boundingBox();
+            if (!box) throw new Error('chip not rendered');
+            const counts = async () => ({
+                chip: await row.getAttribute('data-chip-clicks'),
+                row: await row.getAttribute('data-row-clicks'),
+                native: await row.getAttribute('data-native-clicks'),
+            });
+            // 8px above the 24px chip: inside the 44px hit area only.
+            await page.mouse.click(box.x + box.width / 2, box.y - 8);
+            expect(await counts()).toEqual({
+                chip: '1',
+                row: '1',
+                native: '1',
+            });
+            const focus = await page.evaluate(() => {
+                const el = document.activeElement;
+                return {
+                    action: el?.hasAttribute('data-chip-action') ?? false,
+                    visible: el?.matches(':focus-visible') ?? false,
+                };
+            });
+            expect(focus).toEqual({ action: true, visible: false });
+            expect(
+                await chip.evaluate((el) => getComputedStyle(el).outlineStyle)
+            ).toBe('none');
+            // The visible chip.
+            await page.mouse.click(
+                box.x + box.width / 2,
+                box.y + box.height / 2
+            );
+            expect(await counts()).toEqual({
+                chip: '2',
+                row: '2',
+                native: '2',
+            });
+        });
+});

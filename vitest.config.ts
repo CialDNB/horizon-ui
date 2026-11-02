@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
-import { phosphorDeepImports } from './.storybook/optimize-deps';
+import { phosphorDeepImports } from './.storybook/optimize-deps.ts';
 
 const configDir = fileURLToPath(new URL('./.storybook', import.meta.url));
 

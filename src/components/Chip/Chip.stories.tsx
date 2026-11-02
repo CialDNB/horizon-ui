@@ -234,6 +234,35 @@ export const LongLabel: Story = {
             )
         );
         await expect(canvas.getByText('Short')).not.toHaveAttribute('title');
+        // The label (not the chip's ::before layer) is the pointer target, so
+        // the truncation title shows on hover and the text can be selected.
+        for (const label of [
+            canvas.getAllByText(longLabel)[0],
+            canvas.getAllByText(longLabel)[1],
+            canvas.getByText('Short'),
+        ]) {
+            if (!label) throw new Error('no label');
+            const r = label.getBoundingClientRect();
+            const x = r.left + Math.min(r.width / 2, 24);
+            const y = r.top + r.height / 2;
+            await expect(document.elementFromPoint(x, y)).toBe(label);
+            const caret = document.caretRangeFromPoint(x, y);
+            await expect(caret?.startContainer.parentElement).toBe(label);
+            await expect(getComputedStyle(label).userSelect).not.toBe('none');
+        }
+        const long = canvas.getAllByText(longLabel)[0];
+        if (!long) throw new Error('no label');
+        const lr = long.getBoundingClientRect();
+        await expect(
+            document
+                .elementFromPoint(lr.left + 24, lr.top + lr.height / 2)
+                ?.closest('[title]')
+        ).toBe(long);
+        // Selecting the label text selects exactly that text.
+        const selection = window.getSelection();
+        selection?.selectAllChildren(long);
+        await expect(selection?.toString()).toBe(longLabel);
+        selection?.removeAllRanges();
     },
 };
 

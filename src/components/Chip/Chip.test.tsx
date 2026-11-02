@@ -209,6 +209,72 @@ describe('Chip', () => {
         expect(onDelete).toHaveBeenCalledTimes(2);
     });
 
+    it('inside a clickable parent, each chip click reaches the parent exactly once', async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        const onDelete = vi.fn();
+        const onRow = vi.fn();
+        const ref = createRef<HTMLSpanElement>();
+        render(
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- test fixture: a clickable row
+            <div onClick={onRow}>
+                <Chip
+                    ref={ref}
+                    label="Tag"
+                    onClick={onClick}
+                    onDelete={onDelete}
+                />
+            </div>
+        );
+        // The visible button.
+        await user.click(screen.getByRole('button', { name: 'Tag' }));
+        expect(onClick).toHaveBeenCalledTimes(1);
+        expect(onRow).toHaveBeenCalledTimes(1);
+        // The extended hit layers.
+        const [action, removeOuter] = Array.from(
+            ref.current?.querySelectorAll('[data-chip-hit]') ?? []
+        );
+        if (!action || !removeOuter) throw new Error('layers');
+        fireEvent.click(action);
+        expect(onClick).toHaveBeenCalledTimes(2);
+        expect(onRow).toHaveBeenCalledTimes(2);
+        fireEvent.click(removeOuter);
+        expect(onDelete).toHaveBeenCalledTimes(1);
+        expect(onRow).toHaveBeenCalledTimes(3);
+    });
+
+    it('native ancestor listeners also see exactly one click per hit-layer click', () => {
+        const onClick = vi.fn();
+        const ref = createRef<HTMLSpanElement>();
+        const { container } = render(
+            <Chip ref={ref} label="Tag" onClick={onClick} />
+        );
+        const native = vi.fn();
+        container.addEventListener('click', native);
+        const layer = ref.current?.querySelector('[data-chip-hit]');
+        if (!layer) throw new Error('no layer');
+        fireEvent.click(layer);
+        expect(onClick).toHaveBeenCalledTimes(1);
+        expect(native).toHaveBeenCalledTimes(1);
+    });
+
+    it('a click on a hit layer focuses its button, as a native click does', () => {
+        const ref = createRef<HTMLSpanElement>();
+        render(
+            <Chip ref={ref} label="Tag" onClick={vi.fn()} onDelete={vi.fn()} />
+        );
+        const [action, removeOuter] = Array.from(
+            ref.current?.querySelectorAll('[data-chip-hit]') ?? []
+        );
+        if (!action || !removeOuter) throw new Error('layers');
+        fireEvent.click(action);
+        expect(screen.getByRole('button', { name: 'Tag' })).toHaveFocus();
+        fireEvent.click(removeOuter);
+        expect(
+            screen.getByRole('button', { name: 'Remove Tag' })
+        ).toHaveFocus();
+    });
+
     it('hit layers do nothing while disabled', () => {
         const onClick = vi.fn();
         const ref = createRef<HTMLSpanElement>();

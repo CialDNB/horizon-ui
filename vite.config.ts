@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
-import { buildStylesCss } from './scripts/build-styles';
+import { buildStylesCss } from './scripts/build-styles.ts';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf8')) as {
     dependencies?: Record<string, string>;
