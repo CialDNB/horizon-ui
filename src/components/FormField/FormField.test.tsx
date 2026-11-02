@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -153,6 +153,25 @@ describe('FormField', () => {
             </FormField>
         );
         expect(screen.getByRole('checkbox', { name: 'Bare' })).toBeVisible();
+    });
+
+    it('the caption of a self-labelled choice control names a group around it', () => {
+        render(
+            <>
+                <FormField label="Terms" required>
+                    <Checkbox label="I accept the terms" />
+                </FormField>
+                <FormField label="Bare">
+                    <Checkbox />
+                </FormField>
+            </>
+        );
+        const group = screen.getByRole('group', { name: 'Terms' });
+        expect(
+            within(group).getByRole('checkbox', { name: 'I accept the terms' })
+        ).toBeVisible();
+        // A field labelled by its <label> is not a group.
+        expect(screen.getAllByRole('group')).toHaveLength(1);
     });
 
     it('uses the given id for the control and keeps the control own describedby', () => {

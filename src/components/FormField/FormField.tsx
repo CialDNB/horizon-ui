@@ -137,6 +137,12 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
                 )}
                 data-invalid={isInvalid || undefined}
                 data-disabled={disabled || undefined}
+                // A self-labelled choice control keeps the caption as its
+                // group context (a screen reader announces "Terms, group").
+                {...(ownLabel && {
+                    role: 'group',
+                    'aria-labelledby': labelId,
+                })}
             >
                 {ownLabel ? (
                     // The control names itself (Checkbox/Switch `label`):
