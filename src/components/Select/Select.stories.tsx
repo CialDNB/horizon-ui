@@ -14,6 +14,29 @@ import { Select, SelectGroup, SelectItem, SelectSeparator } from '.';
 const column = { display: 'grid', gap: 16, maxInlineSize: 360 } as const;
 const page = within(document.body);
 
+/*
+ * Story tests open the list from the keyboard and close it again before they
+ * end, waiting for Radix to return focus to the trigger. Otherwise a list
+ * left open by one story (or its delayed focus return) moves focus away from
+ * the next story's trigger, which made these tests order-dependent.
+ */
+async function openList(trigger: HTMLElement) {
+    await waitFor(async () => {
+        trigger.focus();
+        await new Promise((r) => setTimeout(r, 30));
+        await expect(document.activeElement).toBe(trigger);
+    });
+    await userEvent.keyboard('{Enter}');
+    return page.findByRole('listbox');
+}
+async function closeList() {
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(page.queryByRole('listbox')).toBeNull());
+    await waitFor(() =>
+        expect(document.activeElement?.getAttribute('role')).toBe('combobox')
+    );
+}
+
 function Options() {
     return (
         <>
@@ -93,6 +116,7 @@ export const Open: Story = {
         await expect(
             page.getByRole('option', { name: 'Globex Corporation' })
         ).toHaveAttribute('aria-selected', 'true');
+        await closeList();
     },
 };
 
@@ -192,6 +216,7 @@ export const Empty: Story = {
     ),
     play: async () => {
         await expect(await page.findByText('No owners yet')).toBeVisible();
+        await closeList();
     },
 };
 
@@ -247,8 +272,7 @@ export const RTL: Story = {
     ),
     play: async ({ canvasElement }) => {
         const trigger = within(canvasElement).getByTestId('rtl-trigger');
-        await userEvent.click(trigger);
-        const listbox = await page.findByRole('listbox');
+        const listbox = await openList(trigger);
         const content = listbox.closest('[data-select-content]');
         if (!content) throw new Error('no content');
         const t = trigger.getBoundingClientRect();
@@ -271,7 +295,7 @@ export const RTL: Story = {
         await expect(check.getBoundingClientRect().right).toBeLessThanOrEqual(
             text.getBoundingClientRect().left
         );
-        await userEvent.keyboard('{Escape}');
+        await closeList();
     },
 };
 
@@ -382,8 +406,7 @@ async function assertSelect(canvasElement: HTMLElement, viewport: Viewport) {
     await expect(rect.width).toBe(320);
     // The long value truncates inside the trigger.
     await expect(trigger.scrollWidth).toBeLessThanOrEqual(320);
-    await userEvent.click(trigger);
-    const listbox = await page.findByRole('listbox');
+    const listbox = await openList(trigger);
     const content = listbox.closest('[data-select-content]');
     if (!content) throw new Error('no content');
     await expect(content.getBoundingClientRect().width).toBe(320);
@@ -397,7 +420,7 @@ async function assertSelect(canvasElement: HTMLElement, viewport: Viewport) {
         want.row
     );
     await expect(long).toHaveAttribute('title');
-    await userEvent.keyboard('{Escape}');
+    await closeList();
 }
 
 export const OpenMobile: Story = {
@@ -449,8 +472,7 @@ export const ComputedStyles: Story = {
         await expect(cs.boxShadow).toContain(probe.color);
         await expect(cs.borderRadius).toBe('20px');
         await expect(cs.color).toBe(probe.outlineColor);
-        await userEvent.click(trigger);
-        const listbox = await page.findByRole('listbox');
+        const listbox = await openList(trigger);
         const content = listbox.closest('[data-select-content]');
         if (!content) throw new Error('no content');
         await expect(getComputedStyle(content).backgroundColor).toBe(
@@ -464,6 +486,6 @@ export const ComputedStyles: Story = {
                 ).backgroundColor
             ).toBe(probe.borderTopColor)
         );
-        await userEvent.keyboard('{Escape}');
+        await closeList();
     },
 };
