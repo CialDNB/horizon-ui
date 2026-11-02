@@ -1680,25 +1680,25 @@ const DIALOG_CASES = {
 } as const;
 
 /**
- * Waits until Radix has placed the open list and moved focus into it, then
- * pauses. Measured: keys sent within a few hundred ms of opening or of an
- * arrow move (far faster than a person types) intermittently selected the
- * first option instead of the focused one, with or without MUI around; with
- * the pauses the sequence is stable. Not a product issue for human input.
+ * Waits until Radix has placed the open list (the popper wrapper leaves its
+ * off-screen measuring position) and moved focus to a highlighted option.
+ * Measured: a key sent in the ~10-25ms between the list opening and that
+ * focus can act on the first option instead; a person cannot type that fast,
+ * so the tests wait for the focus instead of sleeping.
  */
-const SETTLE_MS = 300;
 const listSettled = async (page: Page) => {
     await page.waitForFunction(() => {
         const wrapper = document.querySelector(
             '[data-radix-popper-content-wrapper]'
         );
+        const active = document.activeElement;
         return (
             wrapper !== null &&
             !(wrapper.getAttribute('style') ?? '').includes('-200%') &&
-            document.activeElement?.getAttribute('role') === 'option'
+            active?.getAttribute('role') === 'option' &&
+            active.hasAttribute('data-highlighted')
         );
     });
-    await page.waitForTimeout(SETTLE_MS);
 };
 
 const dialogSelect = async (page: Page, testId: string) => {
@@ -1754,7 +1754,6 @@ test.describe('Horizon controls inside an MUI dialog (unlayered + host CSS)', ()
         await expect(
             page.getByRole('option', { name: 'Globex' })
         ).toBeFocused();
-        await page.waitForTimeout(SETTLE_MS);
         await page.keyboard.press('Enter');
         await expect(trigger).toHaveText('Globex');
         await expect(trigger).toBeFocused();
@@ -1808,7 +1807,10 @@ test.describe('Horizon controls inside an MUI dialog (unlayered + host CSS)', ()
         // Keyboard and pointer selection still work for sighted users.
         await listSettled(page);
         await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(SETTLE_MS);
+        // Role queries skip the aria-hidden list: wait on the DOM focus.
+        await page.waitForFunction(
+            () => document.activeElement?.textContent === 'Globex'
+        );
         await page.keyboard.press('Enter');
         await expect(trigger).toHaveText('Globex');
         await trigger.click();
