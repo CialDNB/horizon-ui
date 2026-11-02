@@ -68,3 +68,20 @@ The 11 Horizon `typeScale` roles are ported, plus `label/sm|md|lg` (added in Tas
 
 - `elevation` slots 5-24 and `muiShadowsArray` (MUI-specific) are dropped.
 - Font tokens are authored in rem (16px root) in `src/tokens/typography.ts` but emitted as px in `tokens.css`, so a 14px host root (x-core Legacy) cannot shrink them. See `docs/architecture/decisions/0001-css-isolation.md`.
+
+## Design-owner decisions
+
+### Type roles with a 1.0 line-height ratio (logged in Task 10b, not changed)
+
+Four roles in `src/tokens/typography.ts` have a line height equal to their font size, inherited 1:1 from x-core's Horizon typography:
+
+| Role | Now (size / line height) | Proposed | Ratio after |
+| --- | --- | --- | --- |
+| `body/secondary` | 14 / 14 | 14 / 20 | 1.43 |
+| `body/lg` | 20 / 20 | 20 / 28 | 1.4 |
+| `caption` | 12 / 12 | 12 / 16 | 1.33 |
+| `micro` | 10 / 10 | unchanged unless design decides (single-line badge labels only) | 1.0 |
+
+A 1.0 ratio is fine for one-line labels but makes wrapped text touch line to line (descenders meet ascenders), and leaves no room for the WCAG 1.4.12 text-spacing override. Alert therefore uses `body/default` (16/20) for its description instead of `body/secondary` (x-core used MUI `body2`, 14px).
+
+Changing these tokens is the design owner's call. It changes the rendered height of everything that uses them (Typography with those variants, the Progress value text on `body/secondary`, the Badge label on `micro` if that row changes), so the Typography story baselines and the measured coexistence values (`coexistence/tests/components.spec.ts`, Typography line heights) need updating in the same change.
