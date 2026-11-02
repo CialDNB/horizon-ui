@@ -232,7 +232,7 @@ export const curation: Record<string, Curation> = {
         note: 'Done in Task 11b (Radix Dialog, compound): `<DialogV2 open onClose dialogTitle dialogContent dialogActions>` becomes `<Dialog open onOpenChange><DialogContent><DialogHeader><DialogTitle/></DialogHeader><DialogBody/><DialogFooter/></DialogContent></Dialog>`; `isStickyHeader`/`isStickyFooter` are the default (body scrolls); `maxWidth` -> `size` (xs/sm -> sm 570, md/tablet -> md 600, lg/laptop -> lg 900, xl/desktop -> xl 1136); full screen below tablet as x-core; `onClose(event, reason)` -> `onOpenChange(false)`; `disableEscapeKeyDown` -> `dismissible={false}`; `sx`/`PaperProps`/`dialogContentSx`/`dialogActionsSx`/`TransitionProps`/`transitionDirection` dropped (className on the part). New: dev warnings for a missing title/description. Opening an MUI dialog from a Horizon dialog is not supported (renders below). Dropped props warn in development.',
         status: 'done',
         supersededNote:
-            'Call sites (27 files: `open`, `onClose`, `maxWidth` sm/md/xs/xl/tablet/laptop/desktop, `sx`, `TransitionProps`, `scroll`, `fullScreen`, `PaperProps`) migrate to `Dialog` like DialogV2: children become DialogHeader/DialogBody/DialogFooter parts, `maxWidth` -> `size`.',
+            'Call sites (27 files: `open`, `onClose`, `maxWidth` sm/md/xs/xl/tablet/laptop/desktop, `sx`, `TransitionProps`, `scroll`, `fullScreen`, `PaperProps`) migrate to `Dialog` like DialogV2: children become DialogHeader/DialogBody/DialogFooter parts, `maxWidth` -> `size`; `keepMounted` -> `DialogContent keepMounted` (customer360 FilterModal.tsx keeps its react-hook-form state; kept children live in a detached node while closed, read once on mount).',
     },
     ConfirmationDialog: {
         batch: 2,
@@ -243,7 +243,7 @@ export const curation: Record<string, Curation> = {
     DrawerV3: {
         batch: 2,
         horizon: 'Drawer',
-        note: 'Done in Task 11b (Radix Dialog as a side panel). `isOpen` -> `open`; `onClose()` -> `onOpenChange(false)`; `direction` (LayoutDirection) -> logical `side` (`end` default = x-core right edge, mirrored under rtl by itself); `title`, `content`, `actions`, `width` (default 320px; customer360 widths such as `"90%"` work from tablet, capped at the viewport), `keepMounted` kept (content state survives closing; closed content is not in the document); `sx` dropped. Full-width bottom sheet below tablet as x-core. Dropped props warn in development.',
+        note: 'Done in Task 11b (Radix Dialog as a side panel). `isOpen` -> `open`; `onClose()` -> `onOpenChange(false)`; `direction` (LayoutDirection) -> logical `side` (`end` default = x-core right edge, mirrored under rtl by itself); `title`, `content`, `actions`, `width` (default 320px; customer360 widths such as `"90%"` work from tablet, capped at the viewport), `keepMounted` kept (content state survives closing; closed content is not in the document, so layout measured there is 0; read once on mount); `sx` dropped. Full-width bottom sheet below tablet as x-core. Dropped props warn in development.',
         status: 'done',
     },
     Popover: {

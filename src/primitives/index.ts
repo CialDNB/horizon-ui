@@ -38,3 +38,4 @@ export {
     scrimStyles,
 } from './overlay';
 export type { LogicalAlign, LogicalSide } from './overlay';
+export { useKeptContent } from './keptContent';

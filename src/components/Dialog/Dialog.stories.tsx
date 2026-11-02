@@ -166,6 +166,40 @@ export const NotDismissible: Story = {
     args: { dismissible: false },
 };
 
+/**
+ * keepMounted (x-core Dialog v1, e.g. customer360 FilterModal with a
+ * react-hook-form FormProvider): typed values survive closing; the layout
+ * is the same as without it.
+ */
+export const KeepMounted: Story = {
+    render: () => <EditCompany keepMounted lines={40} />,
+    play: async ({ canvasElement }) => {
+        const trigger = within(canvasElement).getByTestId('trigger');
+        await userEvent.click(trigger);
+        const field = await page.findByRole('textbox', {
+            name: 'Company name',
+        });
+        await userEvent.clear(field);
+        await userEvent.type(field, 'Globex');
+        await closeDialog();
+        await userEvent.click(trigger);
+        await expect(
+            await page.findByRole('textbox', { name: 'Company name' })
+        ).toHaveValue('Globex');
+        const el = await openPanel();
+        await settled(el);
+        const body = el.querySelector('[data-dialog-body]');
+        const save = page.getByRole('button', { name: 'Save' });
+        if (!body) throw new Error('no body');
+        // Body still scrolls between header and footer (layout-neutral host).
+        await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+        await expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+            el.getBoundingClientRect().bottom
+        );
+        await closeDialog();
+    },
+};
+
 /** Long body: scrolls between the fixed header and footer. */
 export const LongContent: Story = {
     render: () => <EditCompany lines={40} />,

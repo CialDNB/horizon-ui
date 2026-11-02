@@ -9,9 +9,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
     forwardRef,
-    useCallback,
     useRef,
-    useState,
     type CSSProperties,
     type HTMLAttributes,
     type ReactNode,
@@ -25,6 +23,7 @@ import {
     overlaySurface,
     panelMotion,
     scrimStyles,
+    useKeptContent,
 } from '../../primitives';
 import { usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
@@ -103,7 +102,10 @@ export type DrawerProps = Omit<
         width?: CSSProperties['width'];
         /**
          * Keeps `content` mounted while closed, so its state (form input,
-         * scroll position of inner lists) survives closing. Read on mount.
+         * scroll position of inner lists) survives closing. Read once, on
+         * mount (toggling it later has no effect). While closed the content
+         * lives in a detached element: anything that measures layout there
+         * (charts) sees 0 until the drawer opens.
          * @default false
          */
         keepMounted?: boolean;
@@ -137,19 +139,7 @@ export const Drawer = forwardRef<HTMLDivElement, DrawerProps>(function Drawer(
     const rest = omitLegacyProps('Drawer', props, legacyDrawerProps);
     const side = resolveOption('Drawer', 'side', sideProp, drawerSides, 'end');
     const container = usePortalContainer();
-    // keepMounted: the content lives in one element for the component's
-    // lifetime (a React portal target) that is moved into the open panel.
-    const [keeper] = useState(() =>
-        keepMounted && typeof document !== 'undefined'
-            ? document.createElement('div')
-            : null
-    );
-    const attachKeeper = useCallback(
-        (body: HTMLDivElement | null) => {
-            if (body && keeper) body.appendChild(keeper);
-        },
-        [keeper]
-    );
+    const { keeper, attach: attachKeeper } = useKeptContent(keepMounted);
     const openerRef = useRef<Element | null>(null);
     return (
         <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

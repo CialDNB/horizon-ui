@@ -15,6 +15,7 @@ import {
     type ComponentPropsWithoutRef,
     type HTMLAttributes,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
 import {
@@ -24,6 +25,7 @@ import {
     overlaySurface,
     panelMotion,
     scrimStyles,
+    useKeptContent,
 } from '../../primitives';
 import { usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
@@ -153,6 +155,16 @@ export type DialogContentProps = ComponentPropsWithoutRef<
         showClose?: boolean;
         /** Accessible name of the close button. Translate it. @default 'Close' */
         closeLabel?: string;
+        /**
+         * Keeps the children mounted while closed (x-core Dialog
+         * `keepMounted`), so a form's state (react-hook-form, uncontrolled
+         * inputs) survives closing. The focus trap, scroll lock and
+         * `aria-hidden` of the page still only apply while open. Read once,
+         * on mount; while closed the children live in a detached element
+         * (layout measures 0).
+         * @default false
+         */
+        keepMounted?: boolean;
     };
 
 /**
@@ -172,6 +184,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             dismissible = true,
             showClose = true,
             closeLabel = 'Close',
+            keepMounted = false,
             onEscapeKeyDown,
             onPointerDownOutside,
             onInteractOutside,
@@ -191,6 +204,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             'md'
         );
         const container = usePortalContainer();
+        const { keeper, attach } = useKeptContent(keepMounted);
         const panelRef = useRef<HTMLDivElement>(null);
         // Radix returns focus to a DialogTrigger only; a controlled dialog
         // opened from any other control (customer360's usual pattern) would
@@ -221,63 +235,71 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             return () => clearTimeout(timer);
             // Once per mount: the content mounts on each opening.
         }, []);
-        if (!container) return null;
+        const kept = keeper && createPortal(children, keeper);
+        if (!container) return kept;
         return (
-            <DialogPrimitive.Portal container={container}>
-                <DialogPrimitive.Overlay
-                    className={scrimStyles}
-                    data-dialog-overlay=""
-                />
-                <DialogPrimitive.Content
-                    {...props}
-                    ref={composeRefs(ref, panelRef)}
-                    onEscapeKeyDown={containEscape((event) => {
-                        onEscapeKeyDown?.(event);
-                        if (!dismissible) event.preventDefault();
-                    })}
-                    onPointerDownOutside={(event) => {
-                        onPointerDownOutside?.(event);
-                        if (!dismissible) event.preventDefault();
-                    }}
-                    onInteractOutside={(event) => {
-                        onInteractOutside?.(event);
-                        if (!dismissible) event.preventDefault();
-                    }}
-                    onOpenAutoFocus={(event) => {
-                        // Runs before focus moves in: activeElement is the opener.
-                        openerRef.current = document.activeElement;
-                        onOpenAutoFocus?.(event);
-                    }}
-                    onCloseAutoFocus={(event) => {
-                        onCloseAutoFocus?.(event);
-                        if (event.defaultPrevented) return;
-                        const opener = openerRef.current;
-                        if (
-                            opener instanceof HTMLElement &&
-                            opener.isConnected
-                        ) {
-                            event.preventDefault();
-                            opener.focus();
-                        }
-                    }}
-                    data-size={size}
-                    data-dialog-content=""
-                    className={cn(contentStyles({ size }), className)}
-                >
-                    {children}
-                    {showClose && dismissible && (
-                        <DialogPrimitive.Close
-                            aria-label={closeLabel}
-                            className={cn(
-                                overlayCloseBase,
-                                'hz:absolute hz:end-2 hz:top-[max(8px,env(safe-area-inset-top))] hz:text-muted-foreground hz:hover:text-foreground hz:[&_svg]:size-5 hz:tablet:end-3 hz:tablet:top-3'
-                            )}
-                        >
-                            <XIcon aria-hidden="true" />
-                        </DialogPrimitive.Close>
-                    )}
-                </DialogPrimitive.Content>
-            </DialogPrimitive.Portal>
+            <>
+                {kept}
+                <DialogPrimitive.Portal container={container}>
+                    <DialogPrimitive.Overlay
+                        className={scrimStyles}
+                        data-dialog-overlay=""
+                    />
+                    <DialogPrimitive.Content
+                        {...props}
+                        ref={composeRefs(ref, panelRef)}
+                        onEscapeKeyDown={containEscape((event) => {
+                            onEscapeKeyDown?.(event);
+                            if (!dismissible) event.preventDefault();
+                        })}
+                        onPointerDownOutside={(event) => {
+                            onPointerDownOutside?.(event);
+                            if (!dismissible) event.preventDefault();
+                        }}
+                        onInteractOutside={(event) => {
+                            onInteractOutside?.(event);
+                            if (!dismissible) event.preventDefault();
+                        }}
+                        onOpenAutoFocus={(event) => {
+                            // Runs before focus moves in: activeElement is the opener.
+                            openerRef.current = document.activeElement;
+                            onOpenAutoFocus?.(event);
+                        }}
+                        onCloseAutoFocus={(event) => {
+                            onCloseAutoFocus?.(event);
+                            if (event.defaultPrevented) return;
+                            const opener = openerRef.current;
+                            if (
+                                opener instanceof HTMLElement &&
+                                opener.isConnected
+                            ) {
+                                event.preventDefault();
+                                opener.focus();
+                            }
+                        }}
+                        data-size={size}
+                        data-dialog-content=""
+                        className={cn(contentStyles({ size }), className)}
+                    >
+                        {keeper ? (
+                            <div ref={attach} className="hz:contents" />
+                        ) : (
+                            children
+                        )}
+                        {showClose && dismissible && (
+                            <DialogPrimitive.Close
+                                aria-label={closeLabel}
+                                className={cn(
+                                    overlayCloseBase,
+                                    'hz:absolute hz:end-[max(8px,env(safe-area-inset-left),env(safe-area-inset-right))] hz:top-[max(8px,env(safe-area-inset-top))] hz:text-muted-foreground hz:hover:text-foreground hz:[&_svg]:size-5 hz:tablet:end-3 hz:tablet:top-3'
+                                )}
+                            >
+                                <XIcon aria-hidden="true" />
+                            </DialogPrimitive.Close>
+                        )}
+                    </DialogPrimitive.Content>
+                </DialogPrimitive.Portal>
+            </>
         );
     }
 );
@@ -297,7 +319,7 @@ export const DialogHeader = forwardRef<HTMLDivElement, DialogSectionProps>(
                 {...props}
                 ref={ref}
                 className={cn(
-                    'hz:flex hz:shrink-0 hz:flex-col hz:gap-1 hz:px-4 hz:pe-14 hz:pt-[max(16px,env(safe-area-inset-top))] hz:pb-2 hz:tablet:px-6 hz:tablet:pe-16 hz:tablet:pt-6',
+                    'hz:flex hz:shrink-0 hz:flex-col hz:gap-1 hz:px-[max(16px,env(safe-area-inset-left),env(safe-area-inset-right))] hz:pe-[max(56px,calc(env(safe-area-inset-left)+40px),calc(env(safe-area-inset-right)+40px))] hz:pt-[max(16px,env(safe-area-inset-top))] hz:pb-2 hz:tablet:px-6 hz:tablet:pe-16 hz:tablet:pt-6',
                     className
                 )}
             />
@@ -364,7 +386,7 @@ export const DialogBody = forwardRef<HTMLDivElement, DialogSectionProps>(
                 ref={ref}
                 data-dialog-body=""
                 className={cn(
-                    'hz:min-h-0 hz:flex-1 hz:overflow-y-auto hz:px-4 hz:py-2 hz:break-words hz:tablet:px-6',
+                    'hz:min-h-0 hz:flex-1 hz:overflow-y-auto hz:px-[max(16px,env(safe-area-inset-left),env(safe-area-inset-right))] hz:py-2 hz:break-words hz:tablet:px-6',
                     className
                 )}
             />
@@ -386,7 +408,7 @@ export const DialogFooter = forwardRef<HTMLDivElement, DialogSectionProps>(
                 ref={ref}
                 data-dialog-footer=""
                 className={cn(
-                    'hz:flex hz:shrink-0 hz:flex-col-reverse hz:gap-2 hz:px-4 hz:pt-3 hz:pb-[max(16px,env(safe-area-inset-bottom))] hz:[&>*]:w-full',
+                    'hz:flex hz:shrink-0 hz:flex-col-reverse hz:gap-2 hz:px-[max(16px,env(safe-area-inset-left),env(safe-area-inset-right))] hz:pt-3 hz:pb-[max(16px,env(safe-area-inset-bottom))] hz:[&>*]:w-full',
                     'hz:tablet:flex-row hz:tablet:flex-wrap hz:tablet:justify-end hz:tablet:px-6 hz:tablet:pb-6 hz:tablet:[&>*]:w-auto',
                     className
                 )}

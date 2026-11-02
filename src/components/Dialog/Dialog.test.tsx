@@ -180,6 +180,54 @@ describe('Dialog', () => {
         expect(opener).toHaveFocus();
     });
 
+    it('keepMounted: typed text in an uncontrolled field survives close and reopen', async () => {
+        const user = userEvent.setup();
+        const { unmount } = render(<Edit keepMounted />);
+        const trigger = screen.getByRole('button', { name: 'Edit company' });
+        await user.click(trigger);
+        const field = await screen.findByRole('textbox', { name: 'Name' });
+        await user.clear(field);
+        await user.type(field, 'Globex');
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        // Closed: not in the document (nothing hidden stays focusable), and
+        // the page is no longer aria-hidden.
+        expect(screen.queryByRole('textbox')).toBeNull();
+        expect(screen.getByRole('button', { name: 'Page' })).toBeVisible();
+        await user.click(trigger);
+        expect(
+            await screen.findByRole('textbox', { name: 'Name' })
+        ).toHaveValue('Globex');
+        // Without keepMounted the state is lost.
+        unmount();
+        render(<Edit />);
+        await user.click(screen.getByRole('button', { name: 'Edit company' }));
+        const fresh = await screen.findByRole('textbox', { name: 'Name' });
+        await user.clear(fresh);
+        await user.type(fresh, 'Initech');
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        await user.click(screen.getByRole('button', { name: 'Edit company' }));
+        expect(
+            await screen.findByRole('textbox', { name: 'Name' })
+        ).toHaveValue('Acme');
+    });
+
+    it('keepMounted keeps the name, description and first-field focus', async () => {
+        const user = userEvent.setup();
+        render(<Edit keepMounted />);
+        await user.click(screen.getByRole('button', { name: 'Edit company' }));
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Edit company',
+        });
+        expect(dialog).toHaveAccessibleDescription(
+            'Changes apply to every report.'
+        );
+        await waitFor(() =>
+            expect(screen.getByRole('textbox', { name: 'Name' })).toHaveFocus()
+        );
+    });
+
     it('controlled: onOpenChange receives false on close', async () => {
         const user = userEvent.setup();
         const changes: boolean[] = [];
