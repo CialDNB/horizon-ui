@@ -189,6 +189,36 @@ describe('Chip', () => {
         expect(Chip.displayName).toBe('Chip');
     });
 
+    it('hit layers are hidden from assistive tech and forward clicks to their button', () => {
+        const onClick = vi.fn();
+        const onDelete = vi.fn();
+        const ref = createRef<HTMLSpanElement>();
+        render(
+            <Chip ref={ref} label="Tag" onClick={onClick} onDelete={onDelete} />
+        );
+        const layers = ref.current?.querySelectorAll('[data-chip-hit]') ?? [];
+        expect(layers).toHaveLength(3);
+        for (const layer of Array.from(layers))
+            expect(layer).toHaveAttribute('aria-hidden', 'true');
+        const [action, removeOuter, removeInner] = Array.from(layers);
+        if (!action || !removeOuter || !removeInner) throw new Error('layers');
+        fireEvent.click(action);
+        expect(onClick).toHaveBeenCalledTimes(1);
+        fireEvent.click(removeOuter);
+        fireEvent.click(removeInner);
+        expect(onDelete).toHaveBeenCalledTimes(2);
+    });
+
+    it('hit layers do nothing while disabled', () => {
+        const onClick = vi.fn();
+        const ref = createRef<HTMLSpanElement>();
+        render(<Chip ref={ref} label="Tag" disabled onClick={onClick} />);
+        const layer = ref.current?.querySelector('[data-chip-hit]');
+        if (!layer) throw new Error('no layer');
+        fireEvent.click(layer);
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
     it('a click on the remove button does not trigger onClick', () => {
         const onClick = vi.fn();
         const onDelete = vi.fn();

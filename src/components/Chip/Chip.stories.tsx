@@ -352,26 +352,32 @@ export const Responsive: Story = {
 const viewportWidth = { mobile: 375, tablet: 768, laptop: 1280, desktop: 1920 };
 type Viewport = keyof typeof viewportWidth;
 
+const onAction = fn();
+const onRemove = fn();
+
 function HitProbe() {
     return (
-        <div style={{ ...stack, padding: 48 }}>
+        <div style={{ display: 'grid', gap: 32, padding: 48 }}>
             {sizes.map((size) => (
-                <div key={size} style={row}>
+                <div
+                    key={size}
+                    style={{ display: 'grid', justifyItems: 'start', gap: 32 }}
+                >
                     <Chip
                         size={size}
                         label="Open cases"
-                        onClick={() => undefined}
+                        onClick={onAction}
                         data-testid={`action-${size}`}
                     />
-                    <span style={{ inlineSize: 64 }} />
+
                     <Chip
                         size={size}
                         variant="neutral"
                         label="Germany"
-                        onDelete={() => undefined}
+                        onDelete={onRemove}
                         data-testid={`remove-${size}`}
                     />
-                    <span style={{ inlineSize: 64 }} />
+
                     <Chip
                         size={size}
                         label="A"
@@ -386,6 +392,13 @@ function HitProbe() {
 
 const hit = (x: number, y: number) => document.elementFromPoint(x, y);
 
+/** The clickable part of `chip` at a point: its action button or hit layer. */
+const actionAt = (chip: HTMLElement, x: number, y: number) => {
+    const el = hit(x, y);
+    if (!el || !chip.contains(el)) return null;
+    return el.closest('[data-chip-action], [data-chip-hit]');
+};
+
 async function assertHitArea(canvasElement: HTMLElement, viewport: Viewport) {
     const canvas = within(canvasElement);
     await expect(window.innerWidth).toBe(viewportWidth[viewport]);
@@ -393,40 +406,59 @@ async function assertHitArea(canvasElement: HTMLElement, viewport: Viewport) {
     for (const size of sizes) {
         const chip = canvas.getByTestId(`action-${size}`);
         const rect = chip.getBoundingClientRect();
-        await expect(rect.height).toBe(size === 'md' ? 24 : 20);
-        const action = within(chip).getByRole('button');
-        // 4px above the visual edge: inside the 44px hit area only at mobile.
-        const above = hit(rect.left + rect.width / 2, rect.top - 4);
-        const below = hit(rect.left + rect.width / 2, rect.bottom + 4);
-        if (touch) {
-            await expect(above).toBe(action);
-            await expect(below).toBe(action);
-            await expect(hit(rect.left + rect.width / 2, rect.top - 9)).toBe(
-                action
-            );
-        } else {
-            await expect(above).not.toBe(action);
-            await expect(below).not.toBe(action);
+        const height = size === 'md' ? 24 : 20;
+        await expect(rect.height).toBe(height);
+        const x = rect.left + rect.width / 2;
+        // Just inside a 44px box centred on the chip.
+        const reach = (44 - height) / 2 - 0.5;
+        for (const y of [rect.top - reach, rect.bottom + reach]) {
+            const target = actionAt(chip, x, y);
+            if (touch) {
+                await expect(
+                    target,
+                    `${size} at ${y - rect.top}`
+                ).not.toBeNull();
+                // The point really activates the chip.
+                onAction.mockClear();
+                (hit(x, y) as HTMLElement).click();
+                await expect(onAction).toHaveBeenCalledTimes(1);
+            } else {
+                await expect(target, `${size} at ${y - rect.top}`).toBeNull();
+            }
         }
+        // Fine pointers: the visual box is the target, 1px outside is not.
+        await expect(actionAt(chip, x, rect.top + 1)).not.toBeNull();
+        if (!touch) await expect(actionAt(chip, x, rect.top - 1)).toBeNull();
         const removeChip = canvas.getByTestId(`remove-${size}`);
         const remove = within(removeChip).getByRole('button');
         const r = remove.getBoundingClientRect();
         const cx = r.left + r.width / 2;
         const cy = r.top + r.height / 2;
+        const removeAt = (dx: number, dy: number) => {
+            const el = hit(cx + dx, cy + dy);
+            return Boolean(
+                el &&
+                (el === remove ||
+                    el.closest('[data-chip-remove]')?.contains(remove))
+            );
+        };
         if (touch) {
             for (const [dx, dy] of [
-                [0, -21],
-                [0, 21],
-                [21, 0],
-                [-21, 0],
+                [0, -21.5],
+                [0, 21.5],
+                [21.5, 0],
+                [-21.5, 0],
             ] as const)
                 await expect(
-                    hit(cx + dx, cy + dy),
+                    removeAt(dx, dy),
                     `remove ${size} ${dx},${dy}`
-                ).toBe(remove);
+                ).toBe(true);
+            onRemove.mockClear();
+            (hit(cx, cy - 21.5) as HTMLElement).click();
+            await expect(onRemove).toHaveBeenCalledTimes(1);
         } else {
-            await expect(hit(cx, cy - 21)).not.toBe(remove);
-            await expect(hit(cx, cy - 11)).toBe(remove);
+            await expect(removeAt(0, -21)).toBe(false);
+            await expect(removeAt(0, -11)).toBe(true);
         }
         const short = canvas
             .getByTestId(`short-${size}`)
@@ -462,6 +494,95 @@ export const HitAreaLaptop: Story = {
 export const HitAreaDesktop: Story = {
     ...viewportTest('desktop'),
     name: 'uses visual-size hit areas with a fine pointer at desktop',
+};
+
+/**
+ * Wrapped chips 8px apart at mobile. 44px hit areas cannot fit an 8px gap, so
+ * the rule is: a chip's own visual box always belongs to that chip (visuals
+ * sit above every hit layer); only the gap between two rows is shared, and
+ * there the later chip in DOM order wins.
+ */
+export const AdjacentMobile: Story = {
+    name: 'never lets a neighbour take clicks inside a chip at mobile',
+    tags: ['!autodocs', '!dev'],
+    globals: { viewport: { value: 'mobile', isRotated: false } },
+    render: () => (
+        <div
+            style={{
+                display: 'grid',
+                justifyItems: 'start',
+                gap: 8,
+                padding: 48,
+            }}
+        >
+            {sizes.map((size) => (
+                <div
+                    key={size}
+                    style={{ display: 'grid', justifyItems: 'start', gap: 8 }}
+                >
+                    <Chip
+                        size={size}
+                        label="Alpha"
+                        onClick={() => undefined}
+                        data-testid={`a-${size}`}
+                    />
+                    <Chip
+                        size={size}
+                        label="Bravo"
+                        onClick={() => undefined}
+                        data-testid={`b-${size}`}
+                    />
+                    <Chip
+                        size={size}
+                        label="Static"
+                        variant="neutral"
+                        data-testid={`c-${size}`}
+                    />
+                    <Chip
+                        size={size}
+                        label="Delta"
+                        onClick={() => undefined}
+                        data-testid={`d-${size}`}
+                    />
+                    <Chip
+                        size={size}
+                        label="Echo"
+                        variant="neutral"
+                        onDelete={() => undefined}
+                        data-testid={`e-${size}`}
+                    />
+                    <Chip
+                        size={size}
+                        label="Foxtrot"
+                        onClick={() => undefined}
+                        data-testid={`f-${size}`}
+                    />
+                </div>
+            ))}
+        </div>
+    ),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        const owner = (x: number, y: number) =>
+            hit(x, y)?.closest('[data-testid]')?.getAttribute('data-testid');
+        for (const size of sizes) {
+            const ids = ['a', 'b', 'c', 'd', 'e', 'f'].map(
+                (k) => `${k}-${size}`
+            );
+            for (const id of ids) {
+                const r = canvas.getByTestId(id).getBoundingClientRect();
+                const x = r.left + 6;
+                await expect(owner(x, r.top + 0.5), `${id} top`).toBe(id);
+                await expect(owner(x, r.bottom - 0.5), `${id} bottom`).toBe(id);
+            }
+            // The 8px gap between two clickable chips goes to one of them.
+            const a = canvas.getByTestId(`a-${size}`).getBoundingClientRect();
+            const b = canvas.getByTestId(`b-${size}`).getBoundingClientRect();
+            await expect([`a-${size}`, `b-${size}`]).toContain(
+                owner(a.left + 6, (a.bottom + b.top) / 2)
+            );
+        }
+    },
 };
 
 /** Computed styles that encode the design: size, radius, type, tone tokens, focus ring. */
