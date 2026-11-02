@@ -311,6 +311,49 @@ test.describe('DropdownMenu against Bootstrap 4.4.1 and customer360 host CSS', (
             });
 });
 
+/* ----------------------------------- Toast ---------------------------------- */
+
+const showToast = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-toast-trigger').click();
+    const item = page.locator('[data-did="hz-toast"]');
+    await expect(item).toBeVisible();
+    await item.evaluate((el) =>
+        Promise.all(el.getAnimations().map((a) => a.finished))
+    );
+    return {
+        item: await read(item, [...SURFACE_PROPS, 'listStyleType', 'height']),
+        viewport: await read(page.locator('[data-toast-viewport]'), [
+            ...SURFACE_PROPS,
+            'paddingInlineStart',
+            'marginBottom',
+            'listStyleType',
+            'position',
+        ]),
+        dismiss: await read(
+            item.getByRole('button', { name: 'Dismiss' }),
+            SURFACE_PROPS
+        ),
+    };
+};
+
+test.describe('Toast against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: toast and list unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await showToast(page, url('unlayered'));
+                const withHost = await showToast(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.viewport['zIndex']).toBe('1600');
+                expect(without.viewport['marginBottom']).toBe('0px');
+            });
+});
+
 /* ------------------------- Inside a real MUI Dialog -------------------------- */
 
 const openMuiOverlays = async (page: Page, build: 'layered' | 'unlayered') => {
@@ -489,6 +532,46 @@ for (const build of ['layered', 'unlayered'] as const)
             await trigger.click();
             await page.getByRole('menuitem', { name: /Export/ }).click();
             await expect(menu).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
+        });
+
+        test('Toast: shown from inside the dialog above it, announced to screen readers, dismissable by pointer; the dialog stays', async ({
+            page,
+        }) => {
+            await openMuiOverlays(page, build);
+            await page.getByTestId('mui-toast-trigger').click();
+            const item = page.locator('[data-did="mui-toast"]');
+            await expect(item).toBeVisible();
+            await item.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
+            expect(await onTop(page, item)).toBe(true);
+            // The one announcement lives in body, outside what MUI hides.
+            const announcement = page
+                .locator('[aria-live="polite"]')
+                .filter({ hasText: 'Saved from the harness' });
+            await expect(announcement).toHaveCount(1);
+            expect(
+                await announcement.evaluate(
+                    (el) => el.closest('[aria-hidden="true"]') === null
+                )
+            ).toBe(true);
+            // KNOWN LIMIT (measured): the visible list portals into the app
+            // provider inside #root, which MUI aria-hides while its dialog
+            // is open, and MUI's focus trap keeps F8 focus in the dialog.
+            expect(
+                await item.evaluate(
+                    (el) => el.closest('[aria-hidden="true"]')?.id ?? null
+                )
+            ).toBe('root');
+            // Role queries skip it (aria-hidden); the pointer still works.
+            await expect(
+                item.getByRole('button', { name: 'Dismiss' })
+            ).toHaveCount(0);
+            await item.locator('button[aria-label="Dismiss"]').click();
+            await expect(item).toHaveCount(0);
             await expect(
                 page.getByTestId('mui-overlays-content')
             ).toBeVisible();

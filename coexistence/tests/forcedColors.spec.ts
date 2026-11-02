@@ -128,5 +128,7 @@ for (const build of ['layered', 'unlayered'] as const)
             // The highlighted row (no fill in forced colors) is outlined.
             visibleOutline(await style(page, byTestId('hz-menu-item')));
             await page.keyboard.press('Escape');
+            await page.getByTestId('hz-toast-trigger').click();
+            visibleBorder(await style(page, '[data-did="hz-toast"]'));
         });
     });

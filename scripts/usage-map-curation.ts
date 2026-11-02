@@ -267,7 +267,8 @@ export const curation: Record<string, Curation> = {
     Snackbar: {
         batch: 2,
         horizon: 'Toast',
-        note: 'Planned: role status, auto-dismiss.',
+        note: 'Done in Task 11b (Radix Toast + Alert): mount `<ToastProvider />` once (replaces notistack `SnackbarProvider` in App.jsx); customer360 `useSimpleSnackbar().showErrorSnackbar(text, title)` etc. become `toast({ variant: "error", description: text, title })`; `color` -> `variant` (info/success/warning/error); `text` -> `description`; `onActionClick` + `actionTitle` -> `action: { label, onClick }`; `autoHideDuration` -> `duration` (default 5000); `preventDuplicate` -> a stable `id` (replaces the shown toast); returns `{ id, dismiss }` (was `handleClose`); `showProgress` -> pass a Progress in `description`; `anchorOrigin` top/right + `style.top: 65px` dropped: bottom centre at mobile/tablet, bottom end from laptop (design decision); `SnackbarAlert`/`useSnackbar` exports dropped; `useToast()` hook. Toasts in an MUI dialog are announced but their visible list is aria-hidden by MUI (known limit).',
+        status: 'done',
     },
     SplitButton: {
         batch: 2,

@@ -54,6 +54,8 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    ToastProvider,
+    toast,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
@@ -434,6 +436,22 @@ function Overlays({ scope }: { scope: string }) {
             </Dialog>
             <ConfirmDelete scope={scope} />
             <DetailsDrawer scope={scope} />
+            <Button
+                variant="secondary"
+                data-testid={`${scope}-toast-trigger`}
+                onClick={() =>
+                    toast({
+                        id: `${scope}-toast`,
+                        variant: 'success',
+                        title: 'Overlay toast',
+                        description: 'Saved from the harness',
+                        duration: Infinity,
+                        'data-did': `${scope}-toast`,
+                    })
+                }
+            >
+                Toast
+            </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
@@ -989,6 +1007,7 @@ function App() {
                     <HorizonProvider>
                         <Overlays scope="hz" />
                         <OverlaysInMuiDialog />
+                        <ToastProvider />
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">

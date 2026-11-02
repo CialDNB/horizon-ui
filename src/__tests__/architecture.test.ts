@@ -136,6 +136,7 @@ describe('architecture', () => {
                 "Spinner",
                 "Switch",
                 "Textarea",
+                "ToastProvider",
                 "Tooltip",
                 "TooltipProvider",
                 "Typography",
@@ -160,8 +161,10 @@ describe('architecture', () => {
                 "spinnerVariants",
                 "switchVariants",
                 "textareaVariants",
+                "toast",
                 "typographyVariants",
                 "usePortalContainer",
+                "useToast",
               ]
             `);
         });
