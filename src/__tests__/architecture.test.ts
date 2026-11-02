@@ -133,3 +133,21 @@ describe('architecture', () => {
         });
     });
 });
+
+describe('runtime strings', () => {
+    it('never mention plan task numbers (warnings reach consumers)', () => {
+        const runtime = all.filter((f) => !isTest(f) && !f.endsWith('.d.ts'));
+        const offenders = runtime.flatMap((f) =>
+            readFileSync(f, 'utf8')
+                .split('\n')
+                .map((line, i) => ({ line, i }))
+                .filter(
+                    ({ line }) =>
+                        !/^\s*(\/\/|\*|\/\*)/.test(line) &&
+                        /(['"`])[^'"`]*\bTask \d+[a-z]?\b[^'"`]*\1/.test(line)
+                )
+                .map(({ i }) => `${rel(f)}:${i + 1}`)
+        );
+        expect(offenders).toEqual([]);
+    });
+});

@@ -82,8 +82,8 @@ const spinnerSize = { sm: 'sm', md: 'md', lg: 'lg' } as const;
 /** x-core IconButton / MUI props that are dropped (with a dev warning). */
 const legacyIconButtonProps = {
     color: 'use variant: default -> "primary", primary -> "tertiary", error -> "destructive"',
-    tooltipInfo: 'wrap in Tooltip (Task 11); the name is aria-label',
-    tooltipProps: 'wrap in Tooltip (Task 11)',
+    tooltipInfo: 'wrap in Tooltip (planned); the name is aria-label',
+    tooltipProps: 'wrap in Tooltip (planned)',
     sx: 'use className',
     edge: 'use className for negative margins',
     disableRipple: 'IconButton has no ripple',
