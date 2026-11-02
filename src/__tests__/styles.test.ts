@@ -504,6 +504,36 @@ describe('dist/styles.unlayered.css (legacy hosts, ADR 0001)', () => {
     });
 });
 
+/**
+ * Class names in every selector prelude, nested rules included (a parent rule
+ * with children is not a leaf, but `.alert { &:hover {} }` must still count).
+ * Keyframe steps (`33.3%`) and @property blocks are not selectors.
+ */
+const classNamesIn = (source: string): Set<string> =>
+    new Set(
+        walk(parse(source))
+            .filter(
+                (n) =>
+                    !n.prelude.startsWith('@') &&
+                    !n.ancestors.some((a) => /^@(property|keyframes)\b/.test(a))
+            )
+            .flatMap((n) =>
+                [...n.prelude.matchAll(/\.((?:\\.|[\w-])+)/g)].map(
+                    (m) => m[1] ?? ''
+                )
+            )
+            .filter(Boolean)
+    );
+
+describe('class prefix guard', () => {
+    it('sees unprefixed classes in nested rules and parents (negative control)', () => {
+        const found = classNamesIn(
+            '@layer horizon { .alert { color: red; &:hover { color: blue; } } .hz-root { .progress-bar:focus { outline: 0; } } @keyframes hz-x { 33.3% { opacity: 1; } } }'
+        );
+        expect([...found].sort()).toEqual(['alert', 'hz-root', 'progress-bar']);
+    });
+});
+
 describe('keyframes are namespaced (no global animation names)', () => {
     const keyframeNames = (source: string) =>
         [...source.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]);
@@ -520,15 +550,7 @@ describe('keyframes are namespaced (no global animation names)', () => {
         });
 
         it(`${name} build: every class selector is hz-prefixed (no .alert, .progress, .spinner-border collisions with Bootstrap)`, () => {
-            const classes = new Set(
-                styleRulesOf(parse(source))
-                    .flatMap((r) =>
-                        [...r.prelude.matchAll(/\.((?:\\.|[\w-])+)/g)].map(
-                            (m) => m[1] ?? ''
-                        )
-                    )
-                    .filter(Boolean)
-            );
+            const classes = classNamesIn(source);
             expect(classes.size).toBeGreaterThan(50);
             for (const c of classes) expect(c).toMatch(/^(hz-root$|hz\\:)/);
         });
@@ -568,6 +590,10 @@ describe('keyframes are namespaced (no global animation names)', () => {
             }
             expect(keyframeNames(source)).not.toContain(
                 'progress-indeterminate'
+            );
+            // The pulse's low point is the 3:1 value from contrast.test.ts.
+            expect(source).toMatch(
+                /@keyframes hz-progress-pulse \{\s*50% \{\s*opacity: \.75;?\s*\}/
             );
         });
     }
