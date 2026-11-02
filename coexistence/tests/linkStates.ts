@@ -8,11 +8,16 @@ import { expect, type Page } from '@playwright/test';
  * "visited" reads the link after it has been followed.
  */
 
+/**
+ * `focus` is keyboard focus (`:focus-visible`), `clicked` is mouse focus
+ * after a click with the pointer moved away (`:focus` only).
+ */
 export const LINK_STATES = [
     'rest',
     'hover',
     'focus',
     'active',
+    'clicked',
     'visited',
 ] as const;
 
@@ -32,8 +37,8 @@ export const LINK_PROPS = [
 export type StateStyles = Record<string, Record<string, string>>;
 
 /**
- * Measures every test id at rest, hover, focus (keyboard), active and
- * visited, keyed `"<id> <state>"`. With `touch`, only rest and the sticky
+ * Measures every test id at rest, hover, focus (keyboard), active, clicked
+ * (mouse focus) and visited, keyed `"<id> <state>"`. With `touch`, only rest and the sticky
  * hover a tap leaves (Playwright's tap does not, so a pointer move puts
  * `:hover` on the element).
  */
@@ -57,12 +62,17 @@ export async function linkStates(
                         .map((a) => a.finished.catch(() => undefined))
                 );
                 const cs = getComputedStyle(el);
-                return Object.fromEntries(
+                const out = Object.fromEntries(
                     props.map((p) => [
                         p,
                         cs[p as keyof CSSStyleDeclaration] as string,
                     ])
                 );
+                // An outline that is not drawn has no visible colour: the
+                // host's `a:hover, a:focus { outline: none }` resets the
+                // colour of the (style none) rest outline to currentColor.
+                if (out['outlineStyle'] === 'none') out['outlineColor'] = '-';
+                return out;
             }, LINK_PROPS);
     };
     const reset = async () => {
@@ -92,6 +102,8 @@ export async function linkStates(
         await page.mouse.down();
         await read(id, 'active');
         await page.mouse.up();
+        await page.mouse.move(0, 0);
+        await read(id, 'clicked');
         await reset();
         await read(id, 'visited');
     }

@@ -1,0 +1,122 @@
+/*
+ * customer360's own global element rules, copied verbatim (values unchanged)
+ * from customer360/client/src/projectx-core/css/index.scss (the "global
+ * overrides" after `@import "bootstrap/scss/bootstrap"` at line 112: lines 115-261,
+ * 360-366 and 451-459 at port time), imported unlayered at app start by
+ * customer360/client/src/index.jsx:28. Only element/universal selectors are
+ * copied (class rules such as .btn, .px-* never match horizon markup).
+ * customer360/client/src/css/index.scss has no element rules except
+ * `html { scroll-behavior: smooth }` (included). CSS variables the rules use
+ * (--default, --default-light) are given the customer360
+ * values so the colours are real.
+ */
+:root {
+    --default: #435177;
+    --default-light: #9ba7ca;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', 'Segoe UI', Tahoma, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+var {
+    font-style: normal;
+}
+
+code {
+    font-family:
+        source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+ul {
+    margin: 0;
+}
+
+a:hover,
+a:visited,
+a:focus {
+    text-decoration: none;
+    outline: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--default);
+    margin: 0;
+    font-weight: normal;
+}
+
+h1 {
+    font-size: 32px;
+}
+
+h2 {
+    font-size: 20px;
+}
+
+h3 {
+    font-size: 18px;
+}
+
+h4 {
+    font-size: 16px;
+}
+
+h5 {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+h6 {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+label {
+    display: block;
+    color: var(--default);
+    font-weight: bold;
+}
+
+strong {
+    font-weight: bold;
+}
+
+hr {
+    border-top: 1px solid var(--background);
+}
+
+button + button {
+    margin-left: 8px;
+}
+
+button:focus {
+    outline: none;
+}
+
+input::placeholder {
+    color: var(--default-light);
+}
+
+input {
+    font-size: 14px;
+}

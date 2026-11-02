@@ -23,6 +23,7 @@ import {
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
+import c360Host from './fixtures/customer360-host.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
 import hzUnlayeredStyles from '@cialdnb/horizon-ui/styles.unlayered.css?raw';
 import { useEffect, useRef, useState } from 'react';
@@ -41,12 +42,19 @@ const params = new URLSearchParams(location.search);
 // Bootstrap) and that universal rule, both unlayered. ?reboot=full loads the
 // full bootstrap.css instead (what customer360 imports: the reboot plus the
 // `h1..h6 { font-weight: 500; line-height: 1.2; font-size }` type rules).
+// ?host=customer360 adds customer360's own unlayered global element rules
+// (fixtures/customer360-host.css: `a:focus { text-decoration: none }`,
+// `button + button { margin-left }`, h1..h6, label ...) after Bootstrap, as
+// customer360's index.scss does.
+const withHost = params.get('host') === 'customer360';
 const reboot = () => {
-    addStyle(
-        'bootstrap-reboot',
-        params.get('reboot') === 'full' ? bootstrapFull : bootstrapReboot
-    );
+    if (['1', 'full'].includes(params.get('reboot') ?? ''))
+        addStyle(
+            'bootstrap-reboot',
+            params.get('reboot') === 'full' ? bootstrapFull : bootstrapReboot
+        );
     addStyle('c360-global', '* { box-sizing: border-box; }');
+    if (withHost) addStyle('c360-host', c360Host);
 };
 // ?build=unlayered loads dist/styles.unlayered.css instead of dist/styles.css.
 const horizon = () =>
@@ -57,7 +65,8 @@ const horizon = () =>
 // ?styles=0 renders the page without horizon-ui's stylesheet (baseline).
 // ?order=horizon-first puts horizon's CSS before the reboot; the default is
 // legacy CSS first, the order the docs recommend.
-const withReboot = ['1', 'full'].includes(params.get('reboot') ?? '');
+const withReboot =
+    ['1', 'full'].includes(params.get('reboot') ?? '') || withHost;
 const withHorizon = params.get('styles') !== '0';
 if (params.get('order') === 'horizon-first') {
     if (withHorizon) horizon();

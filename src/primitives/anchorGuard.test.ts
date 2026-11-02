@@ -38,6 +38,13 @@ describe('anchorGuard', () => {
         const link = anchorGuard('primary', { underline: true }).split(' ');
         expect(link).toContain('hz:hover:underline');
         expect(link).toContain('hz:touch-hover:underline');
+        // A host `a:focus { text-decoration: none }` (customer360) must not
+        // remove the underline of a focused underlined link.
+        expect(link).toContain('hz:focus:underline');
+        // Not underlined at rest: a host `a:focus` rule changes nothing.
+        expect(anchorGuard('primary', { hoverUnderline: true })).not.toContain(
+            'hz:focus:'
+        );
         expect(link).not.toContain('hz:hover:no-underline');
     });
 
@@ -45,7 +52,7 @@ describe('anchorGuard', () => {
         expect(
             anchorGuard('primary', { hover: 'primary-hover', underline: true })
         ).toBe(
-            'hz:hover:text-primary-hover hz:touch-hover:text-primary hz:hover:underline hz:touch-hover:underline'
+            'hz:hover:text-primary-hover hz:touch-hover:text-primary hz:hover:underline hz:touch-hover:underline hz:focus:underline'
         );
         expect(anchorGuard('inherit', { hoverUnderline: true })).toBe(
             'hz:hover:text-inherit hz:touch-hover:text-inherit hz:hover:underline hz:touch-hover:no-underline'
@@ -70,7 +77,7 @@ describe('anchorGuard', () => {
             destructive:
                 'hz:hover:text-destructive-foreground hz:touch-hover:text-destructive-foreground hz:hover:no-underline hz:touch-hover:no-underline',
             ghost: 'hz:hover:text-accent-foreground hz:touch-hover:text-foreground hz:hover:no-underline hz:touch-hover:no-underline',
-            link: 'hz:hover:text-primary hz:touch-hover:text-primary hz:hover:underline hz:touch-hover:underline',
+            link: 'hz:hover:text-primary hz:touch-hover:text-primary hz:hover:underline hz:touch-hover:underline hz:focus:underline',
         });
     });
 });

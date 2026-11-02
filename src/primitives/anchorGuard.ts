@@ -45,7 +45,8 @@ export interface AnchorGuardOptions {
  * (Bootstrap reboot, specificity 0,1,1) beats plain utilities in the unlayered
  * build; these state classes (0,2,0) restate the intended look: `hover:` for
  * pointer devices, `touch-hover:` (sticky `:hover` without hover media) back to
- * the rest look. See ADR 0001.
+ * the rest look, and `focus:underline` for underlined looks (a host
+ * `a:focus { text-decoration: none }`, as in customer360). See ADR 0001.
  */
 export function anchorGuard(
     rest: AnchorTextToken,
@@ -60,5 +61,8 @@ export function anchorGuard(
         TOUCH_HOVER_TEXT[rest],
         hoverUnderline ? 'hz:hover:underline' : 'hz:hover:no-underline',
         underline ? 'hz:touch-hover:underline' : 'hz:touch-hover:no-underline',
+        // customer360's `a:focus { text-decoration: none }` (0,1,1) would
+        // remove the underline of a focused link (its non-colour cue).
+        ...(underline ? ['hz:focus:underline'] : []),
     ].join(' ');
 }

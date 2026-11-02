@@ -407,7 +407,47 @@ const LINK: Target[] = [
     },
 ];
 
+/** The legacy-host stylesheets every probe is measured against. */
+const LEGACY_CSS: readonly { label: string; opts: Opts }[] = [
+    { label: 'bootstrap-reboot.css', opts: { reboot: '1' } },
+    { label: 'full bootstrap.css', opts: { reboot: 'full' } },
+    {
+        label: 'full bootstrap.css + customer360 host CSS',
+        opts: { reboot: 'full', host: true },
+    },
+];
+
+const BUTTON_VARIANTS = [
+    'primary',
+    'secondary',
+    'tertiary',
+    'destructive',
+    'ghost',
+    'link',
+] as const;
+
+// Buttons are siblings in the harness: customer360's `button + button {
+// margin-left: 8px }` applies to every Button after the first.
+const BUTTON: Target[] = [
+    ...plain(BUTTON_VARIANTS.map((v) => `hz-variant-${v}`)),
+    ...plain(BUTTON_VARIANTS.map((v) => `hz-link-${v}`)),
+    {
+        key: 'secondary, focused',
+        selector: byTestId('hz-variant-secondary'),
+        focus: byTestId('hz-variant-secondary'),
+    },
+];
+
 const PROBES: Record<string, Probe> = {
+    Button: {
+        targets: BUTTON,
+        props: [
+            ...ICON_BUTTON_PROPS,
+            'marginInlineStart',
+            'fontFamily',
+            'fontWeight',
+        ],
+    },
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
     Badge: { targets: BADGE, props: BADGE_PROPS },
@@ -425,12 +465,13 @@ const PROBES: Record<string, Probe> = {
 
 type Styles = Record<string, Record<string, string>>;
 
-type Opts = { reboot?: '1' | 'full'; horizonFirst?: boolean };
+type Opts = { reboot?: '1' | 'full'; horizonFirst?: boolean; host?: boolean };
 const url = (build: 'layered' | 'unlayered', opts: Opts = {}) => {
     const q = new URLSearchParams();
     if (build === 'unlayered') q.set('build', 'unlayered');
     if (opts.reboot) q.set('reboot', opts.reboot);
     if (opts.horizonFirst) q.set('order', 'horizon-first');
+    if (opts.host) q.set('host', 'customer360');
     return `/?${q.toString()}`;
 };
 
@@ -498,9 +539,9 @@ for (const [name, probe] of Object.entries(PROBES)) {
             expect(diff(layered, unlayered)).toEqual({});
         });
 
-        for (const reboot of ['1', 'full'] as const)
+        for (const legacy of LEGACY_CSS)
             for (const horizonFirst of [false, true])
-                test(`unlayered build is unchanged by ${reboot === 'full' ? 'full bootstrap.css' : 'bootstrap-reboot.css'} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                test(`unlayered build is unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
                     page,
                 }) => {
                     const without = await measure(
@@ -510,12 +551,15 @@ for (const [name, probe] of Object.entries(PROBES)) {
                     );
                     const withBootstrap = await measure(
                         page,
-                        url('unlayered', { reboot, horizonFirst }),
+                        url('unlayered', { ...legacy.opts, horizonFirst }),
                         probe
                     );
                     expect(
                         await page.locator('#bootstrap-reboot').count()
                     ).toBe(1);
+                    expect(await page.locator('#c360-host').count()).toBe(
+                        legacy.opts.host ? 1 : 0
+                    );
                     expect(diff(without, withBootstrap)).toEqual({});
                 });
     });
@@ -881,9 +925,9 @@ test.describe('layered build: Avatar against full Bootstrap', () => {
  */
 const anchorSuite = (name: string, ids: readonly string[]) => {
     test.describe(`${name} anchors: unlayered build vs Bootstrap a, a:hover, a:not([href])`, () => {
-        for (const reboot of ['1', 'full'] as const)
+        for (const legacy of LEGACY_CSS)
             for (const horizonFirst of [false, true])
-                test(`every state unchanged by ${reboot === 'full' ? 'full bootstrap.css' : 'bootstrap-reboot.css'} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                test(`every state unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
                     page,
                 }) => {
                     const without = await linkStates(
@@ -896,7 +940,7 @@ const anchorSuite = (name: string, ids: readonly string[]) => {
                     );
                     const withBootstrap = await linkStates(
                         page,
-                        url('unlayered', { reboot, horizonFirst }),
+                        url('unlayered', { ...legacy.opts, horizonFirst }),
                         ids
                     );
                     expect(diffStates(without, withBootstrap)).toEqual({});
@@ -922,7 +966,11 @@ const anchorSuite = (name: string, ids: readonly string[]) => {
                 ).toBe(false);
                 const withBootstrap = await linkStates(
                     page,
-                    url('unlayered', { reboot: 'full', horizonFirst }),
+                    url('unlayered', {
+                        reboot: 'full',
+                        host: true,
+                        horizonFirst,
+                    }),
                     ids,
                     true
                 );
@@ -930,6 +978,11 @@ const anchorSuite = (name: string, ids: readonly string[]) => {
             });
     });
 };
+
+anchorSuite(
+    'Button asChild',
+    BUTTON_VARIANTS.map((v) => `hz-link-${v}`)
+);
 
 anchorSuite(
     'IconButton asChild',
@@ -1042,3 +1095,41 @@ const LAYERED_LINK_DIFF = {
     ],
     'hz-anchor-disabled': ['color: rgb(71, 85, 105) -> rgb(15, 23, 42)'],
 };
+
+// KNOWN LIMIT, measured: in the layered build the host's unlayered
+// `a { color }`, `a:hover`, `a:not([href])` and customer360's `a:hover,
+// a:focus { text-decoration: none; outline: none }` win in every state: links
+// are Bootstrap blue, the inline link has no underline and keyboard focus
+// shows NO ring. customer360 must use styles.unlayered.css (ADR 0001).
+test.describe('layered build (known limit): Link states against full Bootstrap + customer360 host CSS', () => {
+    test('measured: Bootstrap colours, no inline underline, no focus ring', async ({
+        page,
+    }) => {
+        const without = await linkStates(page, url('layered'), LINK_IDS);
+        const withHost = await linkStates(
+            page,
+            url('layered', { reboot: 'full', host: true }),
+            LINK_IDS
+        );
+        const changed = diffStates(without, withHost);
+        // Every measured state of every link changed.
+        expect(Object.keys(changed)).toHaveLength(
+            LINK_IDS.length * LINK_STATES.length
+        );
+        const at = (id: string, state: string, prop: string) =>
+            withHost[`hz-anchor-${id} ${state}`]?.[prop];
+        for (const id of ['inline', 'standalone', 'subtle', 'external']) {
+            expect(at(id, 'rest', 'color'), id).toBe('rgb(0, 123, 255)');
+            expect(at(id, 'hover', 'color'), id).toBe('rgb(0, 86, 179)');
+            expect(at(id, 'focus', 'outlineStyle'), id).toBe('none');
+            expect(without[`hz-anchor-${id} focus`]?.['outlineStyle']).toBe(
+                'solid'
+            );
+        }
+        for (const state of LINK_STATES)
+            expect(at('inline', state, 'textDecorationLine'), state).toBe(
+                'none'
+            );
+        expect(at('disabled', 'rest', 'color')).toBe('rgb(15, 23, 42)');
+    });
+});
