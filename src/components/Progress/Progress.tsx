@@ -14,6 +14,7 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const progressStyles = cva(
@@ -38,6 +39,8 @@ const indicatorTone = {
     warning: 'hz:bg-warning-strong',
     error: 'hz:bg-destructive-strong',
 } as const;
+
+const progressSizes: readonly ProgressSize[] = ['sm', 'md'];
 
 /** Options accepted by {@link progressVariants} (the track). */
 export type ProgressVariantOptions = VariantProps<typeof progressStyles>;
@@ -124,8 +127,8 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
         {
             value,
             max: maxProp = 100,
-            variant = 'primary',
-            size = 'sm',
+            variant: variantProp,
+            size: sizeProp,
             label,
             showValue = false,
             'aria-label': ariaLabel,
@@ -138,6 +141,21 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
         ref
     ) {
         const labelId = useId();
+        // Untyped callers may pass x-core values (`variant="determinate"`).
+        const variant = resolveOption(
+            'Progress',
+            'variant',
+            variantProp,
+            Object.keys(indicatorTone) as ProgressVariant[],
+            'primary'
+        );
+        const size = resolveOption(
+            'Progress',
+            'size',
+            sizeProp,
+            progressSizes,
+            'sm'
+        );
         const max = maxProp > 0 ? maxProp : 100;
         const determinate = value !== undefined && !Number.isNaN(value);
         const now = determinate ? clamp(value, max) : undefined;

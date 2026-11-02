@@ -47,7 +47,8 @@
  * (scripts/build-styles.ts, ADR 0001), so these never meet a host's names.
  * Indeterminate: a 40% segment travels from before the inline start to past
  * the inline end; `--hz-progress-dir` is -1 under RTL. Reduced motion swaps
- * the travel for a slow opacity pulse of the full bar (no movement).
+ * the travel for a slow opacity pulse of the full bar (no movement); its
+ * low point (0.75) keeps 3:1 against the track (src/tokens/contrast.test.ts).
  */
 @theme inline {
     --animate-progress-indeterminate: progress-indeterminate 1.5s
@@ -65,7 +66,7 @@
 
     @keyframes progress-pulse {
         50% {
-            opacity: 0.4;
+            opacity: 0.75;
         }
     }
 }

@@ -156,3 +156,39 @@ describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {
             ).toBeGreaterThanOrEqual(3);
         });
 });
+
+/** Opacity at the low point of the reduced-motion Progress pulse (index.css). */
+const PROGRESS_PULSE_MIN_OPACITY = 0.75;
+
+/** `top` at `alpha` composited over an opaque `bottom` (sRGB hex). */
+function over(top: string, bottom: string, alpha: number): string {
+    const rgb = (h: string) =>
+        [1, 3, 5].map((i) => Number.parseInt(h.slice(i, i + 2), 16));
+    const b = rgb(bottom);
+    return `#${rgb(top)
+        .map((v, i) =>
+            Math.round(v * alpha + (b[i] ?? 0) * (1 - alpha))
+                .toString(16)
+                .padStart(2, '0')
+        )
+        .join('')}`;
+}
+
+describe('Progress reduced-motion pulse keeps 3:1 against the track at its low point', () => {
+    for (const brand of Object.keys(brands) as Brand[])
+        it.each([
+            'primary',
+            'neutral-strong',
+            'success-strong',
+            'warning-strong',
+            'destructive-strong',
+        ] as const)(`${brand}: %s`, (fill) => {
+            const p = brands[brand];
+            expect(
+                contrast(
+                    over(p[fill], p.muted, PROGRESS_PULSE_MIN_OPACITY),
+                    p.muted
+                )
+            ).toBeGreaterThanOrEqual(3);
+        });
+});

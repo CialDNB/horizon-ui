@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import type { Brand } from '../../tokens/brands';
 import { HorizonProvider } from '../../provider';
 import { Progress, progressVariants, type ProgressVariant } from '.';
@@ -142,5 +143,30 @@ describe('Progress', () => {
             </HorizonProvider>
         );
         expect(screen.getByRole('progressbar')).toBeVisible();
+    });
+
+    describe('old x-core values from untyped callers', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it('variant="determinate" (x-core) still renders a coloured indicator and warns once', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            render(
+                <Progress
+                    variant={'determinate' as never}
+                    size={'large' as never}
+                    value={40}
+                    aria-label="Evaluation"
+                />
+            );
+            const bar = screen.getByRole('progressbar');
+            expect(bar).toHaveAttribute('data-variant', 'primary');
+            expect(bar).toHaveClass('hz:h-1');
+            expect(indicator(bar)).toHaveClass('hz:bg-primary');
+            expect(warn).toHaveBeenCalledTimes(2);
+            expect(warn.mock.calls[0]?.[0]).toContain('variant "determinate"');
+        });
     });
 });
