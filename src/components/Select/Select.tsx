@@ -298,6 +298,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     <SelectPrimitive.Portal container={container}>
                         <SelectPrimitive.Content
                             position="popper"
+                            side="bottom"
+                            align="start"
                             sideOffset={4}
                             collisionPadding={8}
                             className={contentStyles}

@@ -224,18 +224,55 @@ export const LongText: Story = {
     ),
 };
 
-/** Right-to-left: chevron and check on the left. */
+/**
+ * Right-to-left: the list aligns to the trigger's inline-start (right) edge
+ * and grows toward the inline end (left); chevron and check are on the left.
+ */
 export const RTL: Story = {
-    parameters: openA11y,
     globals: { direction: 'rtl' },
     render: () => (
-        <div style={column}>
-            <Select aria-label="חברה" placeholder="בחירת חברה" defaultOpen>
-                <SelectItem value="a">אקמי בע״מ</SelectItem>
-                <SelectItem value="b">גלובקס</SelectItem>
-            </Select>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ inlineSize: 140 }}>
+                <Select
+                    aria-label="חברה"
+                    placeholder="בחירת חברה"
+                    defaultValue="a"
+                    data-testid="rtl-trigger"
+                >
+                    <SelectItem value="a">אקמי בע״מ</SelectItem>
+                    <SelectItem value="b">גלובקס</SelectItem>
+                </Select>
+            </div>
         </div>
     ),
+    play: async ({ canvasElement }) => {
+        const trigger = within(canvasElement).getByTestId('rtl-trigger');
+        await userEvent.click(trigger);
+        const listbox = await page.findByRole('listbox');
+        const content = listbox.closest('[data-select-content]');
+        if (!content) throw new Error('no content');
+        const t = trigger.getBoundingClientRect();
+        const c = content.getBoundingClientRect();
+        // Wider than the 140px trigger (min 192px): start edges align, the
+        // extra width goes to the inline end (left in RTL).
+        await expect(c.width).toBeGreaterThan(t.width);
+        await expect(Math.abs(c.right - t.right)).toBeLessThanOrEqual(1);
+        await expect(c.left).toBeLessThan(t.left);
+        const chevron = trigger.querySelector(':scope > svg');
+        const value = trigger.querySelector(':scope > span');
+        if (!chevron || !value) throw new Error('trigger parts');
+        await expect(chevron.getBoundingClientRect().right).toBeLessThanOrEqual(
+            value.getBoundingClientRect().left
+        );
+        const selected = page.getByRole('option', { name: 'אקמי בע״מ' });
+        const check = selected.querySelector('svg');
+        const text = selected.querySelector('span');
+        if (!check || !text) throw new Error('option parts');
+        await expect(check.getBoundingClientRect().right).toBeLessThanOrEqual(
+            text.getBoundingClientRect().left
+        );
+        await userEvent.keyboard('{Escape}');
+    },
 };
 
 /** All three brands side by side (closed): contrast per brand. */
