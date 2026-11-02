@@ -5,7 +5,14 @@ import {
     Typography as MuiTypography,
     createTheme,
 } from '@mui/material';
-import { Button, Chip, HorizonProvider, Typography } from '@cialdnb/horizon-ui';
+import {
+    Badge,
+    BadgeAnchor,
+    Button,
+    Chip,
+    HorizonProvider,
+    Typography,
+} from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
 import hzStyles from '@cialdnb/horizon-ui/styles.css?raw';
@@ -222,6 +229,41 @@ function App() {
                             onClick={() => undefined}
                             data-testid="hz-chip-disabled"
                         />
+                        <Badge variant="success" data-testid="hz-badge-label">
+                            Approved
+                        </Badge>
+                        <Badge
+                            variant="error"
+                            count={12}
+                            data-testid="hz-badge-count"
+                        />
+                        <Badge
+                            variant="warning"
+                            aria-label="Pending"
+                            data-testid="hz-badge-dot"
+                        />
+                        <Badge variant="ai" data-testid="hz-badge-ai">
+                            AI summary
+                        </Badge>
+                        <Badge
+                            variant="ai-verified"
+                            data-testid="hz-badge-ai-verified"
+                        >
+                            AI verified
+                        </Badge>
+                        <BadgeAnchor
+                            data-testid="hz-badge-anchor"
+                            badge={
+                                <Badge
+                                    variant="error"
+                                    count={4}
+                                    aria-label="4 unread"
+                                    data-testid="hz-badge-anchored"
+                                />
+                            }
+                        >
+                            <Button variant="ghost">Inbox</Button>
+                        </BadgeAnchor>
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">

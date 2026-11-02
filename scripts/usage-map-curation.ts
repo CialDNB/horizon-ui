@@ -51,17 +51,20 @@ export const curation: Record<string, Curation> = {
     Badge: {
         batch: 1,
         horizon: 'Badge',
-        note: 'Planned: `BadgeColor` becomes `variant`.',
+        note: 'Done in Task 10a, see Badge section below. `color` becomes `variant` (tones); `label` becomes children (dot + uppercase label); `badgeContent` becomes `count` (max 999, hidden at 0); a dot alone needs `aria-label`; wrapping children becomes `BadgeAnchor` (`overlap` kept); `labelColor`, `sx`, `invisible`, `anchorOrigin` dropped; `BadgeColor` type becomes `BadgeTone`.',
+        status: 'done',
     },
     BadgeAI: {
         batch: 1,
         horizon: 'Badge',
-        note: 'Becomes a Badge `ai` variant if design keeps it; confirm with design.',
+        note: 'Done in Task 10a: `<Badge variant="ai">`. `showBorder` and `variant=FILLED` (gradient pill) not ported; confirm with design.',
+        status: 'done',
     },
     AIVerifiedBadge: {
         batch: 1,
         horizon: 'Badge',
-        note: 'Becomes a Badge variant or composition; confirm with design.',
+        note: 'Done in Task 10a: `<Badge variant="ai-verified">` (`isValidated`) / `"ai-unverified"`; `text` becomes children (no default label); confirm with design.',
+        status: 'done',
     },
     AIButton: {
         batch: 1,

@@ -118,9 +118,40 @@ const CHIP: Target[] = [
     },
 ];
 
+const BADGE_PROPS = [
+    ...CHIP_PROPS,
+    'position',
+    'top',
+    'insetInlineEnd',
+    'transform',
+] as const;
+
+const BADGE: Target[] = [
+    ...plain(
+        [
+            'label',
+            'count',
+            'dot',
+            'ai',
+            'ai-verified',
+            'anchor',
+            'anchored',
+        ].map((v) => `hz-badge-${v}`)
+    ),
+    {
+        key: 'label text',
+        selector: `${byTestId('hz-badge-label')} > span:last-child`,
+    },
+    {
+        key: 'anchored slot',
+        selector: `${byTestId('hz-badge-anchor')} [data-badge-slot]`,
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
+    Badge: { targets: BADGE, props: BADGE_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -297,3 +328,25 @@ const LAYERED_CHIP_DIFF = {
         ...bootstrapRing('solid', '2px', 'rgb(0, 80, 240)'),
     ],
 };
+
+test.describe('layered build (known limit): Badge against full Bootstrap', () => {
+    test('badge spans are untouched; only the anchor follows its Button host', async ({
+        page,
+    }) => {
+        const probe = PROBES['Badge'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        // The anchored host is a horizon Button, whose type Bootstrap's
+        // `button { font: inherit }` enlarges in the layered build (known
+        // Button limit, ADR 0001): only the anchor's width follows it.
+        const changed = diff(without, withBootstrap);
+        expect(Object.keys(changed)).toEqual(['hz-badge-anchor']);
+        expect(changed['hz-badge-anchor']).toHaveLength(1);
+        expect(changed['hz-badge-anchor']?.[0]).toMatch(/^width: /);
+    });
+});
