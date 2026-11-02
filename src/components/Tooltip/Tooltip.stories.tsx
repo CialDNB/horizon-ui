@@ -37,7 +37,7 @@ const meta = {
                     '',
                     '**Content:** text or simple inline markup. It is not focusable, so no links or buttons inside; use a Popover for rich or interactive content.',
                     '',
-                    'Works without any provider; wrap a toolbar in `TooltipProvider` to skip the delay when moving between neighbouring tooltips. Portals into the HorizonProvider root at `--z-tooltip` (1500).',
+                    'HorizonProvider provides the shared timing (300ms delay; the next tooltip opens at once within 800ms). Default side is `bottom` (x-core). Portals into the HorizonProvider root at `--z-tooltip` (1500).',
                 ].join('\n'),
             },
         },

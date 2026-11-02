@@ -10,6 +10,7 @@ import {
     type ReactNode,
     type Ref,
 } from 'react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../lib/cn';
 import { brands, type Brand } from '../tokens';
 import type { DnbBase } from '../types/DnbBase';
@@ -88,7 +89,20 @@ export const HorizonProvider = forwardRef<HTMLDivElement, HorizonProviderProps>(
             >
                 <HorizonScopeContext.Provider value={scope}>
                     <PortalContext.Provider value={element}>
-                        {children}
+                        {parent ? (
+                            children
+                        ) : (
+                            // One shared tooltip timing for the app (nested
+                            // providers inherit it): 300ms to open, and the
+                            // next tooltip opens at once within 800ms (MUI's
+                            // hysteresis), e.g. along a toolbar.
+                            <TooltipPrimitive.Provider
+                                delayDuration={300}
+                                skipDelayDuration={800}
+                            >
+                                {children}
+                            </TooltipPrimitive.Provider>
+                        )}
                     </PortalContext.Provider>
                 </HorizonScopeContext.Provider>
             </div>

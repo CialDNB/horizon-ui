@@ -26,7 +26,7 @@ import {
     type LogicalAlign,
     type LogicalSide,
 } from '../../primitives';
-import { usePortalContainer } from '../../provider';
+import { useHorizonScope, usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
 
 /** Hover delay before a tooltip opens, in ms (customer360's `enterDelay`). */
@@ -48,9 +48,9 @@ export type TooltipProviderProps = {
 };
 
 /**
- * Optional: shares the open delay between tooltips so moving along a row of
- * icon buttons does not wait on each one. A Tooltip without it creates its
- * own, so nothing breaks when it is missing.
+ * Optional: overrides the tooltip timing for a subtree. HorizonProvider
+ * already provides one (300ms delay, 800ms skip window); a Tooltip outside
+ * any HorizonProvider brings its own.
  */
 export function TooltipProvider({
     delayDuration = DEFAULT_DELAY,
@@ -134,7 +134,7 @@ export type TooltipProps = Omit<
         children: ReactElement;
         /**
          * Side of the trigger, logical (`start`/`end` follow the direction).
-         * Flips when there is no room. @default 'top'
+         * Flips when there is no room. @default 'bottom' (x-core)
          */
         side?: LogicalSide;
         /** Alignment along the side, logical. @default 'center' */
@@ -200,7 +200,13 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         ref
     ) {
         const rest = omitLegacyProps('Tooltip', props, legacyTooltipProps);
-        const side = resolveOption('Tooltip', 'side', sideProp, sides, 'top');
+        const side = resolveOption(
+            'Tooltip',
+            'side',
+            sideProp,
+            sides,
+            'bottom'
+        );
         const align = resolveOption(
             'Tooltip',
             'align',
@@ -208,7 +214,12 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
             aligns,
             'center'
         );
-        const shared = useContext(SharedProvider);
+        // HorizonProvider renders the app's tooltip provider; only a Tooltip
+        // outside any HorizonProvider (already warned by the portal
+        // fallback) brings its own.
+        const ownProvider = useContext(SharedProvider);
+        const scope = useHorizonScope();
+        const shared = ownProvider || scope !== null;
         const container = usePortalContainer();
         const anchorRef = useRef<HTMLButtonElement>(null);
         const direction = useResolvedDir(anchorRef, dir);

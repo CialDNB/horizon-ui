@@ -147,7 +147,7 @@ describe('Tooltip', () => {
         );
     });
 
-    it('falls back to top/center for unknown x-core side values', async () => {
+    it('falls back to bottom/center (x-core default) for unknown side values', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const bad = { side: 'bottom-end' } as object;
         render(
@@ -158,7 +158,7 @@ describe('Tooltip', () => {
             </HorizonProvider>
         );
         await screen.findByRole('tooltip');
-        expect(visibleTooltip()).toHaveAttribute('data-side', 'top');
+        expect(visibleTooltip()).toHaveAttribute('data-side', 'bottom');
         expect(warn).toHaveBeenCalledWith(
             expect.stringContaining('Tooltip: unknown side "bottom-end"')
         );
@@ -176,6 +176,53 @@ describe('Tooltip', () => {
         await waitFor(() =>
             expect(visibleTooltip()).toHaveAttribute('data-side', 'left')
         );
+    });
+});
+
+describe('Tooltip shared timing (HorizonProvider)', () => {
+    it('defaults to below the trigger (x-core placement bottom)', async () => {
+        render(
+            <HorizonProvider>
+                <Tooltip content="Below" defaultOpen>
+                    <button type="button">B</button>
+                </Tooltip>
+            </HorizonProvider>
+        );
+        await screen.findByRole('tooltip');
+        expect(visibleTooltip()).toHaveAttribute('data-side', 'bottom');
+    });
+
+    it('the second of two adjacent tooltips opens at once within the skip window', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        const user = userEvent.setup({
+            advanceTimers: vi.advanceTimersByTime.bind(vi),
+        });
+        render(
+            <HorizonProvider>
+                <Tooltip content="First">
+                    <button type="button">One</button>
+                </Tooltip>
+                <Tooltip content="Second">
+                    <button type="button">Two</button>
+                </Tooltip>
+            </HorizonProvider>
+        );
+        await user.hover(screen.getByRole('button', { name: 'One' }));
+        expect(screen.queryByRole('tooltip')).toBeNull();
+        await act(() => vi.advanceTimersByTimeAsync(350));
+        expect(await screen.findByRole('tooltip')).toHaveTextContent('First');
+        await user.unhover(screen.getByRole('button', { name: 'One' }));
+        const two = screen.getByRole('button', { name: 'Two' });
+        // Leave the first tooltip's grace area, then move over the second.
+        fireEvent.pointerMove(document.body, { clientX: 900, clientY: 900 });
+        await act(() => vi.advanceTimersByTimeAsync(50));
+        fireEvent.pointerMove(two, { pointerType: 'mouse' });
+        // No 300ms wait: the provider is in its skip-delay window.
+        await act(() => vi.advanceTimersByTimeAsync(10));
+        expect(
+            screen.getAllByRole('tooltip').map((t) => t.textContent)
+        ).toContain('Second');
+        vi.useRealTimers();
     });
 });
 
