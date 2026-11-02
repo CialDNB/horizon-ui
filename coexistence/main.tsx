@@ -15,6 +15,7 @@ import {
     Chip,
     HorizonProvider,
     IconButton,
+    Label,
     Link,
     Progress,
     Separator,
@@ -495,6 +496,20 @@ function App() {
                         >
                             <Button variant="ghost">Inbox</Button>
                         </BadgeAnchor>
+                    </HorizonProvider>
+                </section>
+                <section data-testid="hz-forms">
+                    <HorizonProvider>
+                        <Label
+                            htmlFor="hz-form-input"
+                            required
+                            data-testid="hz-label"
+                        >
+                            Company name
+                        </Label>
+                        <Label disabled data-testid="hz-label-disabled">
+                            Disabled label
+                        </Label>
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">

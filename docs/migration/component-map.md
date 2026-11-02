@@ -534,6 +534,10 @@ x-core exports `Link` from the Typography module (MUI Link, semibold primary, no
 
 Visited links keep their colour (product UI). With `styles.unlayered.css` every state (rest, hover, focus, active, visited, touch sticky hover, disabled) is unchanged by Bootstrap's `a`, `a:hover` and `a:not([href])` rules (measured in the coexistence harness); the layered build loses colour and the inline underline (known limit, ADR 0001).
 
+## Forms infrastructure: Label (no direct x-core import)
+
+`Label` is a native `<label>` replacing x-core's internal `shared/inputs/Label` and the MUI `FormLabel`/`InputLabel` that TextField, TextInput, TextArea and RadioGroup render. API: `htmlFor`, `required` (decorative asterisk, `aria-hidden`; the control carries `aria-required`), `disabled`. Type `label/md` (14/20 semibold) at every breakpoint. Dropped with a dev warning: `sx`, `color`, `focused`, `error`, `filled`, `shrink`, `variant`, `component`. Display, margin, colour and weight are set explicitly so Bootstrap's `label { margin-bottom: .5rem }` and customer360's `label { display: block; color; font-weight: bold }` do not apply in `styles.unlayered.css` (the layered build loses all of them: measured in `coexistence/tests/components.spec.ts`).
+
 ## Icons
 
 x-core `icons` is `export * from '@phosphor-icons/react'` plus 14 deprecated legacy aliases. horizon-ui re-exports Phosphor unchanged from the subpath: `import { CheckIcon } from '@cialdnb/horizon-ui/icons'` replaces x-core's `icons` namespace usage (there is no root `icons` namespace); legacy aliases are not carried over, use the `*Icon` names. Under `dir="rtl"`, pass `mirrored` on directional icons (`ArrowLeftIcon`, `ArrowRightIcon`, `CaretLeftIcon`, `CaretRightIcon`, `ArrowBendUpLeftIcon`).

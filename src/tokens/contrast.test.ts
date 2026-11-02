@@ -105,6 +105,17 @@ const textPairs: Pair[] = [
 ];
 
 textPairs.push(
+    { use: 'Label text', text: 'foreground', surface: 'background' },
+    {
+        use: 'Label disabled (exempt, kept AA anyway)',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Label required asterisk',
+        text: 'destructive-strong',
+        surface: 'background',
+    },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
 );

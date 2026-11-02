@@ -407,6 +407,30 @@ const LINK: Target[] = [
     },
 ];
 
+/* ---- Forms (Task 11a) ---- */
+
+const FORM_TYPE_PROPS = [
+    'width',
+    'height',
+    'marginTop',
+    'marginBottom',
+    'marginInlineStart',
+    'paddingTop',
+    'paddingInlineStart',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'color',
+    'cursor',
+    'display',
+] as const;
+
+const LABEL: Target[] = [
+    ...plain(['hz-label', 'hz-label-disabled']),
+    { key: 'required mark', selector: `${byTestId('hz-label')} span` },
+];
+
 /** The legacy-host stylesheets every probe is measured against. */
 const LEGACY_CSS: readonly { label: string; opts: Opts }[] = [
     { label: 'bootstrap-reboot.css', opts: { reboot: '1' } },
@@ -461,6 +485,7 @@ const PROBES: Record<string, Probe> = {
     Avatar: { targets: AVATAR, props: AVATAR_PROPS },
     IconButton: { targets: ICON_BUTTON, props: ICON_BUTTON_PROPS },
     Link: { targets: LINK, props: LINK_PROBE_PROPS },
+    Label: { targets: LABEL, props: FORM_TYPE_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -1132,4 +1157,56 @@ test.describe('layered build (known limit): Link states against full Bootstrap +
             );
         expect(at('disabled', 'rest', 'color')).toBe('rgb(15, 23, 42)');
     });
+});
+
+// KNOWN LIMIT of the LAYERED build for form controls (ADR 0001), measured
+// against full bootstrap.css + customer360's host CSS (its `label`, `input`,
+// `button + button` and `input::placeholder` rules). customer360 must use
+// styles.unlayered.css, which the PROBES groups above prove unchanged.
+// Width/height of text boxes depend on font metrics: only "changed" is kept.
+const labelLimit = (color: string) => [
+    'width: changed',
+    'marginBottom: 0px -> 8px',
+    'fontWeight: 600 -> 700',
+    `color: ${color} -> rgb(67, 81, 119)`,
+    'display: inline-flex -> block',
+];
+const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
+    // customer360 `label { display: block; color; font-weight: bold }` and
+    // the reboot's `margin-bottom: .5rem` win over the layered utilities.
+    Label: {
+        'hz-label': labelLimit('rgb(15, 23, 42)'),
+        'hz-label-disabled': labelLimit('rgb(71, 85, 105)'),
+        'required mark': [
+            'width: changed',
+            'height: changed',
+            'fontWeight: 600 -> 700',
+            'display: block -> inline',
+        ],
+    },
+};
+
+const sizeAgnostic = (changed: Record<string, string[]>) =>
+    Object.fromEntries(
+        Object.entries(changed).map(([key, props]) => [
+            key,
+            props.map((p) => p.replace(/^(width|height): .*$/, '$1: changed')),
+        ])
+    );
+
+test.describe('layered build (known limit): form controls against full Bootstrap + customer360 host CSS', () => {
+    for (const [name, expected] of Object.entries(LAYERED_FORMS_DIFF))
+        test(`${name}: exactly the measured properties change`, async ({
+            page,
+        }) => {
+            const probe = PROBES[name];
+            if (!probe) throw new Error(`no probe ${name}`);
+            const without = await measure(page, url('layered'), probe);
+            const withHost = await measure(
+                page,
+                url('layered', { reboot: 'full', host: true }),
+                probe
+            );
+            expect(sizeAgnostic(diff(without, withHost))).toEqual(expected);
+        });
 });

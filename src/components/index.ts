@@ -45,6 +45,8 @@ export type {
     IconButtonVariant,
     IconButtonVariantOptions,
 } from './IconButton';
+export { Label, labelVariants } from './Label';
+export type { LabelProps, LabelVariantOptions } from './Label';
 export { Link, linkVariants } from './Link';
 export type {
     LinkProps,
