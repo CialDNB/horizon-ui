@@ -91,4 +91,18 @@ for (const build of ['layered', 'unlayered'] as const)
                 ]);
             expect(check).toEqual(['block', 'currentColor']);
         });
+
+        test('outline chips keep a border; status dots keep a system-colour fill', async ({
+            page,
+        }) => {
+            visibleBorder(await style(page, byTestId('hz-chip-outline')));
+            for (const sel of [
+                byTestId('hz-badge-dot'),
+                `${byTestId('hz-badge-label')} [data-badge-dot]`,
+            ]) {
+                const s = await style(page, sel);
+                expect(s.adjust, sel).toBe('none');
+                expect(s.background, sel).not.toBe('rgba(0, 0, 0, 0)');
+            }
+        });
     });

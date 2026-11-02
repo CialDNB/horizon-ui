@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
+import { forcedBorder } from '../../primitives';
 import type { DnbBase } from '../../types/DnbBase';
 
 const chipStyles = cva(
@@ -50,7 +51,8 @@ const chipStyles = cva(
             },
             appearance: {
                 soft: '',
-                outline: 'hz:bg-transparent hz:ring-1 hz:ring-inset',
+                // Forced colors drop the ring (a shadow): a CanvasText border instead.
+                outline: `hz:bg-transparent hz:ring-1 hz:ring-inset ${forcedBorder}`,
             },
             size: {
                 sm: 'hz:h-5 hz:px-1.5 hz:[&_svg]:size-3',

@@ -8,6 +8,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
+import { choiceForcedFill } from '../../primitives';
 import type { DnbBase } from '../../types/DnbBase';
 
 const badgeStyles = cva(
@@ -33,7 +34,8 @@ const badgeStyles = cva(
                 count: 'hz:h-5 hz:min-w-5 hz:justify-center hz:rounded-full hz:px-1.5 hz:text-label-sm hz:tabular-nums',
                 // Tone fill + 1px inset ring in the tone's AA shade: the ring is
                 // the 3:1 boundary (WCAG 1.4.11) for light fills (warning, info).
-                dot: 'hz:size-2 hz:rounded-full hz:ring-1 hz:ring-inset',
+                // Forced colors drop fills and rings: a CanvasText fill that opts out.
+                dot: `hz:size-2 hz:rounded-full hz:ring-1 hz:ring-inset ${choiceForcedFill}`,
             },
         },
         compoundVariants: [
@@ -211,6 +213,7 @@ function Marker({ variant }: { variant: BadgeVariant }) {
                 data-badge-dot=""
                 className={cn(
                     'hz:size-2 hz:shrink-0 hz:rounded-full hz:ring-1 hz:ring-inset',
+                    choiceForcedFill,
                     labelDot[variant]
                 )}
             />
