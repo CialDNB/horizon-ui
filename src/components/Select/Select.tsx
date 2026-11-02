@@ -13,8 +13,12 @@ import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
-    Children,
+    createContext,
     forwardRef,
+    useCallback,
+    useContext,
+    useEffect,
+    useLayoutEffect,
     useRef,
     useState,
     type ButtonHTMLAttributes,
@@ -72,6 +76,16 @@ const triggerStyles = cva(
         defaultVariants: { size: 'md', state: 'rest', clearing: false },
     }
 );
+
+const useIsomorphicLayoutEffect =
+    typeof document === 'undefined' ? useEffect : useLayoutEffect;
+
+/**
+ * Items register while the list is open, so the empty state is based on the
+ * options actually rendered (a child component may render none), not on
+ * the number of React children.
+ */
+const ItemCountContext = createContext<((delta: number) => void) | null>(null);
 
 /** Options accepted by {@link selectVariants}: `size`, `state`, `clearing`. */
 export type SelectVariantOptions = VariantProps<typeof triggerStyles>;
@@ -253,7 +267,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             onValueChange?.(next);
         };
         const showClear = clearable && value !== '' && !control.disabled;
-        const empty = Children.toArray(children).length === 0;
+        const [itemCount, setItemCount] = useState(0);
+        const countItem = useCallback(
+            (delta: number) => setItemCount((n) => n + delta),
+            []
+        );
+        const empty = itemCount === 0;
 
         const root = (
             <SelectPrimitive.Root
@@ -313,7 +332,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                                 <CaretUpIcon aria-hidden="true" />
                             </SelectPrimitive.ScrollUpButton>
                             <SelectPrimitive.Viewport className="hz:p-1">
-                                {empty ? (
+                                <ItemCountContext.Provider value={countItem}>
+                                    {children}
+                                </ItemCountContext.Provider>
+                                {empty && (
                                     <div
                                         role="option"
                                         aria-disabled="true"
@@ -322,8 +344,6 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                                     >
                                         {emptyMessage}
                                     </div>
-                                ) : (
-                                    children
                                 )}
                             </SelectPrimitive.Viewport>
                             <SelectPrimitive.ScrollDownButton
@@ -383,6 +403,12 @@ export type SelectItemProps = Omit<
  */
 export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
     function SelectItem({ className, children, title, ...props }, ref) {
+        const countItem = useContext(ItemCountContext);
+        useIsomorphicLayoutEffect(() => {
+            if (!countItem) return;
+            countItem(1);
+            return () => countItem(-1);
+        }, [countItem]);
         return (
             <SelectPrimitive.Item
                 {...props}

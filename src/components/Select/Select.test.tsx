@@ -266,3 +266,41 @@ describe('Select direction follows a runtime provider change', () => {
         );
     });
 });
+
+describe('Select empty state counts rendered items', () => {
+    function NoItems() {
+        return null;
+    }
+    function SomeItems() {
+        return <SelectItem value="a">Alpha</SelectItem>;
+    }
+
+    it('shows the empty message when a child component renders no items', async () => {
+        const user = userEvent.setup();
+        render(
+            <HorizonProvider>
+                <Select aria-label="A" emptyMessage="Nothing here">
+                    <NoItems />
+                </Select>
+            </HorizonProvider>
+        );
+        await user.click(screen.getByRole('combobox'));
+        expect(await screen.findByText('Nothing here')).toBeVisible();
+    });
+
+    it('hides it when items come from a child component', async () => {
+        const user = userEvent.setup();
+        render(
+            <HorizonProvider>
+                <Select aria-label="B" emptyMessage="Nothing here">
+                    <SomeItems />
+                </Select>
+            </HorizonProvider>
+        );
+        await user.click(screen.getByRole('combobox'));
+        expect(
+            await screen.findByRole('option', { name: 'Alpha' })
+        ).toBeVisible();
+        expect(screen.queryByText('Nothing here')).toBeNull();
+    });
+});
