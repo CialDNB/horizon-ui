@@ -1,6 +1,8 @@
 import {
     Button as MuiButton,
     CssBaseline,
+    Dialog as MuiDialog,
+    DialogContent as MuiDialogContent,
     ThemeProvider,
     Typography as MuiTypography,
     createTheme,
@@ -23,6 +25,8 @@ import {
     Progress,
     RadioGroup,
     RadioGroupItem,
+    Select,
+    SelectItem,
     Separator,
     Spinner,
     Switch,
@@ -177,6 +181,57 @@ const TYPOGRAPHY_ROLES = [
     'label/md',
     'label/lg',
 ] as const;
+
+const SELECT_OPTIONS = ['Acme Ltd.', 'Globex', 'Initech'] as const;
+
+/**
+ * An MUI dialog (z-index 1300) holding horizon Selects. Inside: a
+ * HorizonProvider in the dialog (the documented pattern: the list portals
+ * into it) and a Select that only has the app-level provider (React context
+ * crosses MUI's portal, so its list portals to the app root, outside the
+ * dialog DOM).
+ */
+function SelectInMuiDialog() {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <MuiButton
+                data-testid="open-mui-dialog"
+                onClick={() => setOpen(true)}
+            >
+                Open MUI dialog
+            </MuiButton>
+            <MuiDialog open={open} onClose={() => setOpen(false)}>
+                <MuiDialogContent data-testid="mui-dialog-content">
+                    <HorizonProvider>
+                        <Select
+                            aria-label="Inside provider"
+                            placeholder="Pick"
+                            data-testid="hz-select-dialog"
+                        >
+                            {SELECT_OPTIONS.map((o) => (
+                                <SelectItem key={o} value={o}>
+                                    {o}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                    </HorizonProvider>
+                    <Select
+                        aria-label="App provider only"
+                        placeholder="Pick"
+                        data-testid="hz-select-dialog-outer"
+                    >
+                        {SELECT_OPTIONS.map((o) => (
+                            <SelectItem key={o} value={o}>
+                                {o}
+                            </SelectItem>
+                        ))}
+                    </Select>
+                </MuiDialogContent>
+            </MuiDialog>
+        </>
+    );
+}
 
 function App() {
     return (
@@ -628,6 +683,30 @@ function App() {
                                 data-testid="hz-switch-on"
                             />
                         </div>
+                        <Select
+                            aria-label="Company"
+                            placeholder="Choose a company"
+                            data-testid="hz-select"
+                        >
+                            {SELECT_OPTIONS.map((o) => (
+                                <SelectItem key={o} value={o}>
+                                    {o}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                        <Select
+                            aria-label="Owner"
+                            defaultValue="Globex"
+                            clearable
+                            data-testid="hz-select-value"
+                        >
+                            {SELECT_OPTIONS.map((o) => (
+                                <SelectItem key={o} value={o}>
+                                    {o}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                        <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"
                             placeholder="Add a comment"

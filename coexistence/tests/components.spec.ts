@@ -651,6 +651,26 @@ const PROBES: Record<string, Probe> = {
         ],
         props: [...FIELD_PROPS, 'translate', 'transform'],
     },
+    Select: {
+        targets: [
+            ...plain(['hz-select', 'hz-select-value']),
+            {
+                key: 'trigger, focused',
+                selector: byTestId('hz-select'),
+                focus: byTestId('hz-select'),
+            },
+            {
+                key: 'value text',
+                selector: `${byTestId('hz-select-value')} > span`,
+            },
+            { key: 'chevron', selector: `${byTestId('hz-select')} > svg` },
+            {
+                key: 'clear button',
+                selector: `[data-select-field]:has(${byTestId('hz-select-value')}) > button:not([role])`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1356,6 +1376,11 @@ const choiceLabelLimit = (color: string) => [
     'fontWeight: 400 -> 700',
     `outlineColor: ${color} -> rgb(67, 81, 119)`,
 ];
+const selectTriggerLimit = [
+    'borderRadius: 20px -> 0px',
+    'fontSize: 14px -> 16px',
+    'lineHeight: 14px -> 24px',
+];
 const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // customer360 `label { display: block; color; font-weight: bold }` and
     // the reboot's `margin-bottom: .5rem` win over the layered utilities.
@@ -1397,6 +1422,31 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
         label: choiceLabelLimit('rgb(15, 23, 42)'),
     },
     // Track, thumb and focus ring are spans and survive.
+    // As Input: Bootstrap's `button { font: inherit; border-radius: 0 }`
+    // wins on the trigger; the clear button loses its circle and takes
+    // customer360's `button + button { margin-left: 8px }` (it follows the
+    // trigger) and `button:focus` outline values.
+    Select: {
+        chevron: ['fontSize: 14px -> 16px', 'lineHeight: 14px -> 24px'],
+        'clear button': [
+            'marginTop: 4px -> 0px',
+            'marginBottom: 4px -> 0px',
+            'marginInlineStart: 0px -> 8px',
+            'borderRadius: 100px -> 0px',
+        ],
+        'hz-select': selectTriggerLimit,
+        'hz-select-value': selectTriggerLimit,
+        'trigger, focused': [
+            ...selectTriggerLimit,
+            'outlineWidth: 2px -> 3px',
+            'outlineColor: rgb(0, 80, 240) -> rgb(71, 85, 105)',
+        ],
+        'value text': [
+            'height: changed',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 14px -> 24px',
+        ],
+    },
     Switch: {
         'hz-switch': ['borderRadius: 100px -> 0px'],
         'hz-switch-on': ['borderRadius: 100px -> 0px'],
@@ -1501,4 +1551,118 @@ test.describe('form placeholders against customer360 host CSS', () => {
             expect(withHost).toBe(without);
             expect(without).toBe('rgb(71, 85, 105)');
         });
+});
+
+/** Styles of the open Select list (content and an option). */
+const openList = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-select').click();
+    const option = page.getByRole('option', { name: 'Globex' });
+    await expect(option).toBeVisible();
+    return page.evaluate(
+        (props) => {
+            const read = (el: Element | null) => {
+                if (!el) return {};
+                const cs = getComputedStyle(el);
+                return Object.fromEntries(
+                    props.map((p) => [
+                        p,
+                        cs[p as keyof CSSStyleDeclaration] as string,
+                    ])
+                );
+            };
+            const listbox = document.querySelector('[role="listbox"]');
+            return {
+                content: read(
+                    listbox?.closest('[data-select-content]') ?? null
+                ),
+                option: read(document.querySelector('[role="option"]')),
+                group: read(listbox),
+            };
+        },
+        [...FIELD_PROPS, 'zIndex']
+    );
+};
+
+test.describe('Select open list against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: list and options unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openList(page, url('unlayered'));
+                const withHost = await openList(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.content['zIndex']).toBe('1400');
+            });
+});
+
+test.describe('Select inside an MUI dialog (z-index 1300)', () => {
+    for (const build of ['layered', 'unlayered'] as const)
+        test(`the list opens above the dialog and selects (${build})`, async ({
+            page,
+        }) => {
+            await page.goto(url(build, { reboot: 'full', host: true }));
+            await page.getByTestId('open-mui-dialog').click();
+            const trigger = page.getByTestId('hz-select-dialog');
+            await trigger.click();
+            const option = page.getByRole('option', { name: 'Initech' });
+            await expect(option).toBeVisible();
+            // The topmost element at the option's centre is the option.
+            const box = await option.boundingBox();
+            if (!box) throw new Error('no option box');
+            const top = await page.evaluate(
+                ([x, y]) =>
+                    document
+                        .elementFromPoint(x ?? 0, y ?? 0)
+                        ?.closest('[role="option"]')?.textContent ?? null,
+                [box.x + box.width / 2, box.y + box.height / 2]
+            );
+            expect(top).toBe('Initech');
+            const z = await option.evaluate(
+                (el) =>
+                    getComputedStyle(
+                        el.closest('[data-radix-popper-content-wrapper]') ?? el
+                    ).zIndex
+            );
+            expect(z).toBe('1400');
+            await page.mouse.click(
+                box.x + box.width / 2,
+                box.y + box.height / 2
+            );
+            await expect(trigger).toHaveText('Initech');
+            await expect(trigger).toBeFocused();
+            await expect(page.getByTestId('mui-dialog-content')).toBeVisible();
+        });
+
+    // KNOWN LIMIT (measured): a Select whose nearest HorizonProvider is
+    // outside the MUI dialog portals its list outside the dialog DOM. It is
+    // above the dialog (z 1400), but its trigger inside the dialog is outside
+    // `.hz-root`, so it has no Horizon variables (unstyled). Wrap MUI dialog
+    // content in a HorizonProvider.
+    test('known limit: without a provider inside the dialog the trigger has no Horizon variables', async ({
+        page,
+    }) => {
+        await page.goto(url('unlayered'));
+        await page.getByTestId('open-mui-dialog').click();
+        const outer = page.getByTestId('hz-select-dialog-outer');
+        expect(
+            await outer.evaluate((el) => [
+                el.closest('.hz-root') === null,
+                getComputedStyle(el).getPropertyValue('--primary'),
+            ])
+        ).toEqual([true, '']);
+        const inner = page.getByTestId('hz-select-dialog');
+        expect(
+            await inner.evaluate((el) =>
+                getComputedStyle(el)
+                    .getPropertyValue('--primary')
+                    .trim()
+                    .toUpperCase()
+            )
+        ).toBe('#0050F0');
+    });
 });

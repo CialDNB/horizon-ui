@@ -143,6 +143,23 @@ textPairs.push(
         text: 'foreground',
         surface: 'background',
     },
+    { use: 'Select value', text: 'foreground', surface: 'background' },
+    {
+        use: 'Select placeholder',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    { use: 'Select option', text: 'popover-foreground', surface: 'popover' },
+    {
+        use: 'Select highlighted option',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'Select group label and empty message',
+        text: 'muted-foreground',
+        surface: 'popover',
+    },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
 );
@@ -329,6 +346,17 @@ nonTextPairs.push(
         surface: 'primary-hover',
     },
     { use: 'Switch focus ring', text: 'ring', surface: 'background' },
+    { use: 'Select selected check', text: 'primary', surface: 'popover' },
+    {
+        use: 'Select selected check, highlighted',
+        text: 'primary',
+        surface: 'accent',
+    },
+    {
+        use: 'Select trigger focus/open ring',
+        text: 'ring',
+        surface: 'background',
+    },
     {
         use: 'form control boundary on a popover',
         text: 'control-border',

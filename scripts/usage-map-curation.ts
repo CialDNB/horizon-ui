@@ -191,7 +191,8 @@ export const curation: Record<string, Curation> = {
     Select: {
         batch: 2,
         horizon: 'Select',
-        note: 'Planned: Radix Select; options as children, not an `options` array; bottom sheet on mobile.',
+        note: 'Done in Task 11a for single selection, see Select section below. `options` array becomes `SelectItem` children (`group` -> `SelectGroup`, `disabled` per item); `onChange(event, value)` becomes `onValueChange(value)`; `placeholderValue` becomes `placeholder`; `clearable` kept (+ `clearLabel`); `size="small"` -> `sm`; label/helperText/error/isLabelContainer/info move to FormField. NOT PORTED (need a Combobox, Task 11b): `multiple`, `variant` check/radio/switch, `enableSearchField`/`placeholderSearchField`, apply/reset buttons, `menuHeaderTitle`/`menuHeaderIcon`, `loading`, `startAdornment` (5 of 7 customer360 SelectV2 openings use `multiple`). Dropped with a dev warning.',
+        status: 'done',
     },
     Checkbox: {
         batch: 2,
