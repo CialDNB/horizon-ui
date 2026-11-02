@@ -33,6 +33,8 @@ const textareaStyles = cva(
         // 16/20 at every breakpoint: multi-line text needs the leading
         // (body/secondary is 14/14) and 16px avoids zoom on iPad too.
         'hz:text-body-default hz:placeholder:text-muted-foreground hz:placeholder:opacity-100 hz:outline-none',
+        // Forced colors: the focus ring (a shadow) is gone; outline instead.
+        'hz:forced-colors:focus:outline-2 hz:forced-colors:focus:outline-offset-2 hz:forced-colors:focus:outline-solid hz:forced-colors:focus:outline-[Highlight]',
     ],
     {
         variants: {

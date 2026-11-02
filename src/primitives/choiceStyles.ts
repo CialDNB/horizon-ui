@@ -15,6 +15,20 @@
 export const choiceTarget =
     'hz:group hz:relative hz:m-0 hz:inline-flex hz:shrink-0 hz:cursor-pointer hz:items-center hz:justify-center hz:rounded-xs hz:border-0 hz:bg-transparent hz:p-0 hz:align-middle hz:outline-none hz:focus:outline-none hz:disabled:cursor-not-allowed';
 
+/**
+ * Forced colors: box/circle/track boundaries are shadows or fills, which
+ * forced colors removes; a CanvasText border keeps the control visible.
+ */
+export const choiceForcedBorder =
+    'hz:forced-colors:border hz:forced-colors:border-solid hz:forced-colors:border-[CanvasText]';
+
+/**
+ * A fill that must stay visible in forced colors (radio dot, switch thumb):
+ * opts out of adjustment with a system colour.
+ */
+export const choiceForcedFill =
+    'hz:forced-colors:forced-color-adjust-none hz:forced-colors:bg-[CanvasText]';
+
 /** Focus ring drawn on the visual control (not the 44px target). */
 export const choiceFocusRing =
     'hz:outline-ring hz:group-focus-visible:outline-2 hz:group-focus-visible:outline-offset-2 hz:group-focus-visible:outline-solid';

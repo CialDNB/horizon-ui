@@ -32,6 +32,8 @@ const inputStyles = cva(
     [
         fieldBase,
         'hz:flex hz:items-center hz:gap-2',
+        // Forced colors: the focus ring (a shadow) is gone; outline instead.
+        'hz:forced-colors:has-[>input:focus]:outline-2 hz:forced-colors:has-[>input:focus]:outline-offset-2 hz:forced-colors:has-[>input:focus]:outline-solid hz:forced-colors:has-[>input:focus]:outline-[Highlight]',
         // The text size lives on the <input> (see inputText): host rules
         // (`input { font-size: 14px }`) target the element, not the box.
     ],

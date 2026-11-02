@@ -45,6 +45,8 @@ const triggerStyles = cva(
         'hz:m-0 hz:flex hz:cursor-pointer hz:items-center hz:justify-between hz:gap-2 hz:border-0 hz:text-start hz:normal-case',
         'hz:focus:outline-none hz:focus:outline-2 hz:focus:outline-ring hz:focus-visible:ring-2 hz:data-[state=open]:ring-2',
         'hz:data-[placeholder]:text-muted-foreground',
+        // Forced colors: the focus/open ring (a shadow) is gone; outline instead.
+        'hz:forced-colors:focus-visible:outline-2 hz:forced-colors:focus-visible:outline-offset-2 hz:forced-colors:focus-visible:outline-solid hz:forced-colors:focus-visible:outline-[Highlight] hz:forced-colors:data-[state=open]:outline-2 hz:forced-colors:data-[state=open]:outline-offset-2 hz:forced-colors:data-[state=open]:outline-solid hz:forced-colors:data-[state=open]:outline-[Highlight]',
         'hz:[&>svg]:size-4 hz:[&>svg]:shrink-0 hz:[&>svg]:align-middle hz:[&>svg]:text-muted-foreground hz:[&>svg]:transition-transform hz:[&>svg]:duration-fast hz:data-[state=open]:[&>svg]:rotate-180',
     ],
     {
@@ -87,7 +89,7 @@ export function selectVariants(options?: SelectVariantOptions): string {
 // Width follows the trigger (full width at mobile, where fields fill the
 // form); max height follows the space Radix measured. Above the MUI modal.
 const contentStyles =
-    'hz:relative hz:z-dropdown hz:max-h-(--radix-select-content-available-height) hz:w-(--radix-select-trigger-width) hz:min-w-48 hz:overflow-hidden hz:rounded-sm hz:bg-popover hz:text-popover-foreground hz:shadow-2 hz:ring-1 hz:ring-border';
+    'hz:relative hz:z-dropdown hz:max-h-(--radix-select-content-available-height) hz:w-(--radix-select-trigger-width) hz:min-w-48 hz:overflow-hidden hz:rounded-sm hz:bg-popover hz:text-popover-foreground hz:shadow-2 hz:ring-1 hz:ring-border hz:forced-colors:border hz:forced-colors:border-solid hz:forced-colors:border-[CanvasText]';
 
 // 44px rows at mobile and on touch pointers, 36px with a fine pointer.
 const itemStyles = [

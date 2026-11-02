@@ -15,6 +15,7 @@ import { cn } from '../../lib/cn';
 import { omitLegacyProps } from '../../lib/options';
 import {
     choiceFocusRing,
+    choiceForcedBorder,
     choiceLabel,
     choiceLabelDisabled,
     choiceTarget,
@@ -35,6 +36,7 @@ const trackStyles = cva(
         'hz:relative hz:flex hz:h-6 hz:w-10 hz:shrink-0 hz:items-center hz:rounded-full',
         'hz:transition-colors hz:duration-normal hz:ease-standard',
         choiceFocusRing,
+        choiceForcedBorder,
     ],
     {
         variants: {
@@ -54,7 +56,7 @@ const trackStyles = cva(
 
 // Moves by transform only, along the inline axis (mirrored under RTL).
 const thumbStyles =
-    'hz:pointer-events-none hz:block hz:size-5 hz:rounded-full hz:bg-background hz:shadow-1 hz:translate-x-0.5 hz:data-[state=checked]:translate-x-4.5 hz:rtl:-translate-x-0.5 hz:rtl:data-[state=checked]:-translate-x-4.5 hz:transition-transform hz:duration-normal hz:ease-spring';
+    'hz:forced-colors:forced-color-adjust-none hz:forced-colors:bg-[CanvasText] hz:pointer-events-none hz:block hz:size-5 hz:rounded-full hz:bg-background hz:shadow-1 hz:translate-x-0.5 hz:data-[state=checked]:translate-x-4.5 hz:rtl:-translate-x-0.5 hz:rtl:data-[state=checked]:-translate-x-4.5 hz:transition-transform hz:duration-normal hz:ease-spring';
 
 /** Options accepted by {@link switchVariants}: the track `state`. */
 export type SwitchVariantOptions = VariantProps<typeof trackStyles>;

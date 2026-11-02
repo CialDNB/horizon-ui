@@ -5,9 +5,17 @@
  * buttons get the full 44px height at mobile.
  */
 
+/**
+ * Forced colors (Windows High Contrast) drop box-shadows, so the inset ring
+ * boundary disappears: a real 1px border in CanvasText replaces it there.
+ */
+export const forcedBorder =
+    'hz:forced-colors:border hz:forced-colors:border-solid hz:forced-colors:border-[CanvasText]';
+
 /** Surface, radius, type colour and motion shared by every field. */
 export const fieldBase =
-    'hz:relative hz:w-full hz:min-w-0 hz:rounded-lg hz:bg-transparent hz:text-foreground hz:ring-inset hz:transition-[box-shadow,background-color] hz:duration-fast hz:ease-standard';
+    'hz:relative hz:w-full hz:min-w-0 hz:rounded-lg hz:bg-transparent hz:text-foreground hz:ring-inset hz:transition-[box-shadow,background-color] hz:duration-fast hz:ease-standard ' +
+    forcedBorder;
 
 /**
  * Boundary per state. `rest` turns primary on pointer hover (x-core);

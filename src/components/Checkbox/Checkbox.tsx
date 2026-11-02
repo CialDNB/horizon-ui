@@ -18,6 +18,7 @@ import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
 import {
     choiceFocusRing,
+    choiceForcedBorder,
     choiceLabel,
     choiceLabelDisabled,
     choiceTarget,
@@ -43,6 +44,7 @@ const boxStyles = cva(
         'hz:flex hz:items-center hz:justify-center hz:rounded-xs hz:ring-1 hz:ring-inset',
         'hz:transition-[background-color,box-shadow] hz:duration-fast hz:ease-standard',
         choiceFocusRing,
+        choiceForcedBorder,
         // Checked and indeterminate: solid primary with a primary-foreground mark.
         'hz:group-data-[state=checked]:bg-primary hz:group-data-[state=checked]:ring-primary hz:group-data-[state=indeterminate]:bg-primary hz:group-data-[state=indeterminate]:ring-primary hz:text-primary-foreground',
     ],

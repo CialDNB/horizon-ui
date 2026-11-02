@@ -11,10 +11,17 @@ export type {
 } from './formField';
 export { useResolvedDir } from './useResolvedDir';
 export type { Direction } from './useResolvedDir';
-export { fieldBase, fieldState, fieldStateOf } from './fieldStyles';
+export {
+    fieldBase,
+    fieldState,
+    fieldStateOf,
+    forcedBorder,
+} from './fieldStyles';
 export type { FieldState } from './fieldStyles';
 export {
     choiceFocusRing,
+    choiceForcedBorder,
+    choiceForcedFill,
     choiceLabel,
     choiceLabelDisabled,
     choiceTarget,

@@ -19,6 +19,8 @@ import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
 import {
     choiceFocusRing,
+    choiceForcedBorder,
+    choiceForcedFill,
     choiceLabel,
     choiceLabelDisabled,
     choiceTarget,
@@ -60,6 +62,7 @@ const circleStyles = cva(
         'hz:flex hz:items-center hz:justify-center hz:rounded-full hz:ring-inset',
         'hz:transition-[box-shadow] hz:duration-fast hz:ease-standard',
         choiceFocusRing,
+        choiceForcedBorder,
         'hz:ring-1 hz:group-data-[state=checked]:ring-2',
     ],
     {
@@ -75,7 +78,7 @@ const circleStyles = cva(
     }
 );
 
-const dotStyles = cva('hz:block hz:rounded-full', {
+const dotStyles = cva(cn('hz:block hz:rounded-full', choiceForcedFill), {
     variants: {
         size: { sm: 'hz:size-2', md: 'hz:size-2.5' },
         state: {
