@@ -51,6 +51,9 @@ Ratios per brand are asserted in `src/tokens/contrast.test.ts` and listed in `.s
 | `control-border` | blueGrey/500 `#64748B` | same | `#64748B` | x-core input resting border (`shared/inputs/inputStyles.ts`: `blueGrey[500]`). `input` (blueGrey/300, 1.4:1 on background) fails WCAG 1.4.11 for a control boundary; it stays the disabled border. 4.6:1 on `background`, 4.8:1 on `popover`. |
 | `popover` | white | white | `#FFFFFF` | x-core `background.paper`: floating surfaces (Select content; Popover/Dialog in Task 11b) |
 | `popover-foreground` | = `foreground` | = `foreground` | = `foreground` | text on `popover` |
+| `tooltip` | blueGrey/800 `#1E293B` | same | `#1E293B` | Task 11b: Tooltip surface (x-core TooltipV2 `horizonPalette.blueGrey[800]`) |
+| `tooltip-foreground` | white | white | `#FFFFFF` | text on `tooltip` (AA, `src/tokens/contrast.test.ts`) |
+| `overlay` | blueGrey/900 `#0F172A` | same | `#0F172A` | Task 11b: modal scrim behind Dialog and Drawer, used at 50% (`bg-overlay/50`); x-core used MUI's black 50% backdrop |
 
 z-index scale (`src/tokens/zIndex.ts`, emitted as `--z-*` on `.hz-root`, utilities `hz:z-dialog` ...): dialog 1350, dropdown 1400, popover 1450, tooltip 1500, toast 1600; all above the MUI modal (1300) so horizon overlays opened from inside an x-core dialog stay on top.
 

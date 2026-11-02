@@ -106,6 +106,8 @@ describe('architecture', () => {
                 "Spinner",
                 "Switch",
                 "Textarea",
+                "Tooltip",
+                "TooltipProvider",
                 "Typography",
                 "alertVariants",
                 "avatarVariants",

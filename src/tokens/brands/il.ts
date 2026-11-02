@@ -43,4 +43,9 @@ export const il: SemanticPalette = {
     // Task 11a: floating surfaces (Select content); x-core background.paper.
     popover: '#FFFFFF',
     'popover-foreground': '#0F172A',
+    // Task 11b: Tooltip surface (x-core TooltipV2 blueGrey/800 + white).
+    tooltip: '#1E293B',
+    'tooltip-foreground': '#FFFFFF',
+    // Task 11b: modal scrim, applied at 50% (Dialog/Drawer overlay).
+    overlay: '#0F172A',
 };

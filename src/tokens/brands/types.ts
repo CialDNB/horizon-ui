@@ -36,6 +36,9 @@ export const semanticKeys = [
     'control-border',
     'popover',
     'popover-foreground',
+    'tooltip',
+    'tooltip-foreground',
+    'overlay',
 ] as const;
 
 /** A semantic colour key. */

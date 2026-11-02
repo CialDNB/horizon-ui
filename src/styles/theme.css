@@ -39,6 +39,9 @@
     --color-control-border: var(--control-border);
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
+    --color-tooltip: var(--tooltip);
+    --color-tooltip-foreground: var(--tooltip-foreground);
+    --color-overlay: var(--overlay);
     --spacing: 4px;
     --radius-*: initial;
     --radius-none: 0px;

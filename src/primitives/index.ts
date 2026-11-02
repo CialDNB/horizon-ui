@@ -28,3 +28,13 @@ export {
     choiceWrapper,
 } from './choiceStyles';
 export { clearAction, inlineActionBase } from './inlineAction';
+export {
+    anchoredMotion,
+    containEscape,
+    overlayCloseBase,
+    overlaySurface,
+    panelMotion,
+    physicalPlacement,
+    scrimStyles,
+} from './overlay';
+export type { LogicalAlign, LogicalSide } from './overlay';

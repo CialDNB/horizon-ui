@@ -168,6 +168,9 @@
     --control-border: #64748B;
     --popover: #FFFFFF;
     --popover-foreground: #0F172A;
+    --tooltip: #1E293B;
+    --tooltip-foreground: #FFFFFF;
+    --overlay: #0F172A;
     --spacing: 4px;
     --dialog-width-mobile: 312px;
     --dialog-width-sm: 570px;
@@ -324,6 +327,9 @@
     --control-border: #64748B;
     --popover: #FFFFFF;
     --popover-foreground: #64748B;
+    --tooltip: #1E293B;
+    --tooltip-foreground: #FFFFFF;
+    --overlay: #0F172A;
 }
 
 .hz-root[data-brand='il'] {
@@ -360,4 +366,7 @@
     --control-border: #64748B;
     --popover: #FFFFFF;
     --popover-foreground: #0F172A;
+    --tooltip: #1E293B;
+    --tooltip-foreground: #FFFFFF;
+    --overlay: #0F172A;
 }

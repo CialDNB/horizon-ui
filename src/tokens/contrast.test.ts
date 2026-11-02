@@ -161,7 +161,8 @@ textPairs.push(
         surface: 'popover',
     },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
-    { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
+    { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' },
+    { use: 'Tooltip text', text: 'tooltip-foreground', surface: 'tooltip' }
 );
 
 describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {

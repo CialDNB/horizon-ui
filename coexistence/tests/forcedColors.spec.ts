@@ -105,4 +105,10 @@ for (const build of ['layered', 'unlayered'] as const)
                 expect(s.background, sel).not.toBe('rgba(0, 0, 0, 0)');
             }
         });
+
+        test('overlays keep a visible boundary', async ({ page }) => {
+            await page.getByTestId('hz-tooltip-trigger').focus();
+            await expect(page.getByTestId('hz-tooltip')).toBeVisible();
+            visibleBorder(await style(page, byTestId('hz-tooltip')));
+        });
     });

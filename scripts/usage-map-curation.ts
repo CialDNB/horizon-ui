@@ -255,7 +255,8 @@ export const curation: Record<string, Curation> = {
     Tooltip: {
         batch: 2,
         horizon: 'Tooltip',
-        note: 'Planned: Radix Tooltip; hover-only content gets a focus/touch equivalent.',
+        note: 'Done in Task 11b (Radix Tooltip). `title` becomes `content` (required); `placement` becomes logical `side` (top/bottom/start/end) + `align` (start/center/end): `bottom-end` -> side="bottom" align="end", `right` -> side="end", `auto` -> default top (flips when there is no room); `enterDelay` becomes `delayDuration` (default 300, customer360 always passes 300); `leaveDelay` dropped (closes on leave; grace area to the content); `multipleLine` is the default (wraps at 280px, keeps line breaks); new `showArrow`, `disabled`, optional `TooltipProvider`. Touch never opens a tooltip. `open`/`onClose` -> `open`/`onOpenChange`. Dropped props warn in development. A disabled button cannot trigger it: wrap it in a focusable span.',
+        status: 'done',
     },
     Snackbar: {
         batch: 2,

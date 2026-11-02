@@ -31,6 +31,7 @@ import {
     Spinner,
     Switch,
     Textarea,
+    Tooltip,
     Typography,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
@@ -235,6 +236,55 @@ function SelectInMuiDialog() {
                             </SelectItem>
                         ))}
                     </Select>
+                </MuiDialogContent>
+            </MuiDialog>
+        </>
+    );
+}
+
+/**
+ * The overlays a page opens. Rendered twice: in the app's provider and,
+ * inside a real MUI Dialog, under an inner `<HorizonProvider>` (the
+ * documented pattern). `scope` prefixes the test ids.
+ */
+function Overlays({ scope }: { scope: string }) {
+    return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <Tooltip
+                content="Overlay tooltip text"
+                data-testid={`${scope}-tooltip`}
+            >
+                <Button
+                    variant="secondary"
+                    data-testid={`${scope}-tooltip-trigger`}
+                >
+                    Tooltip
+                </Button>
+            </Tooltip>
+        </div>
+    );
+}
+
+/** A real MUI Dialog (z-index 1300) whose content holds every overlay. */
+function OverlaysInMuiDialog() {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <MuiButton
+                data-testid="open-mui-overlays"
+                onClick={() => setOpen(true)}
+            >
+                Open MUI dialog with overlays
+            </MuiButton>
+            <MuiDialog
+                open={open}
+                onClose={() => setOpen(false)}
+                data-testid="mui-overlays-dialog"
+            >
+                <MuiDialogContent data-testid="mui-overlays-content">
+                    <HorizonProvider>
+                        <Overlays scope="mui" />
+                    </HorizonProvider>
                 </MuiDialogContent>
             </MuiDialog>
         </>
@@ -732,6 +782,12 @@ function App() {
                             disabled
                             data-testid="hz-textarea-disabled"
                         />
+                    </HorizonProvider>
+                </section>
+                <section data-testid="hz-overlays">
+                    <HorizonProvider>
+                        <Overlays scope="hz" />
+                        <OverlaysInMuiDialog />
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">

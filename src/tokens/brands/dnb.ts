@@ -53,4 +53,9 @@ export const dnb: SemanticPalette = {
     // Task 11a: floating surfaces (Select content); x-core background.paper.
     popover: common.white,
     'popover-foreground': blueGrey[500],
+    // Task 11b: Tooltip surface (x-core TooltipV2 blueGrey/800 + white).
+    tooltip: blueGrey[800],
+    'tooltip-foreground': common.white,
+    // Task 11b: modal scrim, applied at 50% (Dialog/Drawer overlay).
+    overlay: blueGrey[900],
 };

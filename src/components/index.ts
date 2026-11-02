@@ -124,3 +124,5 @@ export type {
     TypographyVariantOptions,
     TypographyWeight,
 } from './Typography';
+export { Tooltip, TooltipProvider } from './Tooltip';
+export type { TooltipProps, TooltipProviderProps } from './Tooltip';

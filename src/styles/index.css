@@ -70,3 +70,39 @@
         }
     }
 }
+
+/*
+ * Overlay enter/exit (Tooltip, Popover, DropdownMenu, Dialog, Drawer,
+ * Toast): opacity and transform only, never size or position. Components set
+ * where the motion starts with `--hz-enter-x`, `--hz-enter-y` (a length or
+ * percentage) and `--hz-enter-scale`; Radix keeps exiting content mounted
+ * until the exit animation ends. Durations and curves are the motion tokens
+ * on `.hz-root`; reduced motion collapses them (base.css). Renamed hz-* in
+ * the build.
+ */
+@theme inline {
+    /* prettier-ignore */
+    --animate-overlay-in: overlay-in var(--duration-normal) var(--ease-enter) both;
+    /* prettier-ignore */
+    --animate-overlay-out: overlay-out var(--duration-fast) var(--ease-exit) both;
+    /* prettier-ignore */
+    --animate-panel-in: overlay-in var(--duration-slow) var(--ease-enter) both;
+    /* prettier-ignore */
+    --animate-panel-out: overlay-out var(--duration-normal) var(--ease-exit) both;
+
+    @keyframes overlay-in {
+        from {
+            opacity: 0;
+            transform: translate(var(--hz-enter-x, 0), var(--hz-enter-y, 0))
+                scale(var(--hz-enter-scale, 1));
+        }
+    }
+
+    @keyframes overlay-out {
+        to {
+            opacity: 0;
+            transform: translate(var(--hz-enter-x, 0), var(--hz-enter-y, 0))
+                scale(var(--hz-enter-scale, 1));
+        }
+    }
+}
