@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { diffStates, LINK_STATES, linkStates } from './linkStates';
 
 /*
  * Batch 1 components (Typography, Chip, Badge, Spinner, ...) against customer360's
@@ -313,6 +314,60 @@ const AVATAR: Target[] = [
     },
 ];
 
+const ICON_BUTTON_PROPS = [
+    'width',
+    'height',
+    'paddingTop',
+    'paddingInlineStart',
+    'marginTop',
+    'borderRadius',
+    'borderTopWidth',
+    'borderTopColor',
+    'color',
+    'backgroundColor',
+    'fontSize',
+    'lineHeight',
+    'textDecorationLine',
+    'outlineStyle',
+    'outlineWidth',
+    'outlineColor',
+    'outlineOffset',
+    'cursor',
+    'display',
+    'verticalAlign',
+] as const;
+
+const ICON_BUTTON_VARIANTS = [
+    'primary',
+    'secondary',
+    'tertiary',
+    'destructive',
+    'ghost',
+] as const;
+
+const ICON_BUTTON: Target[] = [
+    ...plain(
+        [...ICON_BUTTON_VARIANTS, 'disabled', 'loading'].map(
+            (v) => `hz-iconbutton-${v}`
+        )
+    ),
+    ...plain(ICON_BUTTON_VARIANTS.map((v) => `hz-iconlink-${v}`)),
+    {
+        key: 'primary, focused',
+        selector: byTestId('hz-iconbutton-primary'),
+        focus: byTestId('hz-iconbutton-primary'),
+    },
+    {
+        key: 'link, focused',
+        selector: byTestId('hz-iconlink-ghost'),
+        focus: byTestId('hz-iconlink-ghost'),
+    },
+    {
+        key: 'icon svg',
+        selector: `${byTestId('hz-iconbutton-primary')} svg`,
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
@@ -325,6 +380,7 @@ const PROBES: Record<string, Probe> = {
     Progress: { targets: PROGRESS, props: PROGRESS_PROPS },
     Alert: { targets: ALERT, props: ALERT_PROPS },
     Avatar: { targets: AVATAR, props: AVATAR_PROPS },
+    IconButton: { targets: ICON_BUTTON, props: ICON_BUTTON_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -775,4 +831,134 @@ test.describe('layered build: Avatar against full Bootstrap', () => {
             ],
         });
     });
+});
+
+/**
+ * Anchor-rendered components against the reboot's `a` rules, every
+ * interaction state, unlayered build: identical with bootstrap-reboot.css and
+ * full bootstrap.css, in both load orders, and on a touch device (sticky
+ * hover without hover media).
+ */
+const anchorSuite = (name: string, ids: readonly string[]) => {
+    test.describe(`${name} anchors: unlayered build vs Bootstrap a, a:hover, a:not([href])`, () => {
+        for (const reboot of ['1', 'full'] as const)
+            for (const horizonFirst of [false, true])
+                test(`every state unchanged by ${reboot === 'full' ? 'full bootstrap.css' : 'bootstrap-reboot.css'} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                    page,
+                }) => {
+                    const without = await linkStates(
+                        page,
+                        url('unlayered'),
+                        ids
+                    );
+                    expect(Object.keys(without)).toHaveLength(
+                        ids.length * LINK_STATES.length
+                    );
+                    const withBootstrap = await linkStates(
+                        page,
+                        url('unlayered', { reboot, horizonFirst }),
+                        ids
+                    );
+                    expect(diffStates(without, withBootstrap)).toEqual({});
+                });
+    });
+
+    test.describe(`${name} anchors on a touch device (no hover media), unlayered build`, () => {
+        test.use({ hasTouch: true, isMobile: true });
+        for (const horizonFirst of [false, true])
+            test(`sticky :hover shows no Bootstrap a:hover look (${horizonFirst ? 'horizon first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await linkStates(
+                    page,
+                    url('unlayered'),
+                    ids,
+                    true
+                );
+                expect(
+                    await page.evaluate(
+                        () => matchMedia('(hover: hover)').matches
+                    )
+                ).toBe(false);
+                const withBootstrap = await linkStates(
+                    page,
+                    url('unlayered', { reboot: 'full', horizonFirst }),
+                    ids,
+                    true
+                );
+                expect(diffStates(without, withBootstrap)).toEqual({});
+            });
+    });
+};
+
+anchorSuite(
+    'IconButton asChild',
+    ICON_BUTTON_VARIANTS.map((v) => `hz-iconlink-${v}`)
+);
+
+test.describe('layered build (known limit): IconButton against full Bootstrap', () => {
+    test('buttons lose the radius and focus ring; asChild links take the reboot link colour', async ({
+        page,
+    }) => {
+        const probe = PROBES['IconButton'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        expect(diff(without, withBootstrap)).toEqual(LAYERED_ICON_BUTTON_DIFF);
+    });
+});
+
+// Measured: Bootstrap's `button { border-radius: 0; line-height: inherit }`
+// squares the buttons (line height has no visual effect on the fixed box) and
+// `button:focus` adds its ring; the reboot's `a` colour and the missing fill
+// win on asChild links. Legacy hosts use styles.unlayered.css (ADR 0001).
+const squared = ['borderRadius: 100px -> 0px', 'lineHeight: 16px -> 24px'];
+const rebootLinkColour = (from: string) => `color: ${from} -> rgb(0, 123, 255)`;
+const LAYERED_ICON_BUTTON_DIFF = {
+    'hz-iconbutton-primary': squared,
+    'hz-iconbutton-secondary': squared,
+    'hz-iconbutton-tertiary': squared,
+    'hz-iconbutton-destructive': squared,
+    'hz-iconbutton-ghost': squared,
+    'hz-iconbutton-disabled': squared,
+    'hz-iconbutton-loading': [...squared, 'cursor: progress -> pointer'],
+    'hz-iconlink-primary': [
+        rebootLinkColour('rgb(255, 255, 255)'),
+        'backgroundColor: rgb(0, 80, 240) -> rgba(0, 0, 0, 0)',
+    ],
+    'hz-iconlink-secondary': [rebootLinkColour('rgb(0, 80, 240)')],
+    'hz-iconlink-tertiary': [rebootLinkColour('rgb(0, 80, 240)')],
+    'hz-iconlink-destructive': [
+        rebootLinkColour('rgb(255, 255, 255)'),
+        'backgroundColor: rgb(231, 13, 50) -> rgba(0, 0, 0, 0)',
+    ],
+    'hz-iconlink-ghost': [rebootLinkColour('rgb(15, 23, 42)')],
+    'link, focused': [rebootLinkColour('rgb(15, 23, 42)')],
+    'icon svg': ['lineHeight: 16px -> 24px'],
+    'primary, focused': [
+        ...squared,
+        ...bootstrapRing('solid', '2px', 'rgb(0, 80, 240)'),
+    ],
+};
+
+test.describe('IconButton mouse focus against Bootstrap button:focus', () => {
+    for (const horizonFirst of [false, true])
+        test(`a clicked icon button shows no ring, unlayered build (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+            page,
+        }) => {
+            await page.goto(url('unlayered', { reboot: 'full', horizonFirst }));
+            const button = page.getByTestId('hz-iconbutton-ghost');
+            await button.click();
+            expect(
+                await button.evaluate((el) => [
+                    el === document.activeElement,
+                    el.matches(':focus-visible'),
+                    getComputedStyle(el).outlineStyle,
+                ])
+            ).toEqual([true, false, 'none']);
+        });
 });

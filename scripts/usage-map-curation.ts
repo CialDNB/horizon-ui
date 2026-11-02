@@ -89,12 +89,14 @@ export const curation: Record<string, Curation> = {
     IconButton: {
         batch: 1,
         horizon: 'IconButton',
-        note: 'Planned: `aria-label` required in the type.',
+        note: 'Done in Task 10c, see IconButton section below. `aria-label` (or `aria-labelledby`) required in the type; `color` becomes `variant` (default -> primary, primary -> tertiary, secondary -> secondary, error -> destructive, inherit -> ghost; success/info/warning -> secondary, known visual regression); `size` small/medium/large becomes sm/md/lg; `tooltipInfo`/`tooltipProps` dropped until Tooltip (Task 11); new `loading`, `asChild`; `sx`, `edge`, `disableRipple` dropped.',
+        status: 'done',
     },
     ActionIconButton: {
         batch: 1,
         horizon: 'IconButton',
-        note: 'Merge into IconButton (only used inside AppBar).',
+        note: 'Done in Task 10c (merged, see IconButton section below): compact form is `IconButton variant="secondary"`; `count` becomes `BadgeAnchor` + `Badge count`; the labelled/arrow form becomes `Button variant="ghost"` with icons. AppBar surface (shadow, 40px) is styled by the AppBar port (Task 12).',
+        status: 'done',
     },
     Divider: {
         batch: 1,

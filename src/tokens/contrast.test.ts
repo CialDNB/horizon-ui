@@ -159,6 +159,35 @@ const nonTextPairs: Pair[] = [
     ]),
 ];
 
+// IconButton: the icon is the only content (a graphic: 3:1), per variant at
+// rest and on hover/press; `secondary` also needs its border to show.
+nonTextPairs.push(
+    ...(
+        [
+            ['primary', 'primary-foreground', 'primary'],
+            ['primary hover', 'primary-foreground', 'primary-hover'],
+            ['secondary', 'primary', 'background'],
+            ['secondary border', 'primary', 'background'],
+            ['secondary hover', 'primary-foreground', 'primary'],
+            ['tertiary', 'primary', 'background'],
+            ['tertiary hover', 'accent-foreground', 'accent'],
+            ['destructive', 'destructive-foreground', 'destructive'],
+            [
+                'destructive hover',
+                'destructive-foreground',
+                'destructive-hover',
+            ],
+            ['ghost', 'foreground', 'background'],
+            ['ghost hover', 'accent-foreground', 'accent'],
+            ['focus ring', 'ring', 'background'],
+        ] as const
+    ).map(([use, text, surface]) => ({
+        use: `IconButton ${use} icon`,
+        text,
+        surface,
+    }))
+);
+
 describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {
     for (const brand of Object.keys(brands) as Brand[])
         it.each(nonTextPairs)(`${brand}: $use`, ({ text, surface }) => {

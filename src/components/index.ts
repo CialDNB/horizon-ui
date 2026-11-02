@@ -37,6 +37,14 @@ export type {
     ChipVariant,
     ChipVariantOptions,
 } from './Chip';
+export { IconButton, iconButtonVariants } from './IconButton';
+export type {
+    IconButtonName,
+    IconButtonProps,
+    IconButtonSize,
+    IconButtonVariant,
+    IconButtonVariantOptions,
+} from './IconButton';
 export { Progress, progressVariants } from './Progress';
 export type {
     ProgressProps,
