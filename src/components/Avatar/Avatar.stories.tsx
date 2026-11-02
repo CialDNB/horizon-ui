@@ -168,18 +168,24 @@ export const ImageFallback: Story = {
     ),
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await waitFor(() =>
-            expect(canvas.getByTestId('broken')).toHaveAttribute(
-                'data-status',
-                'error'
-            )
+        // Image load/error events can take over 1s while the full suite runs
+        // in parallel (flaked from Task 11a on); wait up to 5s.
+        await waitFor(
+            () =>
+                expect(canvas.getByTestId('broken')).toHaveAttribute(
+                    'data-status',
+                    'error'
+                ),
+            { timeout: 5000 }
         );
         await expect(canvas.getByTestId('broken')).toHaveTextContent('NP');
-        await waitFor(() =>
-            expect(canvas.getByTestId('ok')).toHaveAttribute(
-                'data-status',
-                'loaded'
-            )
+        await waitFor(
+            () =>
+                expect(canvas.getByTestId('ok')).toHaveAttribute(
+                    'data-status',
+                    'loaded'
+                ),
+            { timeout: 5000 }
         );
         await expect(
             canvas.getByRole('img', { name: 'Omer Katz' })
