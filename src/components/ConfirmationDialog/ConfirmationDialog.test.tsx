@@ -126,6 +126,19 @@ describe('ConfirmationDialog', () => {
         );
     });
 
+    it('the x-core message as children describes the dialog when there is no description', async () => {
+        render(
+            <Harness description={undefined}>
+                All monitoring alerts for this company stop.
+            </Harness>
+        );
+        expect(
+            await screen.findByRole('alertdialog', { name: 'Delete report?' })
+        ).toHaveAccessibleDescription(
+            'All monitoring alerts for this company stop.'
+        );
+    });
+
     it('no description: no missing-description warning', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         render(<Harness description={undefined} />);

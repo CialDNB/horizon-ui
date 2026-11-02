@@ -4,7 +4,7 @@
  * `ConfirmationDialog` (MUI Dialog with approve/cancel Buttons, x-core
  * 2.2.30).
  */
-import { forwardRef, type MouseEvent, type ReactNode } from 'react';
+import { forwardRef, useId, type MouseEvent, type ReactNode } from 'react';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 import { Button } from '../Button';
@@ -136,6 +136,10 @@ export const ConfirmationDialog = forwardRef<
         variants,
         'default'
     );
+    // x-core passed the message as children: they describe the dialog
+    // when there is no `description`.
+    const bodyId = useId();
+    const describeBody = description === undefined && children !== undefined;
     const cancel = () => {
         onCancel?.();
         onOpenChange(false);
@@ -155,7 +159,7 @@ export const ConfirmationDialog = forwardRef<
                 dismissible={!loading}
                 showClose={false}
                 {...(description === undefined && {
-                    'aria-describedby': undefined,
+                    'aria-describedby': describeBody ? bodyId : undefined,
                 })}
                 {...(className !== undefined && { className })}
             >
@@ -165,7 +169,11 @@ export const ConfirmationDialog = forwardRef<
                         <DialogDescription>{description}</DialogDescription>
                     )}
                 </DialogHeader>
-                {children !== undefined && <DialogBody>{children}</DialogBody>}
+                {children !== undefined && (
+                    <DialogBody {...(describeBody && { id: bodyId })}>
+                        {children}
+                    </DialogBody>
+                )}
                 <DialogFooter>
                     <Button
                         variant="secondary"
