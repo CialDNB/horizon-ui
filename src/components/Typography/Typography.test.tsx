@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import { typography as typographyTokens } from '../../tokens';
 import { Typography, typographyVariants, type TypographyVariant } from '.';
 
@@ -149,5 +150,25 @@ describe('Typography', () => {
         render(<Typography>Standalone</Typography>);
         expect(screen.getByText('Standalone')).toBeVisible();
         expect(Typography.displayName).toBe('Typography');
+    });
+
+    describe('old x-core values from untyped callers', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it('MUI variant="h5" renders body/default as a paragraph without throwing and warns once', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            render(
+                <Typography variant={'h5' as never}>Old heading</Typography>
+            );
+            const el = screen.getByText('Old heading');
+            expect(el.tagName).toBe('P');
+            expect(el).toHaveAttribute('data-variant', 'body/default');
+            expect(el).toHaveClass('hz:text-body-default');
+            expect(warn).toHaveBeenCalledOnce();
+            expect(warn.mock.calls[0]?.[0]).toContain('variant "h5"');
+        });
     });
 });

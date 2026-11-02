@@ -12,6 +12,7 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const typographyStyles = cva(
@@ -170,6 +171,8 @@ const defaultElement: Record<TypographyVariant, ElementType> = {
     'label/lg': 'span',
 };
 
+const typographyRoles = Object.keys(defaultElement) as TypographyVariant[];
+
 // Complete literals: the Tailwind scanner only compiles classes it can see.
 const truncateClass = {
     // text-nowrap replaces the variant's text-pretty/balance (the `text-wrap`
@@ -198,7 +201,7 @@ export function typographyVariants(options?: TypographyVariantOptions): string {
 export const Typography = forwardRef<HTMLElement, TypographyImplProps>(
     function Typography(
         {
-            variant = 'body/default',
+            variant: variantProp,
             as,
             color = 'inherit',
             weight,
@@ -209,6 +212,15 @@ export const Typography = forwardRef<HTMLElement, TypographyImplProps>(
         },
         ref
     ) {
+        // Untyped callers may pass MUI names (`variant="h5"`), which would
+        // leave no element to render.
+        const variant = resolveOption(
+            'Typography',
+            'variant',
+            variantProp,
+            typographyRoles,
+            'body/default'
+        );
         const Component = as ?? defaultElement[variant];
         const lines = truncate === true ? 1 : truncate === false ? 0 : truncate;
         return (
