@@ -90,3 +90,20 @@
         scroll-behavior: auto !important;
     }
 }
+
+/*
+ * DropdownMenu at mobile is a bottom sheet: below the tablet breakpoint the
+ * Radix positioning wrapper of a menu (`data-hz-menu-sheet`) is pinned to
+ * the bottom edge, full width. `!important` because Radix positions the
+ * wrapper with inline styles (left/top/transform/min-width).
+ */
+@media (width < 768px) {
+    .hz-root
+        :where(
+            [data-radix-popper-content-wrapper]:has(> [data-hz-menu-sheet])
+        ) {
+        inset: auto 0 0 !important;
+        transform: none !important;
+        min-width: 0 !important;
+    }
+}

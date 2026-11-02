@@ -79,10 +79,16 @@ const onTop = (page: Page, el: Locator) =>
 
 const openTooltip = async (page: Page, path: string) => {
     await page.goto(path);
-    // Radix closes a tooltip when the page scrolls: scroll first.
+    // Radix closes a tooltip when the page scrolls: scroll first, let the
+    // scroll settle, then focus without scrolling.
     const trigger = page.getByTestId('hz-tooltip-trigger');
-    await trigger.scrollIntoViewIfNeeded();
-    await trigger.focus();
+    await trigger.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await page.evaluate(
+        () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50)))
+    );
+    await trigger.evaluate((el) =>
+        (el as HTMLElement).focus({ preventScroll: true })
+    );
     const content = page.getByTestId('hz-tooltip');
     await expect(content).toBeVisible();
     return read(content, SURFACE_PROPS);
@@ -256,6 +262,55 @@ test.describe('Drawer against Bootstrap 4.4.1 and customer360 host CSS', () => {
             });
 });
 
+/* ------------------------------- DropdownMenu ------------------------------- */
+
+const ITEM_PROPS = [
+    ...SURFACE_PROPS,
+    'height',
+    'textDecorationLine',
+    'cursor',
+    'display',
+] as const;
+
+const openMenu = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-menu-trigger').click();
+    const content = page.getByTestId('hz-menu');
+    await expect(content).toBeVisible();
+    await content.evaluate((el) =>
+        Promise.all(el.getAnimations().map((a) => a.finished))
+    );
+    const link = page.getByTestId('hz-menu-link');
+    const rest = await read(link, ITEM_PROPS);
+    // Highlighted (pointer hover): Bootstrap's a:hover must not win.
+    await link.hover();
+    await expect(link).toHaveAttribute('data-highlighted', '');
+    const hover = await read(link, ITEM_PROPS);
+    return {
+        content: await read(content, SURFACE_PROPS),
+        item: await read(page.getByTestId('hz-menu-item'), ITEM_PROPS),
+        link: rest,
+        linkHover: hover,
+    };
+};
+
+test.describe('DropdownMenu against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: menu, items and link items unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openMenu(page, url('unlayered'));
+                const withHost = await openMenu(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.content['zIndex']).toBe('1400');
+                expect(without.linkHover['textDecorationLine']).toBe('none');
+            });
+});
+
 /* ------------------------- Inside a real MUI Dialog -------------------------- */
 
 const openMuiOverlays = async (page: Page, build: 'layered' | 'unlayered') => {
@@ -393,8 +448,47 @@ for (const build of ['layered', 'unlayered'] as const)
             await expect(trigger).toBeFocused();
             await trigger.click();
             await expect(drawer).toBeVisible();
+            // Radix starts listening for outside presses a tick after open.
+            await drawer.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
             await page.mouse.click(4, 4);
             await expect(drawer).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
+        });
+
+        test('DropdownMenu: keyboard opens it above the dialog, exposed to screen readers; Escape closes only the menu; pointer selects', async ({
+            page,
+        }) => {
+            await openMuiOverlays(page, build);
+            const trigger = page.getByTestId('mui-menu-trigger');
+            await trigger.focus();
+            await page.keyboard.press('Enter');
+            const menu = page.getByRole('menu');
+            await expect(menu).toBeVisible();
+            await expect(
+                page.getByRole('menuitem', { name: /Export/ })
+            ).toBeFocused();
+            expect((await read(menu, []))['zIndex']).toBe('1400');
+            await menu.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
+            expect(await onTop(page, menu)).toBe(true);
+            await page.keyboard.press('ArrowDown');
+            await expect(
+                page.getByRole('menuitem', { name: 'Open history' })
+            ).toBeFocused();
+            await page.keyboard.press('Escape');
+            await expect(menu).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
+            await expect(trigger).toBeFocused();
+            await trigger.click();
+            await page.getByRole('menuitem', { name: /Export/ }).click();
+            await expect(menu).toHaveCount(0);
             await expect(
                 page.getByTestId('mui-overlays-content')
             ).toBeVisible();

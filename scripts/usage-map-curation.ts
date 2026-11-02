@@ -272,7 +272,7 @@ export const curation: Record<string, Curation> = {
     SplitButton: {
         batch: 2,
         horizon: 'SplitButton',
-        note: 'Not in the plan. Button + DropdownMenu composition.',
+        note: 'Not in the plan. Button + DropdownMenu composition (DropdownMenu done in Task 11b).',
     },
     Filter: {
         batch: 2,
@@ -428,7 +428,7 @@ export const curation: Record<string, Curation> = {
     AppBarDropdown: {
         batch: 3,
         horizon: 'AppBarDropdown',
-        note: 'Used transitively through LayoutV2.',
+        note: 'Used transitively through LayoutV2. Its menu is built on `DropdownMenu` (done in Task 11b: items with icons, `asChild` links, checkbox/radio items, submenus; bottom sheet at mobile).',
     },
     AppBarHelp: {
         batch: 3,
@@ -443,12 +443,12 @@ export const curation: Record<string, Curation> = {
     ProductsDropdown: {
         batch: 3,
         horizon: 'ProductsDropdown',
-        note: 'Used transitively through LayoutV2 (V2).',
+        note: 'Used transitively through LayoutV2 (V2). Its menu is built on `DropdownMenu` (done in Task 11b: items with icons, `asChild` links, checkbox/radio items, submenus; bottom sheet at mobile).',
     },
     HelpDropdown: {
         batch: 3,
         horizon: 'HelpDropdown',
-        note: 'Used transitively through LayoutV2.',
+        note: 'Used transitively through LayoutV2. Its menu is built on `DropdownMenu` (done in Task 11b: items with icons, `asChild` links, checkbox/radio items, submenus; bottom sheet at mobile).',
     },
     UserPopover: {
         batch: 3,

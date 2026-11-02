@@ -170,3 +170,35 @@ export type {
 } from './ConfirmationDialog';
 export { Drawer, drawerVariants } from './Drawer';
 export type { DrawerProps, DrawerSide, DrawerVariantOptions } from './Drawer';
+export {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from './DropdownMenu';
+export type {
+    DropdownMenuCheckboxItemProps,
+    DropdownMenuContentProps,
+    DropdownMenuGroupProps,
+    DropdownMenuItemProps,
+    DropdownMenuLabelProps,
+    DropdownMenuProps,
+    DropdownMenuRadioGroupProps,
+    DropdownMenuRadioItemProps,
+    DropdownMenuSeparatorProps,
+    DropdownMenuShortcutProps,
+    DropdownMenuSubContentProps,
+    DropdownMenuSubProps,
+    DropdownMenuSubTriggerProps,
+    DropdownMenuTriggerProps,
+} from './DropdownMenu';

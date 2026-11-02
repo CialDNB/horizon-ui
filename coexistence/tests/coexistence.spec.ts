@@ -275,6 +275,10 @@ test.describe('horizon Dialog and MUI Dialog stack in intended order', () => {
             // Pointer: a scrim click closes only the Horizon dialog.
             await trigger.click();
             await expect(dialog).toBeVisible();
+            // Radix starts listening for outside presses a tick after open.
+            await dialog.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
             await page.mouse.click(4, 4);
             await expect(dialog).toHaveCount(0);
             await expect(muiContent).toBeVisible();

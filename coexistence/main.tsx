@@ -48,6 +48,12 @@ import {
     DialogTrigger,
     ConfirmationDialog,
     Drawer,
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
@@ -428,6 +434,34 @@ function Overlays({ scope }: { scope: string }) {
             </Dialog>
             <ConfirmDelete scope={scope} />
             <DetailsDrawer scope={scope} />
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="secondary"
+                        data-testid={`${scope}-menu-trigger`}
+                    >
+                        Menu
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent data-testid={`${scope}-menu`}>
+                    <DropdownMenuItem
+                        shortcut="Ctrl+E"
+                        data-testid={`${scope}-menu-item`}
+                    >
+                        Export
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <a href="#menu-link" data-testid={`${scope}-menu-link`}>
+                            Open history
+                        </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem checked>
+                        Compact rows
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuItem destructive>Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }

@@ -162,7 +162,30 @@ textPairs.push(
     },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' },
-    { use: 'Tooltip text', text: 'tooltip-foreground', surface: 'tooltip' }
+    { use: 'Tooltip text', text: 'tooltip-foreground', surface: 'tooltip' },
+    { use: 'Overlay title and body', text: 'foreground', surface: 'popover' },
+    {
+        use: 'DropdownMenu destructive item',
+        text: 'destructive-strong',
+        surface: 'popover',
+    },
+    {
+        use: 'DropdownMenu highlighted destructive item',
+        text: 'destructive-strong',
+        surface: 'destructive-subtle',
+    },
+    // Muted shortcut/icon text on the accent highlight is 2.9:1 in il, so
+    // highlighted rows switch it to accent-foreground.
+    {
+        use: 'DropdownMenu highlighted row shortcut and icon',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'DropdownMenu shortcut',
+        text: 'muted-foreground',
+        surface: 'popover',
+    }
 );
 
 describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {

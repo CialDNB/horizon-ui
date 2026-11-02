@@ -122,5 +122,11 @@ for (const build of ['layered', 'unlayered'] as const)
             await page.getByTestId('hz-drawer-trigger').click();
             visibleBorder(await style(page, byTestId('hz-drawer')));
             await page.keyboard.press('Escape');
+            await page.getByTestId('hz-menu-trigger').focus();
+            await page.keyboard.press('Enter');
+            visibleBorder(await style(page, byTestId('hz-menu')));
+            // The highlighted row (no fill in forced colors) is outlined.
+            visibleOutline(await style(page, byTestId('hz-menu-item')));
+            await page.keyboard.press('Escape');
         });
     });
