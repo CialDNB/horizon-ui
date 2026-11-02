@@ -519,6 +519,20 @@ describe('keyframes are namespaced (no global animation names)', () => {
             for (const n of names) expect(n).toMatch(/^hz-/);
         });
 
+        it(`${name} build: every class selector is hz-prefixed (no .alert, .progress, .spinner-border collisions with Bootstrap)`, () => {
+            const classes = new Set(
+                styleRulesOf(parse(source))
+                    .flatMap((r) =>
+                        [...r.prelude.matchAll(/\.((?:\\.|[\w-])+)/g)].map(
+                            (m) => m[1] ?? ''
+                        )
+                    )
+                    .filter(Boolean)
+            );
+            expect(classes.size).toBeGreaterThan(50);
+            for (const c of classes) expect(c).toMatch(/^(hz-root$|hz\\:)/);
+        });
+
         it(`${name} build: animate-spin references hz-spin`, () => {
             const rule = styleRulesOf(parse(source)).find(
                 (r) => r.prelude === '.hz\\:animate-spin'
