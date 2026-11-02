@@ -89,6 +89,7 @@ describe('architecture', () => {
                 "Button",
                 "Checkbox",
                 "Chip",
+                "ConfirmationDialog",
                 "Dialog",
                 "DialogBody",
                 "DialogClose",

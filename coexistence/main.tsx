@@ -46,6 +46,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    ConfirmationDialog,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
@@ -288,6 +289,32 @@ function MuiFromHorizon() {
     );
 }
 
+/** Opens a ConfirmationDialog (destructive). */
+function ConfirmDelete({ scope }: { scope: string }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <Button
+                variant="destructive"
+                data-testid={`${scope}-confirm-trigger`}
+                onClick={() => setOpen(true)}
+            >
+                Delete
+            </Button>
+            <ConfirmationDialog
+                open={open}
+                onOpenChange={setOpen}
+                variant="destructive"
+                title="Delete this report?"
+                description="It cannot be undone."
+                confirmLabel="Delete report"
+                onConfirm={() => undefined}
+                data-testid={`${scope}-confirm`}
+            />
+        </>
+    );
+}
+
 function Overlays({ scope }: { scope: string }) {
     return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -361,6 +388,7 @@ function Overlays({ scope }: { scope: string }) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <ConfirmDelete scope={scope} />
         </div>
     );
 }

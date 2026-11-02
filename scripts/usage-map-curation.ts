@@ -236,8 +236,9 @@ export const curation: Record<string, Curation> = {
     },
     ConfirmationDialog: {
         batch: 2,
-        horizon: 'ConfirmDialog',
-        note: 'Not in the plan. preset composition of Dialog.',
+        horizon: 'ConfirmationDialog',
+        note: 'Done in Task 11b: preset of Dialog (`role="alertdialog"`). `onSubmit` -> `onConfirm`; `onClose` -> `onOpenChange(false)` + `onCancel`; `title` kept (required); `children` kept (body) + new `description`; `approveText`/`cancelText` -> `confirmLabel`/`cancelLabel` (defaults Confirm/Cancel, x-core save/cancel); `submitLoading` -> `loading` (also blocks cancel/Escape); `submitDisabled` -> `confirmDisabled`; `manualClose` -> `closeOnConfirm={false}`; `color="error"` -> `variant="destructive"`; `submitColor`/`cancelColor`/`submitVariant`/`cancelVariant`/`cancelLoading`/`cancelDisabled` dropped. Order changed: Cancel then Confirm (x-core: approve first); initial focus on Cancel; no close icon. Dropped props warn in development.',
+        status: 'done',
     },
     DrawerV3: {
         batch: 2,

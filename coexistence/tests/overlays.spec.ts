@@ -297,4 +297,26 @@ for (const build of ['layered', 'unlayered'] as const)
                 page.getByTestId('mui-overlays-content')
             ).toBeVisible();
         });
+
+        test('ConfirmationDialog: alertdialog above the dialog, focus on Cancel, Escape cancels only it', async ({
+            page,
+        }) => {
+            await openMuiOverlays(page, build);
+            const trigger = page.getByTestId('mui-confirm-trigger');
+            await trigger.click();
+            const dialog = page.getByRole('alertdialog', {
+                name: 'Delete this report?',
+            });
+            await expect(dialog).toBeVisible();
+            await expect(
+                dialog.getByRole('button', { name: 'Cancel' })
+            ).toBeFocused();
+            expect(await onTop(page, dialog)).toBe(true);
+            await page.keyboard.press('Escape');
+            await expect(dialog).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
+            await expect(trigger).toBeFocused();
+        });
     });
