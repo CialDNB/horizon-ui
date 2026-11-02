@@ -88,13 +88,13 @@ export const curation: Record<string, Curation> = {
     AvatarGroup: {
         batch: 1,
         horizon: 'AvatarGroup',
-        note: 'Done in Task 10c, see Avatar section below. Named export `AvatarGroup` (not `Avatar.Group`, consistent with `BadgeAnchor`). `avatars` data array becomes `<Avatar>` children; `max` keeps MUI semantics (all shown when they fit; x-core always showed max-1 plus `+N` and clamped max to 3..4); new `total`, `overflowLabel`, `shape`; `+N` named "N more"; per-avatar and surplus tooltips dropped until Tooltip (Task 11); single-avatar caption mode dropped (compose Avatar + text).',
+        note: 'Done in Task 10c, see Avatar section below. Named export `AvatarGroup` (not `Avatar.Group`, consistent with `BadgeAnchor`). `avatars` data array becomes `<Avatar>` children; `max` keeps MUI semantics (all shown when they fit; x-core always showed max-1 plus `+N` and clamped max to 3..4); new `total`, `overflowLabel`, `shape`; `+N` named "N more"; per-avatar and surplus tooltips: compose `<Tooltip content="Dana Levi, Omer Katz">` around the group or an Avatar (Tooltip done in Task 11b; not built in); single-avatar caption mode dropped (compose Avatar + text).',
         status: 'done',
     },
     IconButton: {
         batch: 1,
         horizon: 'IconButton',
-        note: 'Done in Task 10c, see IconButton section below. `aria-label` (or `aria-labelledby`) required in the type; `color` becomes `variant` (default -> primary, primary -> tertiary, secondary -> secondary, error -> destructive, inherit -> ghost; success/info/warning -> secondary, known visual regression); `size` small/medium/large becomes sm/md/lg; `tooltipInfo`/`tooltipProps` dropped until Tooltip (Task 11); new `loading`, `asChild`; `sx`, `edge`, `disableRipple` dropped.',
+        note: 'Done in Task 10c, see IconButton section below. `aria-label` (or `aria-labelledby`) required in the type; `color` becomes `variant` (default -> primary, primary -> tertiary, secondary -> secondary, error -> destructive, inherit -> ghost; success/info/warning -> secondary, known visual regression); `size` small/medium/large becomes sm/md/lg; `tooltipInfo` -> `tooltip` (shows the aria-label as a Tooltip, Task 11b), `tooltipProps` -> wrap in `Tooltip`; new `loading`, `asChild`; `sx`, `edge`, `disableRipple` dropped.',
         status: 'done',
     },
     ActionIconButton: {

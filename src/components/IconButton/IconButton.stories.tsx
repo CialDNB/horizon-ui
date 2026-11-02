@@ -5,7 +5,7 @@ import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { CSSProperties, ReactNode } from 'react';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { HorizonProvider } from '../../provider';
 import { ResponsiveSpec } from '../../stories/ResponsiveSpec';
 import type { Brand } from '../../tokens';
@@ -174,6 +174,39 @@ export const ConfirmCancel: Story = {
 };
 
 /** Rendered as a link with `asChild`. */
+/**
+ * `tooltip`: the aria-label as a Tooltip on hover and keyboard focus (x-core
+ * `tooltipInfo`). Not shown for touch: the name must stay obvious from the
+ * icon and context.
+ */
+export const WithTooltip: Story = {
+    render: () => (
+        <div style={{ display: 'flex', gap: 8, paddingBlock: 48 }}>
+            <IconButton variant="ghost" aria-label="Edit company" tooltip>
+                <PencilSimpleIcon />
+            </IconButton>
+            <IconButton variant="ghost" aria-label="Download report" tooltip>
+                <DownloadSimpleIcon />
+            </IconButton>
+        </div>
+    ),
+    play: async ({ canvasElement }) => {
+        await userEvent.tab();
+        const button = within(canvasElement).getByRole('button', {
+            name: 'Edit company',
+        });
+        await expect(button).toHaveFocus();
+        await expect(
+            await within(document.body).findByRole('tooltip')
+        ).toHaveTextContent('Edit company');
+        await expect(button).not.toHaveAttribute('aria-describedby');
+        await userEvent.keyboard('{Escape}');
+        await waitFor(() =>
+            expect(document.querySelector('[data-tooltip-content]')).toBeNull()
+        );
+    },
+};
+
 export const AsLink: Story = {
     render: () => (
         <Section title="asChild">

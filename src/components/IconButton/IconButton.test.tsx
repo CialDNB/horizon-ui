@@ -325,3 +325,36 @@ describe('IconButton', () => {
         });
     });
 });
+
+describe('IconButton tooltip', () => {
+    it('tooltip shows the aria-label on focus without a duplicate description', async () => {
+        const user = userEvent.setup();
+        render(
+            <HorizonProvider>
+                <IconButton aria-label="Edit company" tooltip>
+                    <svg />
+                </IconButton>
+            </HorizonProvider>
+        );
+        await user.tab();
+        expect(await screen.findByRole('tooltip')).toHaveTextContent(
+            'Edit company'
+        );
+        const button = screen.getByRole('button', { name: 'Edit company' });
+        expect(button).not.toHaveAttribute('aria-describedby');
+    });
+
+    it('no tooltip by default', async () => {
+        const user = userEvent.setup();
+        render(
+            <HorizonProvider>
+                <IconButton aria-label="Edit">
+                    <svg />
+                </IconButton>
+            </HorizonProvider>
+        );
+        await user.tab();
+        await new Promise((r) => setTimeout(r, 20));
+        expect(screen.queryByRole('tooltip')).toBeNull();
+    });
+});

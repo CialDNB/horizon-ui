@@ -10,12 +10,14 @@ import {
     forwardRef,
     type ButtonHTMLAttributes,
     type MouseEvent,
+    type ReactElement,
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
 import { anchorGuard, blockedClick, buttonTones } from '../../primitives';
 import { Spinner } from '../Spinner';
+import { Tooltip } from '../Tooltip';
 import type { DnbBase } from '../../types/DnbBase';
 
 const iconButtonStyles = cva(
@@ -82,8 +84,8 @@ const spinnerSize = { sm: 'sm', md: 'md', lg: 'lg' } as const;
 /** x-core IconButton / MUI props that are dropped (with a dev warning). */
 const legacyIconButtonProps = {
     color: 'use variant: default -> "primary", primary -> "tertiary", error -> "destructive"',
-    tooltipInfo: 'wrap in Tooltip (planned); the name is aria-label',
-    tooltipProps: 'wrap in Tooltip (planned)',
+    tooltipInfo: 'use tooltip (shows the aria-label) or wrap in Tooltip',
+    tooltipProps: 'wrap in Tooltip',
     sx: 'use className',
     edge: 'use className for negative margins',
     disableRipple: 'IconButton has no ripple',
@@ -126,6 +128,14 @@ export type IconButtonProps = Omit<
          * the single child element (for example a router link) wrapping it.
          */
         children: ReactNode;
+        /**
+         * Shows the `aria-label` as a Tooltip on hover and keyboard focus
+         * (x-core `tooltipInfo`), without announcing it twice. Not shown for
+         * touch or on a disabled button. For other text wrap the button in
+         * a {@link Tooltip} yourself.
+         * @default false
+         */
+        tooltip?: boolean;
         /**
          * Visual style, as {@link Button}. `primary` solid (x-core
          * `color="default"`), `secondary` outlined, `tertiary` primary icon
@@ -176,6 +186,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
             disabled = false,
             onClick,
             children,
+            tooltip = false,
             ...props
         },
         ref
@@ -222,8 +233,18 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
             onClick: handleClick,
         };
 
+        const label = rest['aria-label'];
+        const withTooltip = (button: ReactElement) =>
+            tooltip && label ? (
+                <Tooltip content={label} labelOnly>
+                    {button}
+                </Tooltip>
+            ) : (
+                button
+            );
+
         if (asChild)
-            return (
+            return withTooltip(
                 <Slot
                     {...shared}
                     {...(disabled && { 'aria-disabled': true, tabIndex: -1 })}
@@ -232,7 +253,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
                 </Slot>
             );
 
-        return (
+        return withTooltip(
             <button type={type ?? 'button'} disabled={disabled} {...shared}>
                 {loading ? (
                     <Spinner

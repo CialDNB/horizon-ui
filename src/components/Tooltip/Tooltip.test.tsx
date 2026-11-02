@@ -179,6 +179,26 @@ describe('Tooltip', () => {
     });
 });
 
+describe('Tooltip labelOnly', () => {
+    it('shows the name without describing the trigger with it again', async () => {
+        const user = userEvent.setup();
+        render(
+            <HorizonProvider>
+                <Tooltip content="Edit" labelOnly>
+                    <button type="button" aria-label="Edit">
+                        E
+                    </button>
+                </Tooltip>
+            </HorizonProvider>
+        );
+        await user.tab();
+        await screen.findByRole('tooltip');
+        expect(
+            screen.getByRole('button', { name: 'Edit' })
+        ).not.toHaveAttribute('aria-describedby');
+    });
+});
+
 describe('physicalPlacement', () => {
     it('maps logical sides and alignments per direction', () => {
         expect(physicalPlacement('end', 'center', 'ltr').side).toBe('right');

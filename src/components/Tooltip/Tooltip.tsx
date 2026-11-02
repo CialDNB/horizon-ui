@@ -3,6 +3,7 @@
  * one component with a `content` prop (x-core's `title`). Replaces x-core
  * `TooltipV2` (MUI Tooltip, x-core 2.2.30); `Tooltip` (v1) is superseded.
  */
+import { Slot } from '@radix-ui/react-slot';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import {
     createContext,
@@ -10,6 +11,7 @@ import {
     useContext,
     useRef,
     type ComponentPropsWithoutRef,
+    type HTMLAttributes,
     type ReactElement,
     type ReactNode,
 } from 'react';
@@ -65,6 +67,27 @@ export function TooltipProvider({
     );
 }
 TooltipProvider.displayName = 'TooltipProvider';
+
+/**
+ * Passes the trigger props Radix adds on to the child, minus the
+ * `aria-describedby` that points at the tooltip (`labelOnly`): the child's
+ * own description, if any, is kept by Slot.
+ */
+const WithoutDescription = forwardRef<
+    HTMLElement,
+    Omit<HTMLAttributes<HTMLElement>, 'children'> & { children: ReactElement }
+>(function WithoutDescription({ children, ...props }, ref) {
+    // Only the tooltip's id arrives here (Radix adds it); the child's own
+    // aria-describedby is merged by the inner Slot.
+    const forwarded = Object.fromEntries(
+        Object.entries(props).filter(([key]) => key !== 'aria-describedby')
+    );
+    return (
+        <Slot {...forwarded} ref={ref}>
+            {children}
+        </Slot>
+    );
+});
 
 const sides: readonly LogicalSide[] = ['top', 'bottom', 'start', 'end'];
 const aligns: readonly LogicalAlign[] = ['start', 'center', 'end'];
@@ -122,6 +145,12 @@ export type TooltipProps = Omit<
         showArrow?: boolean;
         /** Never opens (the trigger renders as is). @default false */
         disabled?: boolean;
+        /**
+         * The tooltip only shows the trigger's accessible name (an icon
+         * button's `aria-label`): it is not also linked as a description, so
+         * screen readers do not read the name twice. @default false
+         */
+        labelOnly?: boolean;
         /** Controlled open state. */
         open?: boolean;
         /** Initial open state. */
@@ -157,6 +186,7 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
             delayDuration,
             showArrow = false,
             disabled = false,
+            labelOnly = false,
             open,
             defaultOpen,
             onOpenChange,
@@ -193,7 +223,11 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
                 {...(onOpenChange && { onOpenChange })}
             >
                 <TooltipPrimitive.Trigger asChild ref={anchorRef}>
-                    {children}
+                    {labelOnly ? (
+                        <WithoutDescription>{children}</WithoutDescription>
+                    ) : (
+                        children
+                    )}
                 </TooltipPrimitive.Trigger>
                 {container && (
                     <TooltipPrimitive.Portal container={container}>
