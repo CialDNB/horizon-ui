@@ -244,7 +244,8 @@ export const curation: Record<string, Curation> = {
     Popover: {
         batch: 2,
         horizon: 'Popover',
-        note: 'Planned: Radix Popover; portal inside `.hz-root`.',
+        note: 'Done in Task 11b (Radix Popover, compound). `<PopoverV2 open anchorEl onClose title icon footer hideCloseButton>` becomes `<Popover open onOpenChange><PopoverTrigger asChild>{anchor}</PopoverTrigger><PopoverContent title icon footer hideCloseButton>`; `anchorEl` -> `PopoverTrigger`/`PopoverAnchor` (no imperative element); `anchorOrigin`/`transformOrigin` -> logical `side`/`align` (default bottom/end = x-core default); `slotProps.paper` width -> `width` (default 320px, x-core 318); non-modal by default (`modal` for the MUI focus trap); new `closeLabel`, `showArrow`, `PopoverClose`. At mobile capped to the viewport minus 16px. Dropped props warn in development.',
+        status: 'done',
     },
     Popper: {
         batch: 2,

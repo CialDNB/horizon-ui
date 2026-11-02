@@ -79,7 +79,10 @@ const onTop = (page: Page, el: Locator) =>
 
 const openTooltip = async (page: Page, path: string) => {
     await page.goto(path);
-    await page.getByTestId('hz-tooltip-trigger').focus();
+    // Radix closes a tooltip when the page scrolls: scroll first.
+    const trigger = page.getByTestId('hz-tooltip-trigger');
+    await trigger.scrollIntoViewIfNeeded();
+    await trigger.focus();
     const content = page.getByTestId('hz-tooltip');
     await expect(content).toBeVisible();
     return read(content, SURFACE_PROPS);
@@ -101,6 +104,42 @@ test.describe('Tooltip against Bootstrap 4.4.1 and customer360 host CSS', () => 
                     expect(without['zIndex']).toBe('1500');
                     expect(without['fontSize']).toBe('12px');
                 });
+});
+
+/* ---------------------------------- Popover --------------------------------- */
+
+const openPopover = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-popover-trigger').click();
+    const content = page.getByTestId('hz-popover');
+    await expect(content).toBeVisible();
+    await content.evaluate((el) =>
+        Promise.all(el.getAnimations().map((a) => a.finished))
+    );
+    return {
+        content: await read(content, SURFACE_PROPS),
+        title: await read(content.getByText('Overlay popover'), SURFACE_PROPS),
+        close: await read(
+            content.getByRole('button', { name: 'Close' }),
+            SURFACE_PROPS
+        ),
+    };
+};
+
+test.describe('Popover against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openPopover(page, url('unlayered'));
+                const withHost = await openPopover(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.content['zIndex']).toBe('1450');
+            });
 });
 
 /* ------------------------- Inside a real MUI Dialog -------------------------- */
@@ -142,5 +181,47 @@ for (const build of ['layered', 'unlayered'] as const)
             // Pointer: hovering opens it too.
             await trigger.hover();
             await expect(content).toBeVisible();
+        });
+
+        test('Popover: keyboard opens it above the dialog, focus inside, Escape and outside clicks close only the popover', async ({
+            page,
+        }) => {
+            await openMuiOverlays(page, build);
+            const trigger = page.getByTestId('mui-popover-trigger');
+            await trigger.focus();
+            await page.keyboard.press('Enter');
+            const popover = page.getByRole('dialog', {
+                name: 'Overlay popover',
+            });
+            await expect(popover).toBeVisible();
+            expect((await read(popover, []))['zIndex']).toBe('1450');
+            expect(await onTop(page, popover)).toBe(true);
+            await expect(page.getByTestId('mui-popover-input')).toBeVisible();
+            expect(
+                await popover.evaluate((el) =>
+                    el.contains(document.activeElement)
+                )
+            ).toBe(true);
+            // Typing works (MUI's focus trap accepts the inner provider).
+            await page.getByTestId('mui-popover-input').fill('acme');
+            await expect(page.getByTestId('mui-popover-input')).toHaveValue(
+                'acme'
+            );
+            await page.keyboard.press('Escape');
+            await expect(popover).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
+            await expect(trigger).toBeFocused();
+            // Pointer: open, then click elsewhere inside the MUI dialog.
+            await trigger.click();
+            await expect(popover).toBeVisible();
+            await page.getByTestId('mui-overlays-content').click({
+                position: { x: 4, y: 4 },
+            });
+            await expect(popover).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
         });
     });

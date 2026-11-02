@@ -107,8 +107,13 @@ for (const build of ['layered', 'unlayered'] as const)
         });
 
         test('overlays keep a visible boundary', async ({ page }) => {
+            await page
+                .getByTestId('hz-tooltip-trigger')
+                .scrollIntoViewIfNeeded();
             await page.getByTestId('hz-tooltip-trigger').focus();
             await expect(page.getByTestId('hz-tooltip')).toBeVisible();
             visibleBorder(await style(page, byTestId('hz-tooltip')));
+            await page.getByTestId('hz-popover-trigger').click();
+            visibleBorder(await style(page, byTestId('hz-popover')));
         });
     });

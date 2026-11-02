@@ -36,9 +36,10 @@ export type LogicalSide = 'top' | 'bottom' | 'start' | 'end';
 export type LogicalAlign = 'start' | 'center' | 'end';
 
 /**
- * Radix positions with physical sides and alignments; this maps the logical
- * ones for the text direction (`end` is `right` in ltr, `left` in rtl; a
- * `start` alignment on top/bottom is the right edge in rtl).
+ * Radix positions with physical sides; this maps the logical ones for the
+ * text direction (`end` is `right` in ltr, `left` in rtl). Alignment passes
+ * through: floating-ui already reads the content's computed direction and
+ * puts `start` at the inline start (the right edge in rtl).
  */
 export function physicalPlacement(
     side: LogicalSide,
@@ -48,16 +49,10 @@ export function physicalPlacement(
     side: 'top' | 'bottom' | 'left' | 'right';
     align: LogicalAlign;
 } {
-    const rtl = dir === 'rtl';
-    if (side === 'start' || side === 'end')
-        return {
-            side: (side === 'end') !== rtl ? 'right' : 'left',
-            align,
-        };
-    const flip = rtl && align !== 'center';
+    if (side === 'top' || side === 'bottom') return { side, align };
     return {
-        side,
-        align: flip ? (align === 'start' ? 'end' : 'start') : align,
+        side: (side === 'end') !== (dir === 'rtl') ? 'right' : 'left',
+        align,
     };
 }
 

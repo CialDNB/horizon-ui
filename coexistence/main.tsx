@@ -33,6 +33,10 @@ import {
     Textarea,
     Tooltip,
     Typography,
+    Popover,
+    PopoverClose,
+    PopoverContent,
+    PopoverTrigger,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
@@ -261,6 +265,30 @@ function Overlays({ scope }: { scope: string }) {
                     Tooltip
                 </Button>
             </Tooltip>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="secondary"
+                        data-testid={`${scope}-popover-trigger`}
+                    >
+                        Popover
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                    title="Overlay popover"
+                    data-testid={`${scope}-popover`}
+                    footer={
+                        <PopoverClose asChild>
+                            <Button size="sm">Apply</Button>
+                        </PopoverClose>
+                    }
+                >
+                    <Input
+                        aria-label="Popover field"
+                        data-testid={`${scope}-popover-input`}
+                    />
+                </PopoverContent>
+            </Popover>
         </div>
     );
 }

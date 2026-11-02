@@ -126,3 +126,17 @@ export type {
 } from './Typography';
 export { Tooltip, TooltipProvider } from './Tooltip';
 export type { TooltipProps, TooltipProviderProps } from './Tooltip';
+export {
+    Popover,
+    PopoverAnchor,
+    PopoverClose,
+    PopoverContent,
+    PopoverTrigger,
+} from './Popover';
+export type {
+    PopoverAnchorProps,
+    PopoverCloseProps,
+    PopoverContentProps,
+    PopoverProps,
+    PopoverTriggerProps,
+} from './Popover';

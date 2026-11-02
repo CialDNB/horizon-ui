@@ -189,9 +189,10 @@ describe('physicalPlacement', () => {
             side: 'bottom',
             align: 'start',
         });
+        // floating-ui mirrors alignment itself under rtl: passed through.
         expect(physicalPlacement('bottom', 'start', 'rtl')).toEqual({
             side: 'bottom',
-            align: 'end',
+            align: 'start',
         });
         expect(physicalPlacement('top', 'center', 'rtl').align).toBe('center');
     });
