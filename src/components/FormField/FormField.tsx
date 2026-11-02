@@ -11,13 +11,14 @@ import {
     forwardRef,
     useId,
     useMemo,
+    useState,
     type HTMLAttributes,
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps } from '../../lib/options';
 import { FormFieldContext, type FormFieldContextValue } from '../../primitives';
-import { Label } from '../Label';
+import { Label, labelVariants } from '../Label';
 import type { DnbBase } from '../../types/DnbBase';
 
 const legacyFormFieldProps = {
@@ -98,7 +99,11 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
     ) {
         const rest = omitLegacyProps('FormField', props, legacyFormFieldProps);
         const base = useId();
-        const id = idProp ?? `${base}-control`;
+        // A control's own id (published through context) wins, so the label
+        // follows it; then the FormField `id`; then a generated one.
+        const [controlId, setControlId] = useState<string>();
+        const [ownLabel, setOwnLabel] = useState(false);
+        const id = controlId ?? idProp ?? `${base}-control`;
         const labelId = `${base}-label`;
         const descriptionId = hasContent(description)
             ? `${base}-description`
@@ -116,6 +121,8 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
                 invalid: isInvalid,
                 required,
                 disabled,
+                registerId: setControlId,
+                registerOwnLabel: setOwnLabel,
             }),
             [id, labelId, describedBy, isInvalid, required, disabled]
         );
@@ -131,15 +138,38 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
                 data-invalid={isInvalid || undefined}
                 data-disabled={disabled || undefined}
             >
-                <Label
-                    id={labelId}
-                    htmlFor={id}
-                    required={required}
-                    disabled={disabled}
-                    className="hz:self-start"
-                >
-                    {label}
-                </Label>
+                {ownLabel ? (
+                    // The control names itself (Checkbox/Switch `label`):
+                    // a caption, not a second <label> for it.
+                    <div
+                        id={labelId}
+                        className={cn(
+                            labelVariants({ disabled }),
+                            'hz:self-start'
+                        )}
+                        data-required={required || undefined}
+                    >
+                        {label}
+                        {required && (
+                            <span
+                                aria-hidden="true"
+                                className="hz:text-destructive-strong"
+                            >
+                                *
+                            </span>
+                        )}
+                    </div>
+                ) : (
+                    <Label
+                        id={labelId}
+                        htmlFor={id}
+                        required={required}
+                        disabled={disabled}
+                        className="hz:self-start"
+                    >
+                        {label}
+                    </Label>
+                )}
                 <FormFieldContext.Provider value={context}>
                     {children}
                 </FormFieldContext.Provider>

@@ -158,6 +158,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
             invalid: invalidProp,
             required,
             disabled: disabledProp,
+            ownLabel: label !== undefined,
         });
         const generatedId = useId();
         const id = control.id ?? generatedId;

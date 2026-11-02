@@ -16,6 +16,8 @@ const field: FormFieldContextValue = {
     invalid: true,
     required: true,
     disabled: false,
+    registerId: () => undefined,
+    registerOwnLabel: () => undefined,
 };
 const inField = ({ children }: { children: ReactNode }) => (
     <FormFieldContext.Provider value={field}>

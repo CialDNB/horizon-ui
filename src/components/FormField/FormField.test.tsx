@@ -4,6 +4,8 @@ import { createRef, useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetWarnings } from '../../lib/options';
 import { Input } from '../Input';
+import { Checkbox } from '../Checkbox';
+import { Switch } from '../Switch';
 import { Textarea } from '../Textarea';
 import { FormField } from '.';
 
@@ -95,6 +97,62 @@ describe('FormField', () => {
             'data-disabled',
             'true'
         );
+    });
+
+    it('labels the control when the control brings its own id (x-core call sites pass id)', () => {
+        render(
+            <FormField label="Email" description="Work">
+                <Input id="email" />
+            </FormField>
+        );
+        const input = screen.getByLabelText('Email');
+        expect(input).toHaveAttribute('id', 'email');
+        expect(input).toHaveAccessibleDescription('Work');
+    });
+
+    it('labels the control by the FormField id when the control has none', () => {
+        render(
+            <FormField label="Phone" id="phone">
+                <Input />
+            </FormField>
+        );
+        expect(screen.getByLabelText('Phone')).toHaveAttribute('id', 'phone');
+    });
+
+    it('a control id wins over the FormField id and the label follows it', () => {
+        render(
+            <FormField label="Fax" id="field-id">
+                <Input id="own-id" />
+            </FormField>
+        );
+        expect(screen.getByLabelText('Fax')).toHaveAttribute('id', 'own-id');
+    });
+
+    it('a Checkbox/Switch with its own label is named once: the FormField label becomes a caption', () => {
+        render(
+            <>
+                <FormField label="Terms" required>
+                    <Checkbox label="I accept the terms" />
+                </FormField>
+                <FormField label="Alerts" description="Email only">
+                    <Switch label="Send alerts" />
+                </FormField>
+            </>
+        );
+        expect(
+            screen.getByRole('checkbox', { name: 'I accept the terms' })
+        ).toBeVisible();
+        expect(screen.getByText('Terms').tagName).not.toBe('LABEL');
+        expect(
+            screen.getByRole('switch', { name: 'Send alerts' })
+        ).toHaveAccessibleDescription('Email only');
+        // Without an own label the FormField label still names it.
+        render(
+            <FormField label="Bare">
+                <Checkbox />
+            </FormField>
+        );
+        expect(screen.getByRole('checkbox', { name: 'Bare' })).toBeVisible();
     });
 
     it('uses the given id for the control and keeps the control own describedby', () => {

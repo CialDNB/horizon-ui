@@ -88,8 +88,9 @@ describe('Checkbox', () => {
                 <Checkbox label="I accept the terms" />
             </FormField>
         );
+        // Named by its own label only; the FormField label is a caption.
         const box = screen.getByRole('checkbox', {
-            name: 'Terms I accept the terms',
+            name: 'I accept the terms',
         });
         expect(box).toHaveAttribute('aria-invalid', 'true');
         expect(box).toHaveAttribute('aria-required', 'true');

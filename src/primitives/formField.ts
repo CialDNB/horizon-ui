@@ -1,4 +1,7 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect } from 'react';
+
+const useIsomorphicLayoutEffect =
+    typeof document === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * What a {@link FormField} tells the control inside it. Internal: the public
@@ -15,6 +18,17 @@ export type FormFieldContextValue = {
     invalid: boolean;
     required: boolean;
     disabled: boolean;
+    /**
+     * A control with its own `id` publishes it here so the label's
+     * `htmlFor` follows the real id (`undefined` on unmount).
+     */
+    registerId: (id: string | undefined) => void;
+    /**
+     * A choice control with its own visible label (Checkbox/Switch
+     * `label`) says so here: the FormField label then becomes a caption
+     * instead of a second `<label>` (the control would get two names).
+     */
+    registerOwnLabel: (ownLabel: boolean) => void;
 };
 
 export const FormFieldContext = createContext<FormFieldContextValue | null>(
@@ -33,6 +47,8 @@ export type FieldControlInput = {
     invalid?: boolean | undefined;
     required?: boolean | undefined;
     disabled?: boolean | undefined;
+    /** The control renders its own visible label. */
+    ownLabel?: boolean | undefined;
 };
 
 /** Resolved wiring for a control element. */
@@ -47,10 +63,24 @@ export type FieldControl = {
 /**
  * Merges a control's own props with its FormField: the control's `id`,
  * `invalid`, `required` and `disabled` win when set; `aria-describedby`
- * concatenates (the control's ids first).
+ * concatenates (the control's ids first). A control's own `id` is
+ * published to the FormField so its label follows it.
  */
 export function useFieldControl(props: FieldControlInput): FieldControl {
     const field = useFormField();
+    const registerId = field?.registerId;
+    const registerOwnLabel = field?.registerOwnLabel;
+    const ownLabel = props.ownLabel ?? false;
+    useIsomorphicLayoutEffect(() => {
+        if (!registerId || props.id === undefined) return;
+        registerId(props.id);
+        return () => registerId(undefined);
+    }, [registerId, props.id]);
+    useIsomorphicLayoutEffect(() => {
+        if (!registerOwnLabel || !ownLabel) return;
+        registerOwnLabel(true);
+        return () => registerOwnLabel(false);
+    }, [registerOwnLabel, ownLabel]);
     const describedBy =
         [props['aria-describedby'], field?.describedBy]
             .filter(Boolean)
