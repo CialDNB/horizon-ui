@@ -271,5 +271,22 @@ describe('Link', () => {
                 expect(warn.mock.calls[0]?.[0]).toContain(`${prop} "${value}"`);
             }
         );
+
+        it('drops MUI/x-core-only props (color, underline, sx) instead of leaking them', () => {
+            const warn = vi
+                .spyOn(console, 'warn')
+                .mockImplementation(() => undefined);
+            const props = {
+                href: '/a',
+                color: 'inherit',
+                underline: 'hover',
+                sx: { p: 1 },
+            };
+            render(<Link {...props}>a</Link>);
+            const link = screen.getByRole('link');
+            for (const attr of ['color', 'underline', 'sx'])
+                expect(link).not.toHaveAttribute(attr);
+            expect(warn).toHaveBeenCalledTimes(3);
+        });
     });
 });

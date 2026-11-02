@@ -15,8 +15,8 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { resolveOption } from '../../lib/options';
-import { anchorGuard } from '../../primitives';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
+import { anchorGuard, blockedClick } from '../../primitives';
 import type { DnbBase } from '../../types/DnbBase';
 
 const linkStyles = cva(
@@ -131,6 +131,16 @@ export type LinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'color'> &
         children?: ReactNode;
     };
 
+/** MUI / x-core Link props that are dropped (with a dev warning). */
+const legacyLinkProps = {
+    color: 'use variant="subtle" to inherit the colour',
+    underline:
+        'use variant: "inline" (always) or "standalone"/"subtle" (hover)',
+    sx: 'use className',
+    component: 'use asChild around the router Link',
+    TypographyClasses: 'not supported',
+} as const;
+
 /** Merges `extra` tokens into a `rel` value without duplicates. */
 function mergeRel(rel: string | undefined, extra: readonly string[]): string {
     return [...new Set([...(rel?.split(/\s+/) ?? []), ...extra])]
@@ -160,10 +170,11 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
         target,
         onClick,
         children,
-        ...rest
+        ...props
     },
     ref
 ) {
+    const rest = omitLegacyProps('Link', props, legacyLinkProps);
     // Untyped callers may pass x-core or MUI values (`size="small"`).
     const variant = resolveOption(
         'Link',
@@ -177,13 +188,10 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
         disabledProp ||
         rest['aria-disabled'] === true ||
         rest['aria-disabled'] === 'true';
-    const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-        if (disabled) {
-            event.preventDefault();
-            return;
-        }
-        onClick?.(event);
-    };
+    const handleClick = blockedClick<MouseEvent<HTMLAnchorElement>>(
+        disabled,
+        onClick
+    );
     // The space separates the text from the icon in running text (the
     // standalone flex row uses its gap) and the hint in the accessible name.
     const external = isExternal && (
