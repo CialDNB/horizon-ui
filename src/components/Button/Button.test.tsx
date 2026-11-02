@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import { Button, buttonVariants } from '.';
 
 describe('Button', () => {
@@ -151,5 +152,83 @@ describe('Button', () => {
         expect(button).toHaveAttribute('type', 'submit');
         expect(button).toHaveAttribute('data-variant', 'primary');
         expect(button).toHaveAttribute('data-size', 'md');
+    });
+
+    it('renders startIcon before and endIcon after the label, hidden from AT', () => {
+        render(
+            <Button
+                startIcon={<svg data-testid="start" />}
+                endIcon={<svg data-testid="end" />}
+            >
+                Export
+            </Button>
+        );
+        const button = screen.getByRole('button', { name: 'Export' });
+        const start = screen.getByTestId('start');
+        const end = screen.getByTestId('end');
+        expect(start.parentElement).toHaveAttribute('aria-hidden', 'true');
+        expect(end.parentElement).toHaveAttribute('aria-hidden', 'true');
+        const text = button.textContent ?? '';
+        expect(text).toBe('Export');
+        // DOM order: start icon, label, end icon.
+        expect(
+            start.compareDocumentPosition(end) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+        expect(button).not.toHaveAttribute('starticon');
+    });
+
+    describe('untyped callers (x-core ButtonV2 values)', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it.each([
+            [
+                'variant',
+                'contained',
+                'data-variant',
+                'primary',
+                'hz:bg-primary',
+            ],
+            ['variant', 'text', 'data-variant', 'primary', 'hz:bg-primary'],
+            ['size', 'small', 'data-size', 'md', 'hz:px-5'],
+        ])(
+            '%s=%j falls back with its classes and warns once',
+            (prop, value, attr, expected, cls) => {
+                const warn = vi
+                    .spyOn(console, 'warn')
+                    .mockImplementation(() => undefined);
+                const props = { [prop]: value };
+                render(<Button {...props}>One</Button>);
+                render(<Button {...props}>Two</Button>);
+                const [button] = screen.getAllByRole('button');
+                expect(button).toHaveAttribute(attr, expected);
+                expect(button).toHaveClass(cls);
+                expect(warn).toHaveBeenCalledOnce();
+                expect(warn.mock.calls[0]?.[0]).toContain(`${prop} "${value}"`);
+            }
+        );
+
+        it('drops x-core-only props instead of leaking them to the DOM, warning once each', () => {
+            const warn = vi
+                .spyOn(console, 'warn')
+                .mockImplementation(() => undefined);
+            const props = {
+                color: 'error',
+                textColor: '#fff',
+                sx: { p: 1 },
+                disableElevation: true,
+                showTextUnderLine: true,
+            };
+            const error = vi.spyOn(console, 'error');
+            render(<Button {...props}>Save</Button>);
+            const button = screen.getByRole('button');
+            for (const attr of ['color', 'textcolor', 'sx'])
+                expect(button).not.toHaveAttribute(attr);
+            expect(warn).toHaveBeenCalledTimes(5);
+            expect(error).not.toHaveBeenCalled();
+        });
     });
 });

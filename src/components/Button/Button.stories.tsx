@@ -188,6 +188,27 @@ export const WithIcon: Story = {
     ),
 };
 
+/** x-core-style `startIcon` / `endIcon` props (decorative, hidden from AT). */
+export const StartEndIcon: Story = {
+    render: () => (
+        <Section title="startIcon / endIcon">
+            <Button startIcon={<PlusIcon />}>New report</Button>
+            <Button variant="secondary" endIcon={<DownloadIcon />}>
+                Export
+            </Button>
+        </Section>
+    ),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(
+            canvas.getByRole('button', { name: 'New report' })
+        ).toBeVisible();
+        await expect(
+            canvas.getByRole('button', { name: 'Export' })
+        ).toBeVisible();
+    },
+};
+
 /** Long labels wrap and stay inside a narrow container; long words break. */
 export const LongLabel: Story = {
     render: () => (

@@ -23,3 +23,11 @@ export const badSize: ButtonProps = { size: 'medium' };
 
 // @ts-expect-error exactOptionalPropertyTypes: pass nothing rather than undefined
 export const undefinedVariant: ButtonProps = { variant: undefined };
+
+export const icons: ButtonProps = { startIcon: null, endIcon: 'x' };
+
+// x-core `color` is now `variant` (it was forwarded to the DOM before).
+export const color: ButtonProps = {
+    // @ts-expect-error not a prop
+    color: 'error',
+};

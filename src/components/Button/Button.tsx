@@ -1,13 +1,22 @@
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { forwardRef, type ButtonHTMLAttributes, type MouseEvent } from 'react';
+import {
+    forwardRef,
+    type ButtonHTMLAttributes,
+    type MouseEvent,
+    type ReactNode,
+} from 'react';
 import { cn } from '../../lib/cn';
-import { anchorGuard } from '../../primitives';
+import { omitLegacyProps, resolveOption } from '../../lib/options';
+import { anchorGuard, blockedClick, buttonTones } from '../../primitives';
 import { Spinner } from '../Spinner';
 import type { DnbBase } from '../../types/DnbBase';
 
 /** Props for {@link Button}. */
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
+export type ButtonProps = Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    'color'
+> &
     DnbBase & {
         /**
          * Visual style. `primary` is the main action of a view (one per area),
@@ -42,6 +51,14 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
          * @default false
          */
         fullWidth?: boolean;
+        /**
+         * Decorative icon before the label (x-core `startIcon`), sized by the
+         * button and hidden from assistive technology. Not rendered with
+         * `asChild` (put it in the child).
+         */
+        startIcon?: ReactNode;
+        /** Decorative icon after the label (x-core `endIcon`). As `startIcon`. */
+        endIcon?: ReactNode;
     };
 
 const buttonStyles = cva(
@@ -64,11 +81,11 @@ const buttonStyles = cva(
     {
         variants: {
             variant: {
-                primary: `hz:bg-primary hz:text-primary-foreground hz:hover:bg-primary-hover hz:inactive:bg-muted ${anchorGuard('primary-foreground')}`,
-                secondary: `hz:border-primary hz:bg-transparent hz:text-primary hz:hover:bg-primary hz:inactive:border-input hz:inactive:bg-transparent ${anchorGuard('primary', { hover: 'primary-foreground' })}`,
+                primary: buttonTones.primary,
+                secondary: buttonTones.secondary,
                 tertiary: `hz:bg-transparent hz:text-primary ${anchorGuard('primary', { hoverUnderline: true })}`,
-                destructive: `hz:bg-destructive hz:text-destructive-foreground hz:hover:bg-destructive-hover hz:inactive:bg-muted ${anchorGuard('destructive-foreground')}`,
-                ghost: `hz:bg-transparent hz:text-foreground hz:hover:bg-accent hz:inactive:bg-transparent ${anchorGuard('foreground', { hover: 'accent-foreground' })}`,
+                destructive: buttonTones.destructive,
+                ghost: buttonTones.ghost,
                 // No inline padding, so min-w-11 keeps a 44px target for short labels.
                 link: `hz:min-w-11 hz:bg-transparent hz:text-primary hz:underline hz:hover:decoration-2 ${anchorGuard('primary', { underline: true })}`,
             },
@@ -100,6 +117,27 @@ export type ButtonVariant = NonNullable<ButtonVariantOptions['variant']>;
 /** Size of a {@link Button}. */
 export type ButtonSize = NonNullable<ButtonVariantOptions['size']>;
 
+const buttonVariantNames: readonly ButtonVariant[] = [
+    'primary',
+    'secondary',
+    'tertiary',
+    'destructive',
+    'ghost',
+    'link',
+];
+const buttonSizes: readonly ButtonSize[] = ['sm', 'md', 'lg'];
+
+/** x-core ButtonV2 / MUI props that are dropped (with a dev warning). */
+const legacyButtonProps = {
+    color: 'use variant, e.g. "destructive" for color="error"',
+    textColor: 'colour comes from the variant',
+    showTextUnderLine: 'variant="tertiary" underlines on hover',
+    sx: 'use className',
+    disableElevation: 'Button has no elevation',
+    disableRipple: 'Button has no ripple',
+    endIconAnimation: 'not ported (decorative motion)',
+} as const;
+
 /**
  * Class string for the Button look. Convention for every component: the
  * exported `*Variants` function wraps the internal cva definition in `cn()`,
@@ -128,30 +166,47 @@ export function buttonVariants(options?: ButtonVariantOptions): string {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     function Button(
         {
-            variant = 'primary',
-            size = 'md',
+            variant: variantProp,
+            size: sizeProp,
             loading = false,
             asChild = false,
             fullWidth = false,
+            startIcon,
+            endIcon,
             className,
             type,
             disabled = false,
             onClick,
             children,
-            ...rest
+            ...props
         },
         ref
     ) {
+        // Untyped callers (customer360 .jsx) pass x-core ButtonV2 values and
+        // MUI props: fall back instead of rendering unstyled, and never leak
+        // unknown props to the DOM.
+        const variant = resolveOption(
+            'Button',
+            'variant',
+            variantProp,
+            buttonVariantNames,
+            'primary'
+        );
+        const size = resolveOption(
+            'Button',
+            'size',
+            sizeProp,
+            buttonSizes,
+            'md'
+        );
+        const rest = omitLegacyProps('Button', props, legacyButtonProps);
         const ariaDisabled =
             rest['aria-disabled'] === true || rest['aria-disabled'] === 'true';
         const blocked = loading || disabled || ariaDisabled;
-        const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-            if (blocked) {
-                event.preventDefault();
-                return;
-            }
-            onClick?.(event);
-        };
+        const handleClick = blockedClick<MouseEvent<HTMLButtonElement>>(
+            blocked,
+            onClick
+        );
         const shared = {
             ...rest,
             ref,
@@ -182,8 +237,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             );
         }
 
-        if (asChild) return <Slot {...shared}>{children}</Slot>;
-
         return (
             <button type={type ?? 'button'} disabled={disabled} {...shared}>
                 {loading && (
@@ -201,7 +254,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         loading && 'hz:opacity-0'
                     )}
                 >
+                    {startIcon && (
+                        <span aria-hidden="true" className="hz:inline-flex">
+                            {startIcon}
+                        </span>
+                    )}
                     {children}
+                    {endIcon && (
+                        <span aria-hidden="true" className="hz:inline-flex">
+                            {endIcon}
+                        </span>
+                    )}
                 </span>
             </button>
         );
