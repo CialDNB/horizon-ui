@@ -173,6 +173,10 @@ export type SelectProps = Omit<
         required?: boolean;
         /** Form field name (a hidden native select submits the value). */
         name?: string;
+        /** Id of a `<form>` elsewhere in the document to submit with. */
+        form?: string;
+        /** Autofill hint for the hidden native select (e.g. `country`). */
+        autoComplete?: string;
         /** Controlled open state. */
         open?: boolean;
         /** Initial open state. */
@@ -206,6 +210,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             clearLabel = 'Clear',
             emptyMessage = 'No options',
             name,
+            form,
+            autoComplete,
             open,
             defaultOpen,
             onOpenChange,
@@ -252,6 +258,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 value={value}
                 onValueChange={change}
                 name={name}
+                {...(form !== undefined && { form })}
+                {...(autoComplete !== undefined && { autoComplete })}
                 disabled={control.disabled}
                 required={control.required}
                 dir={direction}
