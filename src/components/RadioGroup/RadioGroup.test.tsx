@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, type ReactElement } from 'react';
+import { createRef, useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetWarnings } from '../../lib/options';
 import { HorizonProvider } from '../../provider';
@@ -140,5 +140,36 @@ describe('RadioGroup', () => {
         expect(warn).toHaveBeenCalledWith(
             expect.stringContaining('x-core prop "row"')
         );
+    });
+});
+
+describe('RadioGroup direction follows a runtime provider change', () => {
+    it('ArrowLeft moves forward after the provider flips to rtl', async () => {
+        const user = userEvent.setup();
+        function Flip() {
+            const [rtl, setRtl] = useState(false);
+            return (
+                <HorizonProvider dir={rtl ? 'rtl' : 'ltr'}>
+                    <button type="button" onClick={() => setRtl(true)}>
+                        flip
+                    </button>
+                    <RadioGroup
+                        aria-label="Plan"
+                        orientation="horizontal"
+                        defaultValue="a"
+                    >
+                        <RadioGroupItem value="a" label="A" />
+                        <RadioGroupItem value="b" label="B" />
+                        <RadioGroupItem value="c" label="C" />
+                    </RadioGroup>
+                </HorizonProvider>
+            );
+        }
+        render(<Flip />);
+        await user.click(screen.getByRole('button', { name: 'flip' }));
+        screen.getByRole('radio', { name: 'A' }).focus();
+        await user.keyboard('{ArrowLeft>}');
+        await user.keyboard('{/ArrowLeft}');
+        expect(screen.getByRole('radio', { name: 'B' })).toHaveFocus();
     });
 });

@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { Brand } from '../tokens';
 
 /**
  * `undefined`: no provider above. `null`: provider mounted its tree but its
@@ -7,6 +8,17 @@ import { createContext, useContext } from 'react';
 export const PortalContext = createContext<HTMLElement | null | undefined>(
     undefined
 );
+
+/** Brand and direction of the nearest HorizonProvider (internal). */
+export type HorizonScope = { brand: Brand; dir: 'ltr' | 'rtl' };
+
+/** `null` outside any provider. Nested providers inherit from it. */
+export const HorizonScopeContext = createContext<HorizonScope | null>(null);
+
+/** The nearest provider's brand and direction, or `null` (internal). */
+export function useHorizonScope(): HorizonScope | null {
+    return useContext(HorizonScopeContext);
+}
 
 let fallbackRoot: HTMLElement | null = null;
 let warned = false;

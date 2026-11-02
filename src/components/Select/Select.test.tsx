@@ -239,3 +239,30 @@ describe('Select', () => {
         );
     });
 });
+
+describe('Select direction follows a runtime provider change', () => {
+    it('the open list is rtl after the provider flips', async () => {
+        const user = userEvent.setup();
+        function Flip() {
+            const [rtl, setRtl] = useState(false);
+            return (
+                <HorizonProvider dir={rtl ? 'rtl' : 'ltr'}>
+                    <button type="button" onClick={() => setRtl(true)}>
+                        flip
+                    </button>
+                    <Select aria-label="Country">
+                        <SelectItem value="il">Israel</SelectItem>
+                    </Select>
+                </HorizonProvider>
+            );
+        }
+        render(<Flip />);
+        await user.click(screen.getByRole('button', { name: 'flip' }));
+        await user.click(screen.getByRole('combobox'));
+        const listbox = await screen.findByRole('listbox');
+        expect(listbox.closest('[data-select-content]')).toHaveAttribute(
+            'dir',
+            'rtl'
+        );
+    });
+});

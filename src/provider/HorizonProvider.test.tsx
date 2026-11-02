@@ -278,3 +278,70 @@ describe('HorizonProvider', () => {
         expect(fn).toHaveBeenLastCalledWith(null);
     });
 });
+
+describe('HorizonProvider inheritance (nested providers)', () => {
+    const attrs = (id: string) => {
+        const el = screen.getByTestId(id);
+        return [el.getAttribute('data-brand'), el.getAttribute('dir')];
+    };
+
+    it('inherits brand and dir from a parent provider when omitted', () => {
+        render(
+            <HorizonProvider brand="dnb" dir="rtl">
+                <HorizonProvider data-testid="inner">x</HorizonProvider>
+            </HorizonProvider>
+        );
+        expect(attrs('inner')).toEqual(['dnb', 'rtl']);
+    });
+
+    it('explicit props win over the parent', () => {
+        render(
+            <HorizonProvider brand="dnb" dir="rtl">
+                <HorizonProvider brand="il" dir="ltr" data-testid="inner">
+                    x
+                </HorizonProvider>
+            </HorizonProvider>
+        );
+        expect(attrs('inner')).toEqual(['il', 'ltr']);
+    });
+
+    it('without a parent the defaults are cial / ltr', () => {
+        render(<HorizonProvider data-testid="alone">x</HorizonProvider>);
+        expect(attrs('alone')).toEqual(['cial', 'ltr']);
+    });
+
+    it('propagates a runtime change of the parent', () => {
+        function Parent() {
+            const [rtl, setRtl] = useState(false);
+            return (
+                <HorizonProvider
+                    dir={rtl ? 'rtl' : 'ltr'}
+                    brand={rtl ? 'il' : 'cial'}
+                >
+                    <button type="button" onClick={() => setRtl(true)}>
+                        flip
+                    </button>
+                    <HorizonProvider data-testid="inner">x</HorizonProvider>
+                </HorizonProvider>
+            );
+        }
+        render(<Parent />);
+        expect(attrs('inner')).toEqual(['cial', 'ltr']);
+        fireEvent.click(screen.getByRole('button', { name: 'flip' }));
+        expect(attrs('inner')).toEqual(['il', 'rtl']);
+    });
+
+    it('inheritance crosses a React portal (e.g. an MUI dialog rendered into body)', () => {
+        render(
+            <HorizonProvider brand="dnb" dir="rtl">
+                {createPortal(
+                    <HorizonProvider data-testid="portalled">
+                        x
+                    </HorizonProvider>,
+                    document.body
+                )}
+            </HorizonProvider>
+        );
+        expect(attrs('portalled')).toEqual(['dnb', 'rtl']);
+    });
+});
