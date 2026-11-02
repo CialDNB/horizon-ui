@@ -41,6 +41,17 @@ describe('anchorGuard', () => {
         expect(link).not.toContain('hz:hover:no-underline');
     });
 
+    it('supports the Link tokens: primary-hover and inherit', () => {
+        expect(
+            anchorGuard('primary', { hover: 'primary-hover', underline: true })
+        ).toBe(
+            'hz:hover:text-primary-hover hz:touch-hover:text-primary hz:hover:underline hz:touch-hover:underline'
+        );
+        expect(anchorGuard('inherit', { hoverUnderline: true })).toBe(
+            'hz:hover:text-inherit hz:touch-hover:text-inherit hz:hover:underline hz:touch-hover:no-underline'
+        );
+    });
+
     it('produces the Button classes per variant', () => {
         expect({
             primary: anchorGuard('primary-foreground'),

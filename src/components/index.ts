@@ -45,6 +45,13 @@ export type {
     IconButtonVariant,
     IconButtonVariantOptions,
 } from './IconButton';
+export { Link, linkVariants } from './Link';
+export type {
+    LinkProps,
+    LinkSize,
+    LinkVariant,
+    LinkVariantOptions,
+} from './Link';
 export { Progress, progressVariants } from './Progress';
 export type {
     ProgressProps,

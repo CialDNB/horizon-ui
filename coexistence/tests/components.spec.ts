@@ -368,6 +368,45 @@ const ICON_BUTTON: Target[] = [
     },
 ];
 
+const LINK_IDS = ['inline', 'standalone', 'subtle', 'external', 'disabled'].map(
+    (v) => `hz-anchor-${v}`
+);
+
+const LINK_PROBE_PROPS = [
+    'width',
+    'height',
+    'minHeight',
+    'color',
+    'backgroundColor',
+    'textDecorationLine',
+    'textDecorationThickness',
+    'textUnderlineOffset',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'borderRadius',
+    'outlineStyle',
+    'outlineWidth',
+    'outlineColor',
+    'outlineOffset',
+    'cursor',
+    'display',
+] as const;
+
+const LINK: Target[] = [
+    ...plain(LINK_IDS),
+    {
+        key: 'standalone, focused',
+        selector: byTestId('hz-anchor-standalone'),
+        focus: byTestId('hz-anchor-standalone'),
+    },
+    {
+        key: 'external icon',
+        selector: `${byTestId('hz-anchor-external')} svg`,
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
@@ -381,6 +420,7 @@ const PROBES: Record<string, Probe> = {
     Alert: { targets: ALERT, props: ALERT_PROPS },
     Avatar: { targets: AVATAR, props: AVATAR_PROPS },
     IconButton: { targets: ICON_BUTTON, props: ICON_BUTTON_PROPS },
+    Link: { targets: LINK, props: LINK_PROBE_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -962,3 +1002,43 @@ test.describe('IconButton mouse focus against Bootstrap button:focus', () => {
             ).toEqual([true, false, 'none']);
         });
 });
+
+anchorSuite('Link', LINK_IDS);
+
+test.describe('layered build (known limit): Link against full Bootstrap', () => {
+    test('links take the reboot colour; the inline link loses its underline', async ({
+        page,
+    }) => {
+        const probe = PROBES['Link'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        expect(diff(without, withBootstrap)).toEqual(LAYERED_LINK_DIFF);
+    });
+});
+
+// Measured: the reboot's `a { color: #007bff; text-decoration: none }` and
+// `a:not([href]) { color: inherit }` beat every layered utility: links turn
+// Bootstrap blue, the inline link loses its underline (its non-colour cue)
+// and the disabled link inherits the text colour. Type, size and focus ring
+// survive. Legacy hosts must use styles.unlayered.css (ADR 0001).
+const bootstrapBlue = (from: string) => `color: ${from} -> rgb(0, 123, 255)`;
+const LAYERED_LINK_DIFF = {
+    'hz-anchor-inline': [
+        bootstrapBlue('rgb(0, 80, 240)'),
+        'textDecorationLine: underline -> none',
+    ],
+    'hz-anchor-standalone': [bootstrapBlue('rgb(0, 80, 240)')],
+    'standalone, focused': [bootstrapBlue('rgb(0, 80, 240)')],
+    'hz-anchor-subtle': [bootstrapBlue('rgb(20, 120, 60)')],
+    'hz-anchor-external': [bootstrapBlue('rgb(0, 80, 240)')],
+    'external icon': [
+        bootstrapBlue('rgb(0, 80, 240)'),
+        'outlineColor: rgb(0, 80, 240) -> rgb(0, 123, 255)',
+    ],
+    'hz-anchor-disabled': ['color: rgb(71, 85, 105) -> rgb(15, 23, 42)'],
+};

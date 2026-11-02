@@ -1,26 +1,32 @@
 /** Semantic text colours an anchor-rendered control can keep on hover. */
 export type AnchorTextToken =
     | 'primary'
+    | 'primary-hover'
     | 'primary-foreground'
     | 'destructive-foreground'
     | 'accent-foreground'
-    | 'foreground';
+    | 'foreground'
+    | 'inherit';
 
 // Complete literals: the Tailwind scanner only compiles classes it can see.
 const HOVER_TEXT: Record<AnchorTextToken, string> = {
     primary: 'hz:hover:text-primary',
+    'primary-hover': 'hz:hover:text-primary-hover',
     'primary-foreground': 'hz:hover:text-primary-foreground',
     'destructive-foreground': 'hz:hover:text-destructive-foreground',
     'accent-foreground': 'hz:hover:text-accent-foreground',
     foreground: 'hz:hover:text-foreground',
+    inherit: 'hz:hover:text-inherit',
 };
 
 const TOUCH_HOVER_TEXT: Record<AnchorTextToken, string> = {
     primary: 'hz:touch-hover:text-primary',
+    'primary-hover': 'hz:touch-hover:text-primary-hover',
     'primary-foreground': 'hz:touch-hover:text-primary-foreground',
     'destructive-foreground': 'hz:touch-hover:text-destructive-foreground',
     'accent-foreground': 'hz:touch-hover:text-accent-foreground',
     foreground: 'hz:touch-hover:text-foreground',
+    inherit: 'hz:touch-hover:text-inherit',
 };
 
 /** Options for {@link anchorGuard}. */

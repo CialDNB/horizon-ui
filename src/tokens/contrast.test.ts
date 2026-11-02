@@ -80,6 +80,21 @@ const textPairs: Pair[] = [
         text: 'primary-foreground',
         surface: 'primary',
     },
+    {
+        use: 'Link inline/standalone rest',
+        text: 'primary',
+        surface: 'background',
+    },
+    {
+        use: 'Link hover and active',
+        text: 'primary-hover',
+        surface: 'background',
+    },
+    {
+        use: 'Link disabled (exempt, kept AA anyway)',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
     ...tones
         .filter(([tone]) => tone !== 'primary')
         .map(([tone, subtle, strong]) => ({

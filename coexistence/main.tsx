@@ -15,6 +15,7 @@ import {
     Chip,
     HorizonProvider,
     IconButton,
+    Link,
     Progress,
     Separator,
     Spinner,
@@ -433,6 +434,45 @@ function App() {
                         >
                             <PencilIcon />
                         </IconButton>
+                        <p style={{ margin: 0 }}>
+                            Read the{' '}
+                            <Link href="#terms" data-testid="hz-anchor-inline">
+                                terms
+                            </Link>{' '}
+                            first.
+                        </p>
+                        <Link
+                            href="#all"
+                            variant="standalone"
+                            data-testid="hz-anchor-standalone"
+                        >
+                            View all
+                        </Link>
+                        <span style={{ color: 'rgb(20, 120, 60)' }}>
+                            <Link
+                                href="#doc"
+                                variant="subtle"
+                                data-testid="hz-anchor-subtle"
+                            >
+                                Subtle
+                            </Link>
+                        </span>
+                        <Link
+                            href="#ext"
+                            variant="standalone"
+                            size="sm"
+                            isExternal
+                            data-testid="hz-anchor-external"
+                        >
+                            External
+                        </Link>
+                        <Link
+                            href="#off"
+                            disabled
+                            data-testid="hz-anchor-disabled"
+                        >
+                            Disabled
+                        </Link>
                         <BadgeAnchor
                             data-testid="hz-badge-anchor"
                             badge={

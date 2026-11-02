@@ -18,7 +18,7 @@ export const curation: Record<string, Curation> = {
     Typography: {
         batch: 1,
         horizon: 'Typography',
-        note: 'Done in Task 10a, see Typography section below. `variant` = the 14 slash-notation roles (MUI `h1`..`caption` map to them); `component` becomes `as`; `color` takes semantic tokens; `noWrap` becomes `truncate` (also 2-4 line clamp); default colour `inherit` and default elements as MUI (`h5`/`h6`/subtitles need `as`); `weight`, `align` added; `sx`, `gutterBottom`, `paragraph`, `display` and MUI typography props dropped.',
+        note: "Done in Task 10a, see Typography section below. `variant` = the 14 slash-notation roles (MUI `h1`..`caption` map to them); `component` becomes `as`; `color` takes semantic tokens; `noWrap` becomes `truncate` (also 2-4 line clamp); default colour `inherit` and default elements as MUI (`h5`/`h6`/subtitles need `as`); `weight`, `align` added; `sx`, `gutterBottom`, `paragraph`, `display` and MUI typography props dropped. The Typography module's `Link` export (1 customer360 file) maps to horizon `Link` (Task 10c, see Link section below).",
         status: 'done',
     },
     Button: {
