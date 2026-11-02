@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import type { Brand } from '../../tokens/brands';
 import { HorizonProvider } from '../../provider';
 import { Spinner, spinnerVariants, type SpinnerSize } from '.';
@@ -141,5 +142,52 @@ describe('Spinner', () => {
         const sizes: SpinnerSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
         for (const size of sizes)
             expect(spinnerVariants({ size })).toMatch(/hz:border-\d/);
+    });
+
+    describe('old x-core values from untyped callers', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it.each([
+            [12, 'xs'],
+            [14, 'xs'],
+            [16, 'sm'],
+            ['19px', 'md'],
+            [20, 'md'],
+            [24, 'lg'],
+            [28, 'lg'],
+            [32, 'lg'],
+            [40, 'xl'],
+            [56, 'xl'],
+        ] as const)(
+            'numeric size %s maps to the nearest step %s and warns',
+            (old, step) => {
+                const warn = vi
+                    .spyOn(console, 'warn')
+                    .mockImplementation(() => {});
+                render(<Spinner size={old as never} value={50} />);
+                expect(screen.getByRole('progressbar')).toHaveAttribute(
+                    'data-size',
+                    step
+                );
+                expect(warn).toHaveBeenCalledOnce();
+                expect(warn.mock.calls[0]?.[0]).toContain(
+                    `size ${JSON.stringify(old)}`
+                );
+            }
+        );
+
+        it('an unknown size or tone falls back to the default (xl, primary)', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            render(
+                <Spinner size={'huge' as never} tone={'secondary' as never} />
+            );
+            const bar = screen.getByRole('progressbar');
+            expect(bar).toHaveAttribute('data-size', 'xl');
+            expect(bar).toHaveClass('hz:size-10', 'hz:text-primary');
+            expect(warn).toHaveBeenCalledTimes(2);
+        });
     });
 });

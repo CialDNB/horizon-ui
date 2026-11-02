@@ -7,6 +7,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveOption, warnOnce } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const spinnerStyles = cva(
@@ -91,6 +92,8 @@ export function spinnerVariants(options?: SpinnerVariantOptions): string {
     return cn(spinnerStyles(options));
 }
 
+const spinnerTones: readonly SpinnerTone[] = ['primary', 'muted', 'inherit'];
+
 const ring: Record<SpinnerSize, { px: number; stroke: number }> = {
     xs: { px: 12, stroke: 2 },
     sm: { px: 16, stroke: 2 },
@@ -100,6 +103,33 @@ const ring: Record<SpinnerSize, { px: number; stroke: number }> = {
 };
 
 const clamp = (value: number) => Math.min(100, Math.max(0, value));
+
+const sizeNames = Object.keys(ring) as SpinnerSize[];
+
+/**
+ * Untyped callers may pass x-core's pixel sizes (`size={24}`, `"19px"`):
+ * those map to the nearest step (ties to the smaller), with a dev warning.
+ * Other unknown values fall back to `xl`.
+ */
+function resolveSize(size: unknown): SpinnerSize {
+    const px =
+        typeof size === 'number'
+            ? size
+            : typeof size === 'string' && /^\d+(\.\d+)?(px)?$/.test(size)
+              ? Number.parseFloat(size)
+              : Number.NaN;
+    if (Number.isNaN(px))
+        return resolveOption('Spinner', 'size', size, sizeNames, 'xl');
+    const step = sizeNames.reduce((best, name) =>
+        Math.abs(ring[name].px - px) < Math.abs(ring[best].px - px)
+            ? name
+            : best
+    );
+    warnOnce(
+        `Spinner: numeric size ${JSON.stringify(size)} is an x-core value; using "${step}" (${ring[step].px}px). Accepted: ${sizeNames.map((n) => `"${n}"`).join(', ')}.`
+    );
+    return step;
+}
 
 /**
  * Shows that something is loading. Renders `role="progressbar"` named by
@@ -111,8 +141,8 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(
     function Spinner(
         {
-            size = 'xl',
-            tone = 'primary',
+            size: sizeProp,
+            tone: toneProp,
             value,
             label = 'Loading',
             className,
@@ -120,6 +150,14 @@ export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(
         },
         ref
     ) {
+        const size = resolveSize(sizeProp);
+        const tone = resolveOption(
+            'Spinner',
+            'tone',
+            toneProp,
+            spinnerTones,
+            'primary'
+        );
         const hidden =
             rest['aria-hidden'] === true || rest['aria-hidden'] === 'true';
         const determinate = value !== undefined && !Number.isNaN(value);
