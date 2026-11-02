@@ -76,6 +76,12 @@ export type {
     SpinnerTone,
     SpinnerVariantOptions,
 } from './Spinner';
+export { Textarea, textareaVariants } from './Textarea';
+export type {
+    TextareaProps,
+    TextareaResize,
+    TextareaVariantOptions,
+} from './Textarea';
 export { Typography, typographyVariants } from './Typography';
 export type {
     TypographyAlign,

@@ -21,6 +21,7 @@ import {
     Progress,
     Separator,
     Spinner,
+    Textarea,
     Typography,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
@@ -560,6 +561,23 @@ function App() {
                                 </IconButton>
                             }
                             data-testid="hz-input-search"
+                        />
+                        <Textarea
+                            aria-label="Comment"
+                            placeholder="Add a comment"
+                            data-testid="hz-textarea"
+                        />
+                        <Textarea
+                            aria-label="Notes"
+                            invalid
+                            resize="none"
+                            rows={2}
+                            data-testid="hz-textarea-invalid"
+                        />
+                        <Textarea
+                            aria-label="Locked"
+                            disabled
+                            data-testid="hz-textarea-disabled"
                         />
                     </HorizonProvider>
                 </section>

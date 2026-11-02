@@ -122,6 +122,12 @@ textPairs.push(
         text: 'muted-foreground',
         surface: 'background',
     },
+    { use: 'Textarea value', text: 'foreground', surface: 'background' },
+    {
+        use: 'Textarea placeholder',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
 );
@@ -244,6 +250,12 @@ nonTextPairs.push(
     {
         use: 'Input clear/adornment icon',
         text: 'muted-foreground',
+        surface: 'background',
+    },
+    { use: 'Textarea focus ring', text: 'ring', surface: 'background' },
+    {
+        use: 'Textarea invalid ring',
+        text: 'destructive',
         surface: 'background',
     },
     {

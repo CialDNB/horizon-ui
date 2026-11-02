@@ -136,7 +136,8 @@ export const curation: Record<string, Curation> = {
     TextArea: {
         batch: 2,
         horizon: 'Textarea',
-        note: 'Planned: native textarea props.',
+        note: 'Done in Task 11a, see Textarea section below. `label`, `helperText`, `error` move to `FormField` (`error` on the field becomes `invalid`); the custom drag handle becomes the native vertical handle (`resize="none"` hides it); `minRows` becomes `rows` (default 4); new `autoResize` + `maxRows`; `multiline`, `fullWidth`, `characterLimit`, `isLabelContainer`, `info`, `inputProps`, `sx` dropped with a dev warning.',
+        status: 'done',
     },
     NumberInput: {
         batch: 2,

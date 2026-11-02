@@ -96,6 +96,7 @@ describe('architecture', () => {
                 "Progress",
                 "Separator",
                 "Spinner",
+                "Textarea",
                 "Typography",
                 "alertVariants",
                 "avatarVariants",
@@ -111,6 +112,7 @@ describe('architecture', () => {
                 "progressVariants",
                 "separatorVariants",
                 "spinnerVariants",
+                "textareaVariants",
                 "typographyVariants",
                 "usePortalContainer",
               ]

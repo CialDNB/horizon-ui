@@ -550,6 +550,19 @@ const PROBES: Record<string, Probe> = {
     Link: { targets: LINK, props: LINK_PROBE_PROPS },
     Label: { targets: LABEL, props: FORM_TYPE_PROPS },
     Input: { targets: INPUT, props: FIELD_PROPS },
+    Textarea: {
+        targets: [
+            ...plain(
+                ['', '-invalid', '-disabled'].map((v) => `hz-textarea${v}`)
+            ),
+            {
+                key: 'focused',
+                selector: byTestId('hz-textarea'),
+                focus: byTestId('hz-textarea'),
+            },
+        ],
+        props: FIELD_PROPS,
+    },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -1252,6 +1265,17 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // `input { font-size: 14px }` win; buttons lose radius and negative
     // margins, and customer360's `button:focus { outline: none }` removes the
     // clear button's focus ring.
+    // Bootstrap's `textarea { line-height: inherit; resize: vertical }`.
+    Textarea: {
+        focused: ['height: changed', 'lineHeight: 20px -> 24px'],
+        'hz-textarea': ['height: changed', 'lineHeight: 20px -> 24px'],
+        'hz-textarea-disabled': ['height: changed', 'lineHeight: 20px -> 24px'],
+        'hz-textarea-invalid': [
+            'height: changed',
+            'lineHeight: 20px -> 24px',
+            'resize: none -> vertical',
+        ],
+    },
     Input: {
         'adornment IconButton (button + button)': [
             'borderRadius: 100px -> 0px',
