@@ -175,6 +175,8 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             onEscapeKeyDown,
             onPointerDownOutside,
             onInteractOutside,
+            onOpenAutoFocus,
+            onCloseAutoFocus,
             className,
             children,
             ...props
@@ -190,6 +192,10 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
         );
         const container = usePortalContainer();
         const panelRef = useRef<HTMLDivElement>(null);
+        // Radix returns focus to a DialogTrigger only; a controlled dialog
+        // opened from any other control (customer360's usual pattern) would
+        // drop focus to <body>. Remember the opener instead.
+        const openerRef = useRef<Element | null>(null);
         const optedOutOfDescription = Object.hasOwn(props, 'aria-describedby');
         // Checked once per opening, after Radix has wired the title and
         // description ids (they register in a later render).
@@ -236,6 +242,23 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
                     onInteractOutside={(event) => {
                         onInteractOutside?.(event);
                         if (!dismissible) event.preventDefault();
+                    }}
+                    onOpenAutoFocus={(event) => {
+                        // Runs before focus moves in: activeElement is the opener.
+                        openerRef.current = document.activeElement;
+                        onOpenAutoFocus?.(event);
+                    }}
+                    onCloseAutoFocus={(event) => {
+                        onCloseAutoFocus?.(event);
+                        if (event.defaultPrevented) return;
+                        const opener = openerRef.current;
+                        if (
+                            opener instanceof HTMLElement &&
+                            opener.isConnected
+                        ) {
+                            event.preventDefault();
+                            opener.focus();
+                        }
                     }}
                     data-size={size}
                     data-dialog-content=""

@@ -154,6 +154,32 @@ describe('Dialog', () => {
         expect(outer).not.toHaveBeenCalled();
     });
 
+    it('controlled without a DialogTrigger: focus returns to the element that opened it', async () => {
+        const user = userEvent.setup();
+        function Opener() {
+            const [open, setOpen] = useState(false);
+            return (
+                <HorizonProvider>
+                    <button type="button" onClick={() => setOpen(true)}>
+                        Open
+                    </button>
+                    <Dialog open={open} onOpenChange={setOpen}>
+                        <DialogContent aria-describedby={undefined}>
+                            <DialogTitle>No trigger</DialogTitle>
+                        </DialogContent>
+                    </Dialog>
+                </HorizonProvider>
+            );
+        }
+        render(<Opener />);
+        const opener = screen.getByRole('button', { name: 'Open' });
+        await user.click(opener);
+        await screen.findByRole('dialog');
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        expect(opener).toHaveFocus();
+    });
+
     it('controlled: onOpenChange receives false on close', async () => {
         const user = userEvent.setup();
         const changes: boolean[] = [];
