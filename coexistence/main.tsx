@@ -47,6 +47,7 @@ import {
     DialogTitle,
     DialogTrigger,
     ConfirmationDialog,
+    Drawer,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
@@ -315,6 +316,43 @@ function ConfirmDelete({ scope }: { scope: string }) {
     );
 }
 
+/** Opens a Drawer (customer360 passes widths like "90%"). */
+function DetailsDrawer({ scope }: { scope: string }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <Button
+                variant="secondary"
+                data-testid={`${scope}-drawer-trigger`}
+                onClick={() => setOpen(true)}
+            >
+                Drawer
+            </Button>
+            <Drawer
+                open={open}
+                onOpenChange={setOpen}
+                title="Overlay drawer"
+                width={480}
+                data-testid={`${scope}-drawer`}
+                content={
+                    <Input
+                        aria-label="Drawer field"
+                        data-testid={`${scope}-drawer-input`}
+                    />
+                }
+                actions={
+                    <Button
+                        data-testid={`${scope}-drawer-save`}
+                        onClick={() => setOpen(false)}
+                    >
+                        Save
+                    </Button>
+                }
+            />
+        </>
+    );
+}
+
 function Overlays({ scope }: { scope: string }) {
     return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -389,6 +427,7 @@ function Overlays({ scope }: { scope: string }) {
                 </DialogContent>
             </Dialog>
             <ConfirmDelete scope={scope} />
+            <DetailsDrawer scope={scope} />
         </div>
     );
 }

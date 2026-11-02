@@ -119,5 +119,8 @@ for (const build of ['layered', 'unlayered'] as const)
             await page.getByTestId('hz-dialog-trigger').click();
             visibleBorder(await style(page, byTestId('hz-dialog')));
             await page.keyboard.press('Escape');
+            await page.getByTestId('hz-drawer-trigger').click();
+            visibleBorder(await style(page, byTestId('hz-drawer')));
+            await page.keyboard.press('Escape');
         });
     });

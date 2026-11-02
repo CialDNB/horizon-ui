@@ -243,7 +243,8 @@ export const curation: Record<string, Curation> = {
     DrawerV3: {
         batch: 2,
         horizon: 'Drawer',
-        note: 'Planned: content side panel; `direction` becomes logical `side`. See plan Task 11 interface.',
+        note: 'Done in Task 11b (Radix Dialog as a side panel). `isOpen` -> `open`; `onClose()` -> `onOpenChange(false)`; `direction` (LayoutDirection) -> logical `side` (`end` default = x-core right edge, mirrored under rtl by itself); `title`, `content`, `actions`, `width` (default 320px; customer360 widths such as `"90%"` work from tablet, capped at the viewport), `keepMounted` kept (content state survives closing; closed content is not in the document); `sx` dropped. Full-width bottom sheet below tablet as x-core. Dropped props warn in development.',
+        status: 'done',
     },
     Popover: {
         batch: 2,

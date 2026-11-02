@@ -215,6 +215,47 @@ test.describe('Dialog against Bootstrap 4.4.1 and customer360 host CSS', () => {
     });
 });
 
+/* ---------------------------------- Drawer ---------------------------------- */
+
+const openDrawer = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-drawer-trigger').click();
+    const content = page.getByTestId('hz-drawer');
+    await expect(content).toBeVisible();
+    await content.evaluate((el) =>
+        Promise.all(el.getAnimations().map((a) => a.finished))
+    );
+    return {
+        content: await read(content, [...SURFACE_PROPS, 'height', 'right']),
+        title: await read(
+            content.getByRole('heading', { name: 'Overlay drawer' }),
+            SURFACE_PROPS
+        ),
+        close: await read(
+            content.getByRole('button', { name: 'Close' }),
+            SURFACE_PROPS
+        ),
+        save: await read(content.getByTestId('hz-drawer-save'), SURFACE_PROPS),
+    };
+};
+
+test.describe('Drawer against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openDrawer(page, url('unlayered'));
+                const withHost = await openDrawer(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.content['zIndex']).toBe('1350');
+                expect(without.content['width']).toBe('480px');
+            });
+});
+
 /* ------------------------- Inside a real MUI Dialog -------------------------- */
 
 const openMuiOverlays = async (page: Page, build: 'layered' | 'unlayered') => {
@@ -318,5 +359,44 @@ for (const build of ['layered', 'unlayered'] as const)
                 page.getByTestId('mui-overlays-content')
             ).toBeVisible();
             await expect(trigger).toBeFocused();
+        });
+
+        test('Drawer: opens above the dialog, focus trapped, Escape and the scrim close only the drawer', async ({
+            page,
+        }) => {
+            await openMuiOverlays(page, build);
+            const trigger = page.getByTestId('mui-drawer-trigger');
+            await trigger.click();
+            const drawer = page.getByRole('dialog', { name: 'Overlay drawer' });
+            await expect(drawer).toBeVisible();
+            await drawer.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
+            expect(await onTop(page, drawer)).toBe(true);
+            // First tabbable: the close button in the title row.
+            await expect(
+                drawer.getByRole('button', { name: 'Close' })
+            ).toBeFocused();
+            for (let i = 0; i < 4; i++) {
+                await page.keyboard.press('Tab');
+                expect(
+                    await drawer.evaluate((el) =>
+                        el.contains(document.activeElement)
+                    )
+                ).toBe(true);
+            }
+            await page.keyboard.press('Escape');
+            await expect(drawer).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
+            await expect(trigger).toBeFocused();
+            await trigger.click();
+            await expect(drawer).toBeVisible();
+            await page.mouse.click(4, 4);
+            await expect(drawer).toHaveCount(0);
+            await expect(
+                page.getByTestId('mui-overlays-content')
+            ).toBeVisible();
         });
     });
