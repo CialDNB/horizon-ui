@@ -44,11 +44,21 @@ Contrast of every Button variant per brand is listed in `.superpowers/sdd/2026-1
 
 Ratios per brand are asserted in `src/tokens/contrast.test.ts` and listed in `.superpowers/sdd/2026-11-01-horizon-ui-foundation/task-10a-report.md`. Not added: `success-foreground`/`warning-foreground`/`info-foreground` (solid fills with text), because no component needs them yet.
 
+## Form and overlay keys (added in Task 11a: forms, Select)
+
+| Semantic key | cial | dnb | il | Source |
+|---|---|---|---|---|
+| `control-border` | blueGrey/500 `#64748B` | same | `#64748B` | x-core input resting border (`shared/inputs/inputStyles.ts`: `blueGrey[500]`). `input` (blueGrey/300, 1.4:1 on background) fails WCAG 1.4.11 for a control boundary; it stays the disabled border. 4.6:1 on `background`, 4.8:1 on `popover`. |
+| `popover` | white | white | `#FFFFFF` | x-core `background.paper`: floating surfaces (Select content; Popover/Dialog in Task 11b) |
+| `popover-foreground` | = `foreground` | = `foreground` | = `foreground` | text on `popover` |
+
+z-index scale (`src/tokens/zIndex.ts`, emitted as `--z-*` on `.hz-root`, utilities `hz:z-dialog` ...): dialog 1350, dropdown 1400, popover 1450, tooltip 1500, toast 1600; all above the MUI modal (1300) so horizon overlays opened from inside an x-core dialog stay on top.
+
 ## Palette keys without a semantic home
 
 | x-core key | Brands | Note |
 |---|---|---|
-| `background.paper` | all | Needs a `card`/`popover` pair. Add `card`, `card-foreground`, `popover`, `popover-foreground` when Card/Popover are ported. |
+| `background.paper` | all | `popover`/`popover-foreground` added in Task 11a; `card`/`card-foreground` still to add with Card. |
 | `text.disabled` | all | Needs a disabled token. |
 | `<role>.light`, `<role>.dark`, `<role>.hover` for secondary/warning/success/info (primary/error hover now ported, see above) | all | Hover and tint/shade variants. `primary.light`/`dark` are used only to derive `accent`. |
 | `success/warning/info .contrastText` | all | No `success-foreground`, `warning-foreground`, `info-foreground` keys (see Tone keys: text uses `<tone>-strong`). Warning contrast is amber/900 (CIAL, D&B) or #5F4B14 (IL). |

@@ -15,5 +15,6 @@ export { elevation } from './shadows';
 export { duration, easing } from './motion';
 export { iconSize } from './iconography';
 export { breakpoints } from './breakpoints';
+export { zIndex } from './zIndex';
 export { brands, brandTypography, semanticKeys } from './brands';
 export type { Brand, SemanticKey, SemanticPalette } from './brands';

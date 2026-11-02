@@ -104,6 +104,11 @@ const textPairs: Pair[] = [
         })),
 ];
 
+textPairs.push(
+    { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
+    { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
+);
+
 describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {
     it('computes the reference ratios', () => {
         expect(contrast('#FFFFFF', '#000000')).toBeCloseTo(21, 5);
@@ -201,6 +206,21 @@ nonTextPairs.push(
         text,
         surface,
     }))
+);
+
+// Form controls (Task 11a): the control boundary must be visible (3:1) on the
+// page and on popover surfaces.
+nonTextPairs.push(
+    {
+        use: 'form control boundary (Input, Select trigger, Checkbox, Radio, Switch off track)',
+        text: 'control-border',
+        surface: 'background',
+    },
+    {
+        use: 'form control boundary on a popover',
+        text: 'control-border',
+        surface: 'popover',
+    }
 );
 
 describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {

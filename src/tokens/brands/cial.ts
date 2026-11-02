@@ -49,4 +49,9 @@ export const cial: SemanticPalette = {
     border: borderColor.subtle,
     input: borderColor.default,
     ring: blue[500],
+    // Task 11a: boundary of form controls, 3:1 on background and popover.
+    'control-border': blueGrey[500],
+    // Task 11a: floating surfaces (Select content); x-core background.paper.
+    popover: common.white,
+    'popover-foreground': blueGrey[900],
 };

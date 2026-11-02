@@ -12,6 +12,7 @@ import { duration, easing } from '../src/tokens/motion';
 import { elevation } from '../src/tokens/shadows';
 import { dialogWidth, spacingBase } from '../src/tokens/spacing';
 import { fontSize, lineHeight, typeScale } from '../src/tokens/typography';
+import { zIndex } from '../src/tokens/zIndex';
 
 type Decl = readonly [name: string, value: string | number];
 
@@ -102,6 +103,7 @@ const nonColor = (): Decl[] => [
     ...scale('icon-size', iconSize, 'px'),
     ...scale('font-size', pxScale(fontSize)),
     ...scale('line-height', pxScale(lineHeight)),
+    ...scale('z', zIndex),
 ];
 
 /**
@@ -161,6 +163,12 @@ export function buildThemeCss(): string {
         ['font-sans', 'var(--font-family)'],
         ['font-weight-*', 'initial'],
         ...scale('font-weight', brandTypography.cial.fontWeight),
+        // `hz:z-dropdown` etc. (bare integers such as `hz:z-1` still work).
+        ['z-index-*', 'initial'],
+        ...Object.keys(zIndex).map((k): Decl => [
+            `z-index-${k}`,
+            `var(--z-${k})`,
+        ]),
         // Type comes only from the type-scale utilities in typography.css.
         ['text-*', 'initial'],
     ];

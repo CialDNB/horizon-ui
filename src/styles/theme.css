@@ -36,6 +36,9 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
+    --color-control-border: var(--control-border);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
     --spacing: 4px;
     --radius-*: initial;
     --radius-none: 0px;
@@ -72,5 +75,11 @@
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
     --font-weight-extra-bold: 800;
+    --z-index-*: initial;
+    --z-index-dialog: var(--z-dialog);
+    --z-index-dropdown: var(--z-dropdown);
+    --z-index-popover: var(--z-popover);
+    --z-index-tooltip: var(--z-tooltip);
+    --z-index-toast: var(--z-toast);
     --text-*: initial;
 }

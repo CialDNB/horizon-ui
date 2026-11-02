@@ -11,6 +11,7 @@ import * as colors from '../../src/tokens/colors';
 import { borderRadius } from '../../src/tokens/borderRadius';
 import { duration, easing } from '../../src/tokens/motion';
 import { fontSize, lineHeight, typeScale } from '../../src/tokens/typography';
+import { zIndex } from '../../src/tokens/zIndex';
 import { brandTypography, brands, semanticKeys } from '../../src/tokens/brands';
 
 const css = buildTokensCss();
@@ -85,6 +86,20 @@ describe('buildTokensCss', () => {
         expect(css).toContain('--text-label-lg-size: 16px;');
         expect(css).toContain('--text-label-lg-line-height: 24px;');
         expect(css).toContain('--text-label-md-weight: 600;');
+    });
+
+    it('emits the z-index scale above the MUI modal (1300)', () => {
+        expect(zIndex).toEqual({
+            dialog: 1350,
+            dropdown: 1400,
+            popover: 1450,
+            tooltip: 1500,
+            toast: 1600,
+        });
+        for (const [k, v] of Object.entries(zIndex)) {
+            expect(v).toBeGreaterThan(1300);
+            expect(rule('.hz-root')).toContain(`--z-${k}: ${v};`);
+        }
     });
 
     it('scopes brand variables under .hz-root, never :root', () => {
@@ -200,6 +215,12 @@ describe('buildThemeCss', () => {
         expect(theme).toContain('--shadow-1:');
         expect(theme).toContain('--font-sans: var(--font-family);');
         expect(theme).toContain('--text-*: initial;');
+    });
+
+    it('maps the z-index scale to hz:z-<name> utilities', () => {
+        expect(theme).toContain('--z-index-*: initial;');
+        for (const k of Object.keys(zIndex))
+            expect(theme).toContain(`--z-index-${k}: var(--z-${k});`);
     });
 
     it('committed theme.css matches generator output', () => {

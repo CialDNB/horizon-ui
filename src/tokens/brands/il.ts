@@ -38,4 +38,9 @@ export const il: SemanticPalette = {
     border: borderColor.subtle,
     input: borderColor.default,
     ring: '#3F51B5',
+    // Task 11a: boundary of form controls, 3:1 on background and popover.
+    'control-border': '#64748B',
+    // Task 11a: floating surfaces (Select content); x-core background.paper.
+    popover: '#FFFFFF',
+    'popover-foreground': '#0F172A',
 };

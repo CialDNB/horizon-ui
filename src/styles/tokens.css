@@ -165,6 +165,9 @@
     --border: #E2E8F0;
     --input: #CBD5E1;
     --ring: #0050F0;
+    --control-border: #64748B;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F172A;
     --spacing: 4px;
     --dialog-width-mobile: 312px;
     --dialog-width-sm: 570px;
@@ -231,6 +234,11 @@
     --line-height-36: 36px;
     --line-height-40: 40px;
     --line-height-44: 44px;
+    --z-dialog: 1350;
+    --z-dropdown: 1400;
+    --z-popover: 1450;
+    --z-tooltip: 1500;
+    --z-toast: 1600;
     --font-family: 'Open Sans', sans-serif;
     --font-weight-light: 300;
     --font-weight-regular: 400;
@@ -313,6 +321,9 @@
     --border: #E2E8F0;
     --input: #CBD5E1;
     --ring: #3F51B5;
+    --control-border: #64748B;
+    --popover: #FFFFFF;
+    --popover-foreground: #64748B;
 }
 
 .hz-root[data-brand='il'] {
@@ -346,4 +357,7 @@
     --border: #E2E8F0;
     --input: #CBD5E1;
     --ring: #3F51B5;
+    --control-border: #64748B;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F172A;
 }
