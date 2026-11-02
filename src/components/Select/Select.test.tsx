@@ -4,6 +4,7 @@ import { createRef, useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetWarnings } from '../../lib/options';
 import { HorizonProvider } from '../../provider';
+import { resetFallbackPortalRoot } from '../../provider/portal-context';
 import { FormField } from '../FormField';
 import { Select, SelectGroup, SelectItem, SelectSeparator } from '.';
 
@@ -185,6 +186,26 @@ describe('Select', () => {
         expect(trigger).toHaveAttribute('data-did', 'country');
         expect(trigger).toHaveClass('custom');
         expect(trigger).toHaveAttribute('data-size', 'lg');
+    });
+
+    it('outside any provider the list still opens in a styled .hz-root fallback (warns once)', async () => {
+        const user = userEvent.setup();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        resetFallbackPortalRoot();
+        render(
+            <Select aria-label="Bare" placeholder="Pick">
+                <SelectItem value="a">Alpha</SelectItem>
+            </Select>
+        );
+        await user.click(screen.getByRole('combobox'));
+        const listbox = await screen.findByRole('listbox');
+        const root = listbox.closest('.hz-root');
+        expect(root).toHaveAttribute('data-hz-portal-root');
+        expect(root).toHaveAttribute('data-brand', 'cial');
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining('outside <HorizonProvider>')
+        );
+        resetFallbackPortalRoot();
     });
 
     it('drops x-core SelectV2 props with a warning; size="small" falls back to md', () => {
