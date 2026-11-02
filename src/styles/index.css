@@ -41,3 +41,31 @@
         }
     }
 }
+
+/*
+ * Progress animations. The build renames every keyframes name to hz-*
+ * (scripts/build-styles.ts, ADR 0001), so these never meet a host's names.
+ * Indeterminate: a 40% segment travels from before the inline start to past
+ * the inline end; `--hz-progress-dir` is -1 under RTL. Reduced motion swaps
+ * the travel for a slow opacity pulse of the full bar (no movement).
+ */
+@theme inline {
+    --animate-progress-indeterminate: progress-indeterminate 1.5s
+        cubic-bezier(0.2, 0, 0, 1) infinite;
+    --animate-progress-pulse: progress-pulse 2s ease-in-out infinite;
+
+    @keyframes progress-indeterminate {
+        from {
+            transform: translateX(calc(-100% * var(--hz-progress-dir, 1)));
+        }
+        to {
+            transform: translateX(calc(250% * var(--hz-progress-dir, 1)));
+        }
+    }
+
+    @keyframes progress-pulse {
+        50% {
+            opacity: 0.4;
+        }
+    }
+}

@@ -11,6 +11,7 @@ import {
     Button,
     Chip,
     HorizonProvider,
+    Progress,
     Separator,
     Spinner,
     Typography,
@@ -307,6 +308,16 @@ function App() {
                             />
                             <span>end</span>
                         </div>
+                        <Progress
+                            value={30}
+                            label="Profile completion"
+                            showValue
+                            data-testid="hz-progress"
+                        />
+                        <Progress
+                            aria-label="Exporting"
+                            data-testid="hz-progress-indeterminate"
+                        />
                         <Spinner size="sm" data-testid="hz-spinner-sm" />
                         <Spinner
                             size="xl"

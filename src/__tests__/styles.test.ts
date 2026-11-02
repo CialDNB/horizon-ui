@@ -531,6 +531,31 @@ describe('keyframes are namespaced (no global animation names)', () => {
             ]);
             expect(keyframeNames(source)).toContain('hz-spin');
         });
+
+        it(`${name} build: Progress animations reference their hz- keyframes`, () => {
+            const rules = styleRulesOf(parse(source));
+            for (const [utility, keyframes] of [
+                [
+                    '.hz\\:animate-progress-indeterminate',
+                    'hz-progress-indeterminate',
+                ],
+                [
+                    '.hz\\:motion-reduce\\:animate-progress-pulse',
+                    'hz-progress-pulse',
+                ],
+            ] as const) {
+                const rule = rules.find((r) => r.prelude === utility);
+                expect(rule?.decls, utility).toEqual([
+                    expect.stringMatching(
+                        new RegExp(`^animation: .*(^|\\s)${keyframes}(\\s|$)`)
+                    ),
+                ]);
+                expect(keyframeNames(source)).toContain(keyframes);
+            }
+            expect(keyframeNames(source)).not.toContain(
+                'progress-indeterminate'
+            );
+        });
     }
 
     it('renames every Tailwind animation (definitions and references) in both builds', async () => {

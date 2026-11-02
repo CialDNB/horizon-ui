@@ -42,7 +42,8 @@ export const curation: Record<string, Curation> = {
     LinearProgress: {
         batch: 1,
         horizon: 'Progress',
-        note: 'Not in the plan. Add to Batch 1 as `Progress` (Radix Progress).',
+        note: 'Done in Task 10b, see Progress section below. `variant="determinate" value` becomes `value` (omit for indeterminate); `color` becomes `variant` (primary/neutral/success/warning/error); new `max`, `size` (sm 4px, md 8px), `label`, `showValue`; a name is required (`label`, `aria-label` or `aria-labelledby`); `variant="buffer"`/`"query"`, `valueBuffer`, `sx`, `children` dropped.',
+        status: 'done',
     },
     Alert: {
         batch: 1,

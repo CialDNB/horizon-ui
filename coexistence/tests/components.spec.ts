@@ -192,6 +192,53 @@ const SEPARATOR_PROPS = [
     'alignSelf',
 ] as const;
 
+const PROGRESS_PROPS = [
+    'width',
+    'height',
+    'marginTop',
+    'marginBottom',
+    'borderRadius',
+    'overflow',
+    'backgroundColor',
+    'color',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'translate',
+    'transitionDuration',
+    'animationName',
+    'display',
+] as const;
+
+const progressPart = (id: string, part: string) => `${byTestId(id)} ${part}`;
+const PROGRESS: Target[] = [
+    ...plain(['hz-progress', 'hz-progress-indeterminate']),
+    {
+        key: 'track',
+        selector: progressPart('hz-progress', '[role="progressbar"]'),
+    },
+    {
+        key: 'indicator',
+        selector: progressPart('hz-progress', '[data-progress-indicator]'),
+    },
+    {
+        key: 'label',
+        selector: progressPart('hz-progress', 'span[id]'),
+    },
+    {
+        key: 'value',
+        selector: progressPart('hz-progress', '[data-progress-value]'),
+    },
+    {
+        key: 'segment',
+        selector: progressPart(
+            'hz-progress-indeterminate',
+            '[data-progress-indicator]'
+        ),
+    },
+];
+
 const PROBES: Record<string, Probe> = {
     Typography: { targets: plain(TYPOGRAPHY), props: TYPE_PROPS },
     Chip: { targets: CHIP, props: CHIP_PROPS },
@@ -201,6 +248,7 @@ const PROBES: Record<string, Probe> = {
         targets: plain(['hz-separator-h', 'hz-separator-v']),
         props: SEPARATOR_PROPS,
     },
+    Progress: { targets: PROGRESS, props: PROGRESS_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -528,6 +576,22 @@ test.describe('reduced motion', () => {
                     `${byTestId('hz-ltr-loading')} [data-hz-motion="essential"]`
                 )
             ).toEqual(slow);
+            // Indeterminate Progress: the full bar pulses, it does not travel.
+            const segment = `${byTestId('hz-progress-indeterminate')} [data-progress-indicator]`;
+            expect(await timing(segment)).toEqual({
+                name: 'hz-progress-pulse',
+                duration: '2s',
+                iterations: 'infinite',
+                transition: '0s',
+                running: 'running',
+            });
+            const widths = await page
+                .locator(segment)
+                .evaluate((el) => [
+                    el.getBoundingClientRect().width,
+                    el.parentElement?.getBoundingClientRect().width,
+                ]);
+            expect(widths[0]).toBe(widths[1]);
             // The Button itself (not essential) keeps the kill switch.
             expect((await timing(byTestId('hz-ltr-loading'))).transition).toBe(
                 '1e-05s'
@@ -550,5 +614,19 @@ test.describe('layered build: Separator against full Bootstrap', () => {
         expect(diff(without, withBootstrap)).toEqual({});
         expect(without['hz-separator-h']?.['height']).toBe('1px');
         expect(without['hz-separator-v']?.['width']).toBe('1px');
+    });
+});
+
+test.describe('layered build: Progress against full Bootstrap', () => {
+    test('progress divs and spans are untouched', async ({ page }) => {
+        const probe = PROBES['Progress'];
+        if (!probe) throw new Error('no probe');
+        const without = await measure(page, url('layered'), probe);
+        const withBootstrap = await measure(
+            page,
+            url('layered', { reboot: 'full' }),
+            probe
+        );
+        expect(diff(without, withBootstrap)).toEqual({});
     });
 });

@@ -21,6 +21,13 @@ export type {
     ChipVariant,
     ChipVariantOptions,
 } from './Chip';
+export { Progress, progressVariants } from './Progress';
+export type {
+    ProgressProps,
+    ProgressSize,
+    ProgressVariant,
+    ProgressVariantOptions,
+} from './Progress';
 export { Separator, separatorVariants } from './Separator';
 export type {
     SeparatorOrientation,

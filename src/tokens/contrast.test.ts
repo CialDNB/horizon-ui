@@ -53,6 +53,12 @@ const textPairs: Pair[] = [
     },
     { use: 'Badge status label', text: 'foreground', surface: 'background' },
     { use: 'Badge ai label', text: 'primary', surface: 'background' },
+    { use: 'Progress label', text: 'foreground', surface: 'background' },
+    {
+        use: 'Progress value',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
 ];
 
 describe('semantic colour contrast (WCAG AA, 4.5:1 for text)', () => {
@@ -90,6 +96,26 @@ const nonTextPairs: Pair[] = [
         text,
         surface: 'background' as const,
     })),
+    ...(
+        [
+            'primary',
+            'neutral-strong',
+            'success-strong',
+            'warning-strong',
+            'destructive-strong',
+        ] as const
+    ).flatMap((text) => [
+        {
+            use: `Progress ${text} indicator on the muted track`,
+            text,
+            surface: 'muted' as const,
+        },
+        {
+            use: `Progress ${text} indicator on background`,
+            text,
+            surface: 'background' as const,
+        },
+    ]),
     ...(['primary', 'muted-foreground'] as const).flatMap((text) => [
         { use: `Spinner ${text} ring`, text, surface: 'background' as const },
         {
