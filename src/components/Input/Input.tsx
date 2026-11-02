@@ -10,6 +10,8 @@ import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
     forwardRef,
+    useEffect,
+    useLayoutEffect,
     useRef,
     useState,
     type ChangeEvent,
@@ -181,6 +183,9 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> &
         className?: string;
     };
 
+const useIsomorphicLayoutEffect =
+    typeof document === 'undefined' ? useEffect : useLayoutEffect;
+
 function setNativeValue(input: HTMLInputElement, value: string) {
     Object.getOwnPropertyDescriptor(
         HTMLInputElement.prototype,
@@ -242,6 +247,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         invalid: control.invalid,
     });
     const showClear = clearable && filled && !control.disabled && !readOnly;
+
+    // Uncontrolled values also change without onChange: form.reset() and
+    // react-hook-form setValue/reset write the DOM value directly. Re-read it
+    // after every render and after a reset of the owning form.
+    useIsomorphicLayoutEffect(() => {
+        const input = inputRef.current;
+        if (controlled || !input) return;
+        const has = input.value !== '';
+        if (has !== uncontrolledFilled) setUncontrolledFilled(has);
+    });
+    useEffect(() => {
+        const form = inputRef.current?.form;
+        if (controlled || !form) return;
+        // `reset` fires before the values are restored.
+        const onReset = () =>
+            setTimeout(() =>
+                setUncontrolledFilled((inputRef.current?.value ?? '') !== '')
+            );
+        form.addEventListener('reset', onReset);
+        return () => form.removeEventListener('reset', onReset);
+    }, [controlled]);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (!controlled) setUncontrolledFilled(event.target.value !== '');

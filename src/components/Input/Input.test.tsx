@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -246,5 +246,35 @@ describe('Input', () => {
         expect(warn).toHaveBeenCalledWith(
             expect.stringContaining('x-core prop "helperText"')
         );
+    });
+});
+
+describe('Input clear button follows DOM value changes', () => {
+    it('hides the clear button after form.reset() empties an uncontrolled input', async () => {
+        const user = userEvent.setup();
+        render(
+            <form data-testid="form">
+                <Input aria-label="Search" clearable name="q" />
+            </form>
+        );
+        await user.type(screen.getByRole('textbox'), 'acme');
+        expect(screen.getByRole('button', { name: 'Clear' })).toBeVisible();
+        const form = screen.getByTestId('form') as HTMLFormElement;
+        await act(async () => {
+            form.reset();
+            await new Promise((r) => setTimeout(r, 0));
+        });
+        expect(screen.getByRole('textbox')).toHaveValue('');
+        expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
+    });
+
+    it('re-reads a value written to the DOM (react-hook-form setValue) on the next render', () => {
+        const { rerender } = render(
+            <Input aria-label="Search" clearable data-n="1" />
+        );
+        const input = screen.getByRole<HTMLInputElement>('textbox');
+        input.value = 'set by setValue';
+        rerender(<Input aria-label="Search" clearable data-n="2" />);
+        expect(screen.getByRole('button', { name: 'Clear' })).toBeVisible();
     });
 });
