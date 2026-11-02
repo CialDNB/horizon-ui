@@ -516,7 +516,48 @@ export const ComputedStyles: Story = {
         await expect(focused.outlineStyle).toBe('solid');
         await expect(focused.outlineWidth).toBe('2px');
         await expect(focused.outlineColor).toBe(probe.outlineColor);
+        // Laptop, fine pointer: the 32px button sits inside the padding.
+        await expect(focused.outlineOffset).toBe('0px');
         await userEvent.keyboard(' ');
         await expect(dismissSpy).toHaveBeenCalledOnce();
+    },
+};
+
+/**
+ * At mobile the 44px dismiss target reaches the alert's corner, so a parent
+ * with `overflow: hidden` (cards, dialogs) would clip an outside ring: the
+ * ring is drawn 2px inside instead.
+ */
+export const DismissFocusMobile: Story = {
+    name: 'draws the dismiss focus ring inside the target at mobile',
+    tags: ['!autodocs', '!dev'],
+    globals: { viewport: { value: 'mobile', isRotated: false } },
+    render: () => (
+        <div
+            data-testid="clip"
+            style={{ overflow: 'hidden', borderRadius: 16 }}
+        >
+            <Alert variant="info" onDismiss={() => undefined}>
+                Few data credits left.
+            </Alert>
+        </div>
+    ),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        const dismiss = canvas.getByRole('button', { name: 'Dismiss' });
+        await userEvent.tab();
+        await expect(dismiss).toHaveFocus();
+        const cs = getComputedStyle(dismiss);
+        await expect(cs.outlineStyle).toBe('solid');
+        await expect(cs.outlineWidth).toBe('2px');
+        await expect(cs.outlineOffset).toBe('-2px');
+        // The ring (border box grown by width + offset) stays inside the clip.
+        const ring = dismiss.getBoundingClientRect();
+        const clip = canvas.getByTestId('clip').getBoundingClientRect();
+        const grow =
+            Number.parseFloat(cs.outlineWidth) +
+            Number.parseFloat(cs.outlineOffset);
+        await expect(ring.top - grow).toBeGreaterThanOrEqual(clip.top - 0.5);
+        await expect(ring.right + grow).toBeLessThanOrEqual(clip.right + 0.5);
     },
 };

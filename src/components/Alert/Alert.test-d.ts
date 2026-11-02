@@ -27,3 +27,8 @@ export const onClose: AlertProps = { onClose: () => undefined };
 
 // @ts-expect-error onDismiss takes no event (the button is internal)
 export const dismissArgs: AlertProps = { onDismiss: (id: string) => id };
+
+export const landmark: AlertProps = { role: 'region', 'aria-label': 'Notices' };
+
+// @ts-expect-error only alert, status, none or region (not an arbitrary ARIA role)
+export const buttonRole: AlertProps = { role: 'button' };

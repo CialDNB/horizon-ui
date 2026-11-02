@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import type { Brand } from '../../tokens/brands';
 import { HorizonProvider } from '../../provider';
 import { Button } from '../Button';
@@ -166,5 +167,33 @@ describe('Alert', () => {
             </HorizonProvider>
         );
         expect(screen.getByRole('alert')).toBeVisible();
+    });
+
+    describe('old x-core values from untyped callers', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it.each(['standard', 'inline', 'footer'])(
+            'variant="%s" renders as info without throwing and warns once',
+            (old) => {
+                const warn = vi
+                    .spyOn(console, 'warn')
+                    .mockImplementation(() => {});
+                const { container, rerender } = render(
+                    <Alert variant={old as never}>Message</Alert>
+                );
+                rerender(<Alert variant={old as never}>Message again</Alert>);
+                const alert = screen.getByRole('status');
+                expect(alert).toHaveAttribute('data-variant', 'info');
+                expect(alert).toHaveClass('hz:bg-info-subtle');
+                expect(
+                    container.querySelector('[data-alert-icon]')
+                ).toHaveAttribute('data-icon', 'Info');
+                expect(warn).toHaveBeenCalledOnce();
+                expect(warn.mock.calls[0]?.[0]).toContain(`variant "${old}"`);
+            }
+        );
     });
 });

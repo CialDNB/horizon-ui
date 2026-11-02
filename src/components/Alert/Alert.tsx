@@ -11,13 +11,9 @@ import { WarningIcon } from '@phosphor-icons/react/dist/csr/Warning';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { cva, type VariantProps } from 'class-variance-authority';
-import {
-    forwardRef,
-    type AriaRole,
-    type HTMLAttributes,
-    type ReactNode,
-} from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const alertStyles = cva(
@@ -56,8 +52,10 @@ const toneIcon = {
     neutral: { name: 'Info', Icon: InfoIcon },
 } as const satisfies Record<AlertVariant, unknown>;
 
+const alertVariantNames = Object.keys(toneIcon) as AlertVariant[];
+
 /** Errors and warnings interrupt; the rest wait for the user to be idle. */
-const toneRole: Record<AlertVariant, AriaRole> = {
+const toneRole: Record<AlertVariant, AlertRole> = {
     info: 'status',
     success: 'status',
     warning: 'alert',
@@ -65,8 +63,17 @@ const toneRole: Record<AlertVariant, AriaRole> = {
     neutral: 'status',
 };
 
+/**
+ * Roles an {@link Alert} can take: the two live-region roles, `none` for
+ * static guidance, or `region` (needs `aria-label`) for a landmark.
+ */
+export type AlertRole = 'alert' | 'status' | 'none' | 'region';
+
 /** Props for {@link Alert}. */
-export type AlertProps = Omit<HTMLAttributes<HTMLDivElement>, 'title'> &
+export type AlertProps = Omit<
+    HTMLAttributes<HTMLDivElement>,
+    'title' | 'role'
+> &
     DnbBase & {
         /**
          * Tone: colours, icon and default role. `warning` and `error` render
@@ -111,7 +118,7 @@ export type AlertProps = Omit<HTMLAttributes<HTMLDivElement>, 'title'> &
          * is part of the page content rather than a reaction to the user, or
          * `"none"` for static guidance that must not be announced.
          */
-        role?: AriaRole;
+        role?: AlertRole;
     };
 
 /** Class string for an Alert surface (`variant`), conflict-resolved with `cn()`. */
@@ -133,7 +140,10 @@ const dismissStyles = cn(
     'hz:size-11 hz:-m-3 hz:tablet:pointer-fine:size-8 hz:tablet:pointer-fine:-m-1.5',
     'hz:[&_svg]:size-5 hz:[&_svg]:pointer-events-none',
     'hz:transition-colors hz:duration-fast hz:ease-standard hz:hover:bg-current/12 hz:active:bg-current/16',
-    'hz:outline-ring hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:outline-offset-0 hz:focus-visible:outline-solid hz:focus-visible:outline-ring'
+    // The ring sits 2px inside the target where the 44px target reaches the
+    // alert's edge (an overflow-hidden parent would clip an outside ring);
+    // the 32px fine-pointer target has room for it at offset 0.
+    'hz:outline-ring hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:-outline-offset-2 hz:tablet:pointer-fine:focus-visible:outline-offset-0 hz:focus-visible:outline-solid hz:focus-visible:outline-ring'
 );
 
 /**
@@ -146,7 +156,7 @@ const dismissStyles = cn(
  */
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
     {
-        variant = 'info',
+        variant: variantProp,
         title,
         icon,
         action,
@@ -159,6 +169,14 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
     },
     ref
 ) {
+    // Untyped callers may pass x-core values (`variant="standard"`).
+    const variant = resolveOption(
+        'Alert',
+        'variant',
+        variantProp,
+        alertVariantNames,
+        'info'
+    );
     const hasTitle = title !== undefined && title !== null && title !== false;
     const { name, Icon } = toneIcon[variant];
     const hasAction = action !== undefined && action !== null;
