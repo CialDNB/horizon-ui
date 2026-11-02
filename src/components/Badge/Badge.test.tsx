@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { createRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import { brands, type Brand, type SemanticKey } from '../../tokens/brands';
 import { contrastRatio } from '../../tokens/contrast';
 import { Badge, BadgeAnchor, badgeVariants, type BadgeTone } from '.';
@@ -211,6 +212,28 @@ describe('Badge', () => {
         expect(ref.current).toHaveAttribute('data-did', 'status');
         expect(ref.current).toHaveClass('hz:ms-2');
         expect(Badge.displayName).toBe('Badge');
+    });
+
+    describe('old x-core values from untyped callers', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it('an MUI colour as variant falls back to primary with a coloured dot and warns once', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const ref = createRef<HTMLSpanElement>();
+            render(
+                <Badge ref={ref} variant={'secondary' as never}>
+                    Status
+                </Badge>
+            );
+            expect(ref.current).toHaveAttribute('data-variant', 'primary');
+            expect(ref.current?.querySelector('[data-badge-dot]')).toHaveClass(
+                'hz:bg-primary'
+            );
+            expect(warn).toHaveBeenCalledOnce();
+        });
     });
 });
 

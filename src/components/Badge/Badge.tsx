@@ -7,6 +7,7 @@ import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const badgeStyles = cva(
@@ -184,6 +185,13 @@ const labelDot: Record<BadgeTone, string> = {
     error: 'hz:bg-destructive hz:ring-destructive-strong',
 };
 
+const badgeVariantNames: readonly BadgeVariant[] = [
+    ...(Object.keys(labelDot) as BadgeTone[]),
+    'ai',
+    'ai-verified',
+    'ai-unverified',
+];
+
 const isTone = (variant: BadgeVariant): variant is BadgeTone =>
     !variant.startsWith('ai');
 
@@ -241,9 +249,17 @@ function Marker({ variant }: { variant: BadgeVariant }) {
  * {@link BadgeAnchor} to pin a badge to its corner.
  */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
-    { variant = 'primary', count, max = 999, className, children, ...rest },
+    { variant: variantProp, count, max = 999, className, children, ...rest },
     ref
 ) {
+    // Untyped callers may pass x-core/MUI colours (`variant="secondary"`).
+    const variant = resolveOption(
+        'Badge',
+        'variant',
+        variantProp,
+        badgeVariantNames,
+        'primary'
+    );
     if (count === 0) return null;
     const form =
         count !== undefined && isTone(variant)
