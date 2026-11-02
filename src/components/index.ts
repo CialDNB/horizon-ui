@@ -92,6 +92,8 @@ export type {
     SpinnerTone,
     SpinnerVariantOptions,
 } from './Spinner';
+export { Switch, switchVariants } from './Switch';
+export type { SwitchProps, SwitchVariantOptions } from './Switch';
 export { Textarea, textareaVariants } from './Textarea';
 export type {
     TextareaProps,

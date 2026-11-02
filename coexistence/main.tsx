@@ -25,6 +25,7 @@ import {
     RadioGroupItem,
     Separator,
     Spinner,
+    Switch,
     Textarea,
     Typography,
 } from '@cialdnb/horizon-ui';
@@ -619,6 +620,14 @@ function App() {
                                 data-testid="hz-radio-disabled"
                             />
                         </RadioGroup>
+                        <div>
+                            <Switch label="Alerts" data-testid="hz-switch" />
+                            <Switch
+                                label="On"
+                                defaultChecked
+                                data-testid="hz-switch-on"
+                            />
+                        </div>
                         <Textarea
                             aria-label="Comment"
                             placeholder="Add a comment"

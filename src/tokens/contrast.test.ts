@@ -311,6 +311,24 @@ nonTextPairs.push(
         text: 'destructive',
         surface: 'background',
     },
+    { use: 'Switch off track', text: 'control-border', surface: 'background' },
+    { use: 'Switch on track', text: 'primary', surface: 'background' },
+    {
+        use: 'Switch thumb on the off track',
+        text: 'background',
+        surface: 'control-border',
+    },
+    {
+        use: 'Switch thumb on the on track',
+        text: 'background',
+        surface: 'primary',
+    },
+    {
+        use: 'Switch thumb on the hovered on track',
+        text: 'background',
+        surface: 'primary-hover',
+    },
+    { use: 'Switch focus ring', text: 'ring', surface: 'background' },
     {
         use: 'form control boundary on a popover',
         text: 'control-border',

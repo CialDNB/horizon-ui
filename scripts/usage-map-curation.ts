@@ -214,7 +214,8 @@ export const curation: Record<string, Curation> = {
     Switch: {
         batch: 2,
         horizon: 'Switch',
-        note: 'Planned: Radix Switch, `onCheckedChange`.',
+        note: 'Done in Task 11a, see Switch section below. `onChange(event, checked)` becomes `onCheckedChange(checked)`; MUI `FormControlLabel` becomes `label`; `checked`, `defaultChecked`, `disabled`, `name` kept; `color`, `size`, `sx`, `edge`, `inputProps`, `disableRipple` dropped with a dev warning; the squish animation becomes a spring transform (instant under reduced motion). v1 `Switch` call sites (4 files: `checked`, `onChange`) migrate the same way.',
+        status: 'done',
     },
     Dialog: {
         batch: 2,

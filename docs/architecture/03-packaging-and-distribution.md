@@ -66,6 +66,7 @@ Sizes are minified, measured by bundling the package alone with Vite (react exte
 | `clsx` | 0.8 KB (0.5 KB) | Conditional class strings inside `cn`. |
 | `@radix-ui/react-checkbox` | 19.8 KB (6.3 KB), incl. its shared Radix internals (primitive, context, presence, use-size); most are shared with the other Radix packages, so the marginal cost after Select is far smaller | `Checkbox` (Task 11a): `role="checkbox"`, tri-state `aria-checked="mixed"`, Space toggling, label/`htmlFor` click, and a hidden native input so it submits with `<form>` and resets with `form.reset()`. Rebuilding this correctly by hand is the shadcn anti-pattern; x-core used MUI's. |
 | `@radix-ui/react-radio-group` | 39.5 KB (11.3 KB), incl. roving focus, collection and direction internals (shared with Select) | `RadioGroup` (Task 11a): WAI-ARIA radio group with roving tabindex, arrow-key selection that skips disabled items and reverses in RTL, and native inputs for forms. Roving focus is the error-prone part and is reused by later menus/tabs. |
+| `@radix-ui/react-switch` | 16.0 KB (5.3 KB), mostly the internals shared with Checkbox | `Switch` (Task 11a): `role="switch"` with `aria-checked`, Space/Enter, label click and a hidden native input for forms, the same contract as Checkbox. |
 
 ## Publishing
 

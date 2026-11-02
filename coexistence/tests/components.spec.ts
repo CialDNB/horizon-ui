@@ -628,6 +628,29 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    Switch: {
+        targets: [
+            ...plain(['hz-switch', 'hz-switch-on']),
+            ...['', '-on'].map((v) => ({
+                key: `hz-switch${v} track`,
+                selector: `${byTestId(`hz-switch${v}`)} > span`,
+            })),
+            ...['', '-on'].map((v) => ({
+                key: `hz-switch${v} thumb`,
+                selector: `${byTestId(`hz-switch${v}`)} [data-switch-thumb]`,
+            })),
+            {
+                key: 'track, focused',
+                selector: `${byTestId('hz-switch')} > span`,
+                focus: byTestId('hz-switch'),
+            },
+            {
+                key: 'label',
+                selector: `[data-switch]:has(> ${byTestId('hz-switch')}) > label`,
+            },
+        ],
+        props: [...FIELD_PROPS, 'translate', 'transform'],
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1371,6 +1394,12 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
         'hz-radio': ['borderRadius: 4px -> 0px'],
         'hz-radio-checked': ['borderRadius: 4px -> 0px'],
         'hz-radio-disabled': ['borderRadius: 4px -> 0px'],
+        label: choiceLabelLimit('rgb(15, 23, 42)'),
+    },
+    // Track, thumb and focus ring are spans and survive.
+    Switch: {
+        'hz-switch': ['borderRadius: 100px -> 0px'],
+        'hz-switch-on': ['borderRadius: 100px -> 0px'],
         label: choiceLabelLimit('rgb(15, 23, 42)'),
     },
     FormField: {
