@@ -10,7 +10,12 @@ export interface Curation {
     /** Extra text for the superseded rows of the family (shared enums/constants). */
     supersededNote?: string;
     /** Forces a status for the latest version (skip, no-equivalent, done). */
-    status?: 'skip' | 'no-equivalent' | 'done' | 'superseded';
+    status?: 'skip' | 'no-equivalent' | 'done' | 'partial' | 'superseded';
+    /**
+     * Status for the family's superseded rows when their call sites cannot
+     * fully migrate yet (e.g. `partial`: the port lacks a feature they use).
+     */
+    supersededStatus?: 'partial';
 }
 
 /** Keyed by family base name (or by exact name for the Drawer exception). */
@@ -191,8 +196,11 @@ export const curation: Record<string, Curation> = {
     Select: {
         batch: 2,
         horizon: 'Select',
-        note: 'Done in Task 11a for single selection, see Select section below. `options` array becomes `SelectItem` children (`group` -> `SelectGroup`, `disabled` per item); `onChange(event, value)` becomes `onValueChange(value)`; `placeholderValue` becomes `placeholder`; `clearable` kept (+ `clearLabel`); `size="small"` -> `sm`; label/helperText/error/isLabelContainer/info move to FormField. NOT PORTED (need a Combobox, Task 11b): `multiple`, `variant` check/radio/switch, `enableSearchField`/`placeholderSearchField`, apply/reset buttons, `menuHeaderTitle`/`menuHeaderIcon`, `loading`, `startAdornment` (5 of 7 customer360 SelectV2 openings use `multiple`). Dropped with a dev warning.',
-        status: 'done',
+        note: 'PARTIAL (Task 11a): single selection only, see Select section below. `options` array becomes `SelectItem` children (`group` -> `SelectGroup`, `disabled` per item); `onChange(event, value)` becomes `onValueChange(value)`; `placeholderValue` becomes `placeholder`; `clearable` kept (+ `clearLabel`); `size="small"` -> `sm`; label/helperText/error/isLabelContainer/info move to FormField. BLOCKED: multiple selection (`multiple`, `variant` check/radio/switch, apply/reset) and the search field need Combobox (planned, Task 11c): 2 of 4 customer360 SelectV2 files (5 of 7 openings) use `multiple`, 1 opening uses search. Dropped props warn in development.',
+        status: 'partial',
+        supersededNote:
+            'PARTIAL: 8 of 22 customer360 files (10 of 30 openings) use `multiple` (MUI multi-select with chips): blocked until Combobox (planned, Task 11c); single-value call sites can migrate to `Select` now.',
+        supersededStatus: 'partial',
     },
     Checkbox: {
         batch: 2,

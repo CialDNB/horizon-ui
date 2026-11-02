@@ -92,6 +92,7 @@ function toMapRows(report: Report): MapRow[] {
                 ? 'Lower version of the family; not ported (unused-in-customer360).'
                 : `Lower version of the family; not ported. Migrate call sites to \`${h}\`.`;
             if (cur.supersededNote) note += ` ${cur.supersededNote}`;
+            if (cur.supersededStatus) mapStatus = cur.supersededStatus;
         } else if (mapStatus === 'skip' && unused) {
             const rest = note
                 .replace(
@@ -217,7 +218,7 @@ export function renderRegion(report: Report): string {
 Counts are **runtime** imports and distinct files; type-only imports (\`import type\`, \`import { type X }\`, and names x-core exports only as types such as \`ChipProps\`) are shown separately and excluded from ranking, because they vanish at build time. Everything is ranked by runtime files.
 
 - ${rows.length} x-core components (${used.length} version families imported directly by customer360; ${rows.length - direct} components have no direct import).
-- Status: ${countStatus('todo')} todo, ${countStatus('done')} done, ${countStatus('superseded')} superseded, ${countStatus('no-equivalent')} no-equivalent, ${countStatus('skip')} skip.
+- Status: ${countStatus('todo')} todo, ${countStatus('done')} done, ${countStatus('partial')} partial, ${countStatus('superseded')} superseded, ${countStatus('no-equivalent')} no-equivalent, ${countStatus('skip')} skip.
 - **Superseded versions are still heavily used by customer360**: ${supersededUse.join('; ')}. Migrating those call sites targets the single horizon-ui name.
 - Used by customer360 but missing from the plan's batch lists: ${notInPlan}. See the "Usage-ordered batch lists" subsections under Tasks 10-13 in the plan.
 

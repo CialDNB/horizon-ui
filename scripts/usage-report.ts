@@ -40,7 +40,13 @@ const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
 
 export type Kind = 'named' | 'default' | 'namespace' | 'reexport' | 'dynamic';
 export type Status =
-    'todo' | 'in-progress' | 'done' | 'superseded' | 'no-equivalent' | 'skip';
+    | 'todo'
+    | 'in-progress'
+    | 'done'
+    | 'partial'
+    | 'superseded'
+    | 'no-equivalent'
+    | 'skip';
 
 export interface UsageRecord {
     specifier: string;
