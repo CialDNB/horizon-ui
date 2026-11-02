@@ -17,6 +17,7 @@ import {
     type RefObject,
 } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveOption } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 
 const chipStyles = cva(
@@ -181,6 +182,15 @@ const removeStyles = cn(
     'hz:outline-ring hz:focus-visible:outline-2 hz:focus-visible:outline-offset-0 hz:focus-visible:outline-solid hz:focus-visible:outline-ring'
 );
 
+const chipTones: readonly ChipVariant[] = [
+    'neutral',
+    'primary',
+    'info',
+    'success',
+    'warning',
+    'error',
+];
+
 /** Options accepted by {@link chipVariants}. */
 export type ChipVariantOptions = Omit<
     VariantProps<typeof chipStyles>,
@@ -335,9 +345,9 @@ function useIsTruncated(label: string) {
 export const Chip = forwardRef<HTMLSpanElement, ChipProps>(function Chip(
     {
         label,
-        variant = 'primary',
-        appearance = 'soft',
-        size = 'md',
+        variant: variantProp,
+        appearance: appearanceProp,
+        size: sizeProp,
         icon,
         onClick,
         onDelete,
@@ -348,6 +358,23 @@ export const Chip = forwardRef<HTMLSpanElement, ChipProps>(function Chip(
     },
     ref
 ) {
+    // Untyped callers may pass x-core values (`size="small"`,
+    // `variant="outlined"`); `size` indexes the hit-area records below.
+    const variant = resolveOption(
+        'Chip',
+        'variant',
+        variantProp,
+        chipTones,
+        'primary'
+    );
+    const appearance = resolveOption(
+        'Chip',
+        'appearance',
+        appearanceProp,
+        ['soft', 'outline'],
+        'soft'
+    );
+    const size = resolveOption('Chip', 'size', sizeProp, ['sm', 'md'], 'md');
     const [labelRef, truncated] = useIsTruncated(label);
     const actionRef = useRef<HTMLButtonElement>(null);
     const removeRef = useRef<HTMLButtonElement>(null);

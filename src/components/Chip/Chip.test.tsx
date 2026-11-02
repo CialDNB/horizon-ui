@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetWarnings } from '../../lib/options';
 import { Chip, chipVariants } from '.';
 
 describe('Chip', () => {
@@ -292,5 +293,35 @@ describe('Chip', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Remove Tag' }));
         expect(onDelete).toHaveBeenCalledTimes(1);
         expect(onClick).not.toHaveBeenCalled();
+    });
+
+    describe('old x-core values from untyped callers', () => {
+        afterEach(() => {
+            resetWarnings();
+            vi.restoreAllMocks();
+        });
+
+        it('size="small" with onClick and onDelete renders md without throwing', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const ref = createRef<HTMLSpanElement>();
+            render(
+                <Chip
+                    ref={ref}
+                    label="Tag"
+                    size={'small' as never}
+                    variant={'outlined' as never}
+                    appearance={'filled' as never}
+                    onClick={() => undefined}
+                    onDelete={() => undefined}
+                />
+            );
+            expect(
+                screen.getByRole('button', { name: 'Remove Tag' })
+            ).toBeVisible();
+            expect(ref.current).toHaveAttribute('data-size', 'md');
+            expect(ref.current).toHaveAttribute('data-variant', 'primary');
+            expect(ref.current).toHaveAttribute('data-appearance', 'soft');
+            expect(warn).toHaveBeenCalledTimes(3);
+        });
     });
 });
