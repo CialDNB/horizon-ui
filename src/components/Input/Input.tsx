@@ -26,6 +26,7 @@ import {
     fieldState,
     fieldStateOf,
     useFieldControl,
+    clearAction,
 } from '../../primitives';
 import { Spinner } from '../Spinner';
 import type { DnbBase } from '../../types/DnbBase';
@@ -88,13 +89,7 @@ const adornment =
 // A 44px target at mobile (32px with a fine pointer from tablet) that
 // reaches into the field padding; the icon is 16px. `m-0` first: host
 // `button + button { margin-left }` and the reboot's `button { margin: 0 }`.
-const clearButton = [
-    'hz:m-0 hz:-me-3 hz:inline-flex hz:size-11 hz:shrink-0 hz:cursor-pointer hz:items-center hz:justify-center hz:rounded-full hz:border-0 hz:bg-transparent hz:p-0 hz:text-muted-foreground',
-    'hz:tablet:pointer-fine:-me-2 hz:tablet:pointer-fine:size-8',
-    'hz:transition-colors hz:duration-fast hz:ease-standard hz:hover:text-foreground',
-    'hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:-outline-offset-2 hz:focus-visible:outline-solid hz:focus-visible:outline-ring',
-    'hz:[&_svg]:size-4 hz:[&_svg]:align-middle',
-].join(' ');
+const clearButton = cn(clearAction, 'hz:-me-3 hz:tablet:pointer-fine:-me-2');
 
 /** Options accepted by {@link inputVariants}: `size`, `state`. */
 export type InputVariantOptions = VariantProps<typeof inputStyles>;

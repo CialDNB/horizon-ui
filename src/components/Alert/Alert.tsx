@@ -14,6 +14,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { omitLegacyProps, resolveOption } from '../../lib/options';
+import { inlineActionBase } from '../../primitives';
 import type { DnbBase } from '../../types/DnbBase';
 
 const alertStyles = cva(
@@ -132,18 +133,16 @@ const firstLine = (hasTitle: boolean) =>
     cn('hz:flex hz:shrink-0 hz:items-center', hasTitle ? 'hz:h-6' : 'hz:h-5');
 
 const dismissStyles = cn(
-    // Bootstrap reboot sets button margin, radius and a `button:focus`
-    // outline: each is set here as a class, which wins in the unlayered build.
-    'hz:inline-flex hz:items-center hz:justify-center hz:rounded-full hz:border-0 hz:bg-transparent hz:p-0 hz:text-inherit hz:cursor-pointer',
-    // 44px target at mobile and on touch, laid out as 20px (negative margins)
-    // so it never pushes the text; 32px from tablet with a fine pointer.
-    'hz:size-11 hz:-m-3 hz:tablet:pointer-fine:size-8 hz:tablet:pointer-fine:-m-1.5',
+    inlineActionBase,
+    'hz:text-inherit',
+    // Laid out as 20px (negative margins) so it never pushes the text.
+    'hz:-m-3 hz:tablet:pointer-fine:-m-1.5',
     'hz:[&_svg]:size-5 hz:[&_svg]:pointer-events-none',
-    'hz:transition-colors hz:duration-fast hz:ease-standard hz:hover:bg-current/12 hz:active:bg-current/16',
-    // The ring sits 2px inside the target where the 44px target reaches the
-    // alert's edge (an overflow-hidden parent would clip an outside ring);
-    // the 32px fine-pointer target has room for it at offset 0.
-    'hz:outline-ring hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:-outline-offset-2 hz:tablet:pointer-fine:focus-visible:outline-offset-0 hz:focus-visible:outline-solid hz:focus-visible:outline-ring'
+    'hz:hover:bg-current/12 hz:active:bg-current/16',
+    // The ring sits 2px inside the 44px target where it reaches the alert's
+    // edge (an overflow-hidden parent would clip an outside ring); the 32px
+    // fine-pointer target has room for it at offset 0.
+    'hz:tablet:pointer-fine:focus-visible:outline-offset-0'
 );
 
 /** x-core / MUI props that are dropped (with a dev warning). */

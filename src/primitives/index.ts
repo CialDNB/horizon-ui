@@ -27,3 +27,4 @@ export {
     choiceTarget,
     choiceWrapper,
 } from './choiceStyles';
+export { clearAction, inlineActionBase } from './inlineAction';

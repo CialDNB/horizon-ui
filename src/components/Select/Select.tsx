@@ -35,6 +35,7 @@ import {
     useFieldControl,
     useResolvedDir,
     type Direction,
+    clearAction,
 } from '../../primitives';
 import { usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
@@ -116,13 +117,10 @@ const itemStyles = [
 const scrollButton =
     'hz:flex hz:h-6 hz:cursor-default hz:items-center hz:justify-center hz:text-muted-foreground hz:[&>svg]:size-4';
 
-const clearButton = [
-    'hz:absolute hz:inset-y-0 hz:end-8 hz:m-0 hz:my-auto hz:inline-flex hz:size-11 hz:cursor-pointer hz:items-center hz:justify-center hz:rounded-full hz:border-0 hz:bg-transparent hz:p-0 hz:text-muted-foreground',
-    'hz:tablet:pointer-fine:size-8',
-    'hz:transition-colors hz:duration-fast hz:ease-standard hz:hover:text-foreground',
-    'hz:focus:outline-none hz:focus-visible:outline-2 hz:focus-visible:-outline-offset-2 hz:focus-visible:outline-solid hz:focus-visible:outline-ring',
-    'hz:[&_svg]:size-4 hz:[&_svg]:align-middle',
-].join(' ');
+const clearButton = cn(
+    clearAction,
+    'hz:absolute hz:inset-y-0 hz:end-8 hz:my-auto'
+);
 
 /** x-core SelectV2 / MUI Select props that are dropped (dev warning). */
 const legacySelectProps = {
