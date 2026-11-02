@@ -285,10 +285,10 @@ These runtime imports are attributed to a superseded component, so porting only 
 | `color` = `secondary`/`success`/`warning`/`info`/`orange`/`purple`/`neutral`/`bright` | Not ported. Colour is set by the variant; status colours belong to Alert/Badge. `neutral` text buttons map to `variant="ghost"`. |
 | (none)                                                                                | `variant="ghost"`, `variant="link"` (new)                                                                                        |
 | `size="small"` / `"medium"` / `"large"`                                               | `size="sm"` / `"md"` / `"lg"`                                                                                                    |
-| `startIcon` / `endIcon`                                                               | Icons as `children`, before or after the label                                                                                   |
+| `startIcon` / `endIcon` | `startIcon` / `endIcon` (decorative, hidden from AT; not rendered with `asChild`), or icons in `children` |
 | `textColor`                                                                           | Not ported (token-only colour)                                                                                                   |
 | `loading`                                                                             | `loading` (also sets `aria-busy`/`aria-disabled`, keeps focus and width)                                                         |
-| `sx`, MUI props                                                                       | `className` (`hz:` utilities), `asChild` for links                                                                               |
+| `sx`, MUI props (`color`, `textColor`, `showTextUnderLine`, `disableElevation`, `disableRipple`) | `className` (`hz:` utilities), `asChild` for links. From untyped callers these are dropped with a one-shot dev warning instead of leaking to the DOM; unknown `variant`/`size` (`contained`, `small`) fall back to `primary`/`md` with a warning |
 | (none)                                                                                | `fullWidth`                                                                                                                      |
 
 Visual deviations from ButtonV2 (no Figma link was available; decisions in the Task 6 report):
@@ -474,7 +474,7 @@ customer360 usage measured at port time (11 Avatar files, 1 AvatarGroup file): `
 
 | x-core                                                      | horizon-ui                                                                                          |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `alt` (image alt **and** initials source)                   | `name` (initials + accessible name); `alt` overrides the name, `alt=""` = decorative                |
+| `alt` (image alt **and** initials source; still the initials source when `name` is absent, so `<Avatar alt={name} />` keeps its initials)                   | `name` (initials + accessible name); `alt` overrides the name, `alt=""` = decorative                |
 | `size` xsmall / small (default) / medium / large / xlarge   | `size` xs / sm (default) / md / lg / xl, same px (16/24/32/40/64); initials on the type scale       |
 | `size={{ width, height }}`, `sx` width/height               | Dropped: pick the nearest step, or `className` (for example `hz:size-24` for the 96px company logo) |
 | MUI `variant` circular / rounded / square                   | `shape` circle / rounded (4px up to sm, 8px from md); square dropped                                |
@@ -488,6 +488,8 @@ customer360 usage measured at port time (11 Avatar files, 1 AvatarGroup file): `
 | `+N` with a tooltip listing names; per-avatar name tooltips | `+N` named "N more" (`overflowLabel`); tooltips wait for Tooltip (Task 11)                          |
 | single avatar: avatar + caption name                        | Dropped: compose `Avatar alt=""` + `Typography`                                                     |
 | `sx`, `imgProps`, `srcSet`, `sizes`, `component`            | Dropped                                                                                             |
+
+Untyped callers: `sx`, `variant`, `imgProps`, `sizes`, `srcSet`, `component` are dropped with a one-shot dev warning (every ported component does the same for its x-core/MUI-only props).
 
 Visual deviations from x-core (no Figma link was available): initials are semibold on the type scale (x-core used MUI defaults, 12-18px regular); group avatars overlap 4px (xs, sm) / 8px (md+) with a 2px `background` ring (MUI: 8px, 2px border); the `+N` avatar is a neutral soft tint (MUI grey).
 
