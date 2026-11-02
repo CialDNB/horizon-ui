@@ -51,3 +51,11 @@ export const storyLayout = {
         margin: '0 0 8px',
     },
 } as const;
+
+/** Resolves once `el`'s running transitions have finished (settled styles). */
+export async function settled(el: Element): Promise<CSSStyleDeclaration> {
+    await Promise.all(
+        el.getAnimations().map((a) => a.finished.catch(() => undefined))
+    );
+    return getComputedStyle(el);
+}

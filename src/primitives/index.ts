@@ -11,3 +11,5 @@ export type {
 } from './formField';
 export { useResolvedDir } from './useResolvedDir';
 export type { Direction } from './useResolvedDir';
+export { fieldBase, fieldState, fieldStateOf } from './fieldStyles';
+export type { FieldState } from './fieldStyles';

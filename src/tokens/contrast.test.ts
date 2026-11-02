@@ -116,6 +116,12 @@ textPairs.push(
         text: 'destructive-strong',
         surface: 'background',
     },
+    { use: 'Input value', text: 'foreground', surface: 'background' },
+    {
+        use: 'Input placeholder',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
     { use: 'popover text', text: 'popover-foreground', surface: 'popover' },
     { use: 'popover muted text', text: 'muted-foreground', surface: 'popover' }
 );
@@ -225,6 +231,19 @@ nonTextPairs.push(
     {
         use: 'form control boundary (Input, Select trigger, Checkbox, Radio, Switch off track)',
         text: 'control-border',
+        surface: 'background',
+    },
+    { use: 'Input hover ring', text: 'primary', surface: 'background' },
+    { use: 'Input focus ring (2px)', text: 'ring', surface: 'background' },
+    { use: 'Input invalid ring', text: 'destructive', surface: 'background' },
+    {
+        use: 'Input invalid icon',
+        text: 'destructive-strong',
+        surface: 'background',
+    },
+    {
+        use: 'Input clear/adornment icon',
+        text: 'muted-foreground',
         surface: 'background',
     },
     {

@@ -15,6 +15,7 @@ import {
     Chip,
     HorizonProvider,
     IconButton,
+    Input,
     Label,
     Link,
     Progress,
@@ -510,6 +511,56 @@ function App() {
                         <Label disabled data-testid="hz-label-disabled">
                             Disabled label
                         </Label>
+                        <Input
+                            id="hz-form-input"
+                            placeholder="Acme Ltd."
+                            data-testid="hz-input"
+                        />
+                        <Input
+                            size="sm"
+                            aria-label="Small"
+                            data-testid="hz-input-sm"
+                        />
+                        <Input
+                            size="lg"
+                            aria-label="Large"
+                            data-testid="hz-input-lg"
+                        />
+                        <Input
+                            aria-label="Invalid"
+                            invalid
+                            defaultValue="acme@"
+                            data-testid="hz-input-invalid"
+                        />
+                        <Input
+                            aria-label="Disabled"
+                            disabled
+                            defaultValue="off"
+                            data-testid="hz-input-disabled"
+                        />
+                        <Input
+                            type="number"
+                            aria-label="Amount"
+                            defaultValue={12}
+                            data-testid="hz-input-number"
+                        />
+                        <Input
+                            type="search"
+                            aria-label="Search"
+                            clearable
+                            defaultValue="acme"
+                            startAdornment={<PencilIcon />}
+                            endAdornment={
+                                <IconButton
+                                    variant="ghost"
+                                    size="sm"
+                                    aria-label="Go"
+                                >
+                                    <PencilIcon />
+                                </IconButton>
+                            }
+                            data-testid="hz-input-search"
+                        />
                     </HorizonProvider>
                 </section>
                 <section data-testid="hz-rtl-section">

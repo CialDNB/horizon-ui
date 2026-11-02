@@ -431,6 +431,69 @@ const LABEL: Target[] = [
     { key: 'required mark', selector: `${byTestId('hz-label')} span` },
 ];
 
+const FIELD_PROPS = [
+    'width',
+    'height',
+    'marginTop',
+    'marginBottom',
+    'marginInlineStart',
+    'marginInlineEnd',
+    'paddingTop',
+    'paddingInlineStart',
+    'paddingInlineEnd',
+    'borderTopWidth',
+    'borderTopStyle',
+    'borderRadius',
+    'boxShadow',
+    'boxSizing',
+    'backgroundColor',
+    'color',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'letterSpacing',
+    'appearance',
+    'outlineStyle',
+    'outlineWidth',
+    'outlineColor',
+    'outlineOffset',
+    'overflow',
+    'resize',
+    'cursor',
+    'display',
+    'verticalAlign',
+] as const;
+
+const fieldOf = (id: string) => `[data-input-field]:has(> ${byTestId(id)})`;
+const INPUT_IDS = ['', '-sm', '-lg', '-invalid', '-disabled', '-number'].map(
+    (v) => `hz-input${v}`
+);
+const INPUT: Target[] = [
+    ...plain(INPUT_IDS),
+    ...INPUT_IDS.map((id) => ({ key: `${id} field`, selector: fieldOf(id) })),
+    {
+        key: 'field, input focused',
+        selector: fieldOf('hz-input'),
+        focus: byTestId('hz-input'),
+    },
+    { key: 'search input', selector: byTestId('hz-input-search') },
+    { key: 'search field', selector: fieldOf('hz-input-search') },
+    {
+        key: 'clear button',
+        selector: `${fieldOf('hz-input-search')} button[aria-label="Clear"]`,
+    },
+    {
+        key: 'clear button, focused',
+        selector: `${fieldOf('hz-input-search')} button[aria-label="Clear"]`,
+        focus: `${fieldOf('hz-input-search')} button[aria-label="Clear"]`,
+    },
+    {
+        key: 'adornment IconButton (button + button)',
+        selector: `${fieldOf('hz-input-search')} button[aria-label="Go"]`,
+    },
+];
+
 /** The legacy-host stylesheets every probe is measured against. */
 const LEGACY_CSS: readonly { label: string; opts: Opts }[] = [
     { label: 'bootstrap-reboot.css', opts: { reboot: '1' } },
@@ -486,6 +549,7 @@ const PROBES: Record<string, Probe> = {
     IconButton: { targets: ICON_BUTTON, props: ICON_BUTTON_PROPS },
     Link: { targets: LINK, props: LINK_PROBE_PROPS },
     Label: { targets: LABEL, props: FORM_TYPE_PROPS },
+    Input: { targets: INPUT, props: FIELD_PROPS },
 };
 
 type Styles = Record<string, Record<string, string>>;
@@ -1184,6 +1248,38 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
             'display: block -> inline',
         ],
     },
+    // Inputs: Bootstrap's `input { line-height: inherit }` and customer360's
+    // `input { font-size: 14px }` win; buttons lose radius and negative
+    // margins, and customer360's `button:focus { outline: none }` removes the
+    // clear button's focus ring.
+    Input: {
+        'adornment IconButton (button + button)': [
+            'borderRadius: 100px -> 0px',
+            'lineHeight: 16px -> 24px',
+        ],
+        'clear button': [
+            'marginInlineEnd: -8px -> 0px',
+            'borderRadius: 100px -> 0px',
+        ],
+        'clear button, focused': [
+            'marginInlineEnd: -8px -> 0px',
+            'borderRadius: 100px -> 0px',
+            'outlineStyle: solid -> none',
+            'outlineWidth: 2px -> 3px',
+            'outlineColor: rgb(0, 80, 240) -> rgb(71, 85, 105)',
+        ],
+        'hz-input': ['lineHeight: 14px -> 21px'],
+        'hz-input-disabled': ['lineHeight: 14px -> 21px'],
+        'hz-input-invalid': ['lineHeight: 14px -> 21px'],
+        'hz-input-lg': ['fontSize: 16px -> 14px', 'lineHeight: 20px -> 21px'],
+        'hz-input-number': ['lineHeight: 14px -> 21px'],
+        'hz-input-sm': ['lineHeight: 14px -> 21px'],
+        'search input': [
+            'width: changed',
+            'lineHeight: 14px -> 21px',
+            'outlineOffset: 0px -> -2px',
+        ],
+    },
 };
 
 const sizeAgnostic = (changed: Record<string, string[]>) =>
@@ -1208,5 +1304,29 @@ test.describe('layered build (known limit): form controls against full Bootstrap
                 probe
             );
             expect(sizeAgnostic(diff(without, withHost))).toEqual(expected);
+        });
+});
+
+// `::placeholder` is a pseudo-element: measured separately. customer360 sets
+// `input::placeholder { color: var(--default-light) }` (unlayered).
+test.describe('form placeholders against customer360 host CSS', () => {
+    for (const horizonFirst of [false, true])
+        test(`placeholder colour unchanged, unlayered build (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+            page,
+        }) => {
+            const read = async (path: string) => {
+                await page.goto(path);
+                return page
+                    .getByTestId('hz-input')
+                    .evaluate(
+                        (el) => getComputedStyle(el, '::placeholder').color
+                    );
+            };
+            const without = await read(url('unlayered'));
+            const withHost = await read(
+                url('unlayered', { reboot: 'full', host: true, horizonFirst })
+            );
+            expect(withHost).toBe(without);
+            expect(without).toBe('rgb(71, 85, 105)');
         });
 });

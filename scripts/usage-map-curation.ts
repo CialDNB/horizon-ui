@@ -124,12 +124,14 @@ export const curation: Record<string, Curation> = {
     TextField: {
         batch: 2,
         horizon: 'Input',
-        note: 'Planned: `Input` + `FormField` (label/description/error); MUI `helperText`/`error` move to FormField.',
+        note: 'Done in Task 11a, see Input section below. `label`, `helperText` and `error` move to `FormField` (`label`, `description`, `error`); `error` on the input itself becomes `invalid`; `InputProps.startAdornment/endAdornment` and `leadingAdornment` become `startAdornment`/`endAdornment`; `size` small/medium becomes sm/md (+ lg); full width by default (`fullWidth` dropped); `multiline`/`rows`/`minRows` use `Textarea`; `characterLimit`, `mask`/`definitions`, `success`, `sx`, `variant`, `margin`, `InputLabelProps`, `inputProps`, `inputRef` dropped with a dev warning.',
+        status: 'done',
     },
     TextInput: {
         batch: 2,
         horizon: 'Input',
-        note: 'Planned: same as TextField.',
+        note: 'Done in Task 11a, see Input section below. As TextField; `clearable` kept (+ `clearLabel`, `onClear`), `isLoading` becomes `loading`; `size` small/medium/large becomes sm/md/lg (default md 40px from tablet, was large 40px); `isLabelContainer`, `info` use FormField; `append` (text/country selectors), `autoPopulateCountryCode` and country props not ported.',
+        status: 'done',
     },
     TextArea: {
         batch: 2,
