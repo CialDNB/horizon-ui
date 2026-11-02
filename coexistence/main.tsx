@@ -37,6 +37,15 @@ import {
     PopoverClose,
     PopoverContent,
     PopoverTrigger,
+    Dialog,
+    DialogBody,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from '@cialdnb/horizon-ui';
 import bootstrapFull from 'bootstrap/dist/css/bootstrap.css?raw';
 import bootstrapReboot from 'bootstrap/dist/css/bootstrap-reboot.css?raw';
@@ -251,6 +260,34 @@ function SelectInMuiDialog() {
  * inside a real MUI Dialog, under an inner `<HorizonProvider>` (the
  * documented pattern). `scope` prefixes the test ids.
  */
+/**
+ * An MUI Dialog opened from inside a Horizon Dialog: the unsupported order
+ * (it renders below the Horizon dialog), kept to measure it.
+ */
+function MuiFromHorizon() {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <Button
+                variant="secondary"
+                data-testid="open-mui-from-hz"
+                onClick={() => setOpen(true)}
+            >
+                Open MUI dialog
+            </Button>
+            <MuiDialog
+                open={open}
+                onClose={() => setOpen(false)}
+                disableEnforceFocus
+            >
+                <MuiDialogContent data-testid="mui-from-hz-content">
+                    MUI dialog opened from a Horizon dialog
+                </MuiDialogContent>
+            </MuiDialog>
+        </>
+    );
+}
+
 function Overlays({ scope }: { scope: string }) {
     return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -289,6 +326,41 @@ function Overlays({ scope }: { scope: string }) {
                     />
                 </PopoverContent>
             </Popover>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button
+                        variant="secondary"
+                        data-testid={`${scope}-dialog-trigger`}
+                    >
+                        Dialog
+                    </Button>
+                </DialogTrigger>
+                <DialogContent data-testid={`${scope}-dialog`}>
+                    <DialogHeader>
+                        <DialogTitle>Overlay dialog</DialogTitle>
+                        <DialogDescription>
+                            Dialog description
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogBody>
+                        <Input
+                            aria-label="Dialog field"
+                            data-testid={`${scope}-dialog-input`}
+                        />
+                        {scope === 'hz' && <MuiFromHorizon />}
+                    </DialogBody>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="secondary">Cancel</Button>
+                        </DialogClose>
+                        <DialogClose asChild>
+                            <Button data-testid={`${scope}-dialog-save`}>
+                                Save
+                            </Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

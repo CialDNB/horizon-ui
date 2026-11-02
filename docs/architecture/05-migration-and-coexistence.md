@@ -63,6 +63,14 @@ Measured in the coexistence harness (`coexistence/tests/components.spec.ts`, unl
 
 A `container` prop on Select was considered and not added: any container must itself be a `.hz-root` (for the variables), which is exactly what the inner provider gives; later overlays (Dialog, Popover, Tooltip) follow the same rule.
 
+### Overlays and MUI dialogs: stacking, Escape, focus (Task 11b)
+
+Every Horizon overlay layer is above the MUI modal (1300): Dialog/Drawer 1350 < DropdownMenu 1400 < Popover 1450 < Tooltip 1500 < Toast 1600 (`src/tokens/zIndex.ts`). Measured in `coexistence/tests/coexistence.spec.ts` ("stack in intended order") and `coexistence/tests/overlays.spec.ts`, both builds, full Bootstrap + customer360 host CSS:
+
+- **Supported: a Horizon overlay opened from inside an MUI Dialog** (content wrapped in the inner `<HorizonProvider>`). It portals into that provider, i.e. inside the MUI dialog's DOM, so MUI's focus trap accepts focus in it and its content is not `aria-hidden`. It paints on top, a Horizon Dialog's scrim covers the MUI dialog (no click-through), Tab stays in the Horizon dialog, Escape and a scrim click close only the Horizon overlay and focus returns to its trigger inside the MUI dialog; a second Escape then closes the MUI dialog.
+- **Escape containment.** MUI's Modal closes on any Escape `keydown` that reaches it, ignoring `defaultPrevented`. Radix handles Escape on `document` in the capture phase, so every Horizon overlay stops the native event there (`containEscape` in `src/primitives/overlay.ts`); without it one Escape closed both (measured before the fix).
+- **Not supported: an MUI Dialog opened from a Horizon Dialog.** The MUI dialog (1300, in `body`) renders below the Horizon dialog (1350) and the modal Horizon dialog blocks pointer input outside itself. Migrate the inner dialog first, or close the Horizon dialog before opening the MUI one.
+
 ## Component porting order (proposal)
 
 Principle: foundational + most-used first so customer360 gets value early. Final ranking should come from import counts in customer360 (builder: grep x-core imports in `customer360/client`).

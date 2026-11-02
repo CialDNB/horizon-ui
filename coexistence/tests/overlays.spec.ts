@@ -142,6 +142,79 @@ test.describe('Popover against Bootstrap 4.4.1 and customer360 host CSS', () => 
             });
 });
 
+/* ---------------------------------- Dialog ---------------------------------- */
+
+const openDialog = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-dialog-trigger').click();
+    const content = page.getByTestId('hz-dialog');
+    await expect(content).toBeVisible();
+    await content.evaluate((el) =>
+        Promise.all(el.getAnimations().map((a) => a.finished))
+    );
+    return {
+        content: await read(content, SURFACE_PROPS),
+        title: await read(
+            content.getByRole('heading', { name: 'Overlay dialog' }),
+            SURFACE_PROPS
+        ),
+        description: await read(
+            content.getByText('Dialog description'),
+            SURFACE_PROPS
+        ),
+        close: await read(
+            content.getByRole('button', { name: 'Close' }),
+            SURFACE_PROPS
+        ),
+        save: await read(content.getByTestId('hz-dialog-save'), SURFACE_PROPS),
+    };
+};
+
+test.describe('Dialog against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openDialog(page, url('unlayered'));
+                const withHost = await openDialog(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.content['zIndex']).toBe('1350');
+            });
+
+    test('layered build (known limit): full Bootstrap + host CSS restyles the title h2 and description p', async ({
+        page,
+    }) => {
+        const without = await openDialog(page, url('layered'));
+        const withHost = await openDialog(
+            page,
+            url('layered', { reboot: 'full', host: true })
+        );
+        const changed = (
+            a: Record<string, string>,
+            b: Record<string, string>
+        ) => Object.keys(a).filter((k) => a[k] !== b[k]);
+        expect({
+            content: changed(without.content, withHost.content),
+            title: changed(without.title, withHost.title),
+            description: changed(without.description, withHost.description),
+            close: changed(without.close, withHost.close),
+            save: changed(without.save, withHost.save),
+        }).toEqual({
+            // Measured: the layered build loses these to unlayered host CSS
+            // (customer360 must use styles.unlayered.css, as for Button).
+            content: ['marginTop'],
+            title: ['fontSize', 'fontWeight', 'color'],
+            description: [],
+            close: ['borderRadius'],
+            save: ['width', 'borderRadius', 'fontSize'],
+        });
+    });
+});
+
 /* ------------------------- Inside a real MUI Dialog -------------------------- */
 
 const openMuiOverlays = async (page: Page, build: 'layered' | 'unlayered') => {

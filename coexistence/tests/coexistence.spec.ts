@@ -190,11 +190,145 @@ test('horizon Button renders identically at html font-size 14px and 16px', async
     expect(Math.abs(at14.height - at16.height)).toBeLessThanOrEqual(1);
 });
 
-// TODO(Task 11): implement once horizon Dialog exists. It needs the z-index
-// scale token (horizon overlay above the MUI modal, 1300) and both dialogs
-// clickable. Skipped on purpose so it cannot pass silently.
-test.fixme('horizon Dialog and MUI Dialog stack in intended order', () => {
-    // intentionally empty until Task 11
+/*
+ * Documented stacking order (src/tokens/zIndex.ts, ADR 0001): every Horizon
+ * overlay sits above the MUI modal layer (1300): dialog 1350 < dropdown 1400
+ * < popover 1450 < tooltip 1500 < toast 1600. Supported: a Horizon Dialog
+ * opened from inside an MUI Dialog (content wrapped in an inner
+ * HorizonProvider). Not supported: an MUI Dialog opened from a Horizon
+ * Dialog; it renders below (measured here so the docs stay true).
+ */
+const hitTestId = (page: Page, x: number, y: number) =>
+    page.evaluate(
+        ([px, py]) => {
+            const hit = document.elementFromPoint(px ?? 0, py ?? 0);
+            return {
+                horizonDialog:
+                    hit?.closest('[data-dialog-content]') !== null &&
+                    hit?.closest('[data-dialog-content]') !== undefined,
+                horizonScrim: hit?.hasAttribute('data-dialog-overlay') ?? false,
+                muiDialog: hit?.closest('.MuiDialog-container') !== null,
+            };
+        },
+        [x, y]
+    );
+
+test.describe('horizon Dialog and MUI Dialog stack in intended order', () => {
+    for (const build of ['layered', 'unlayered'] as const)
+        test(`a Horizon Dialog opened inside an MUI Dialog is on top; clicks, focus and Escape stay with it (${build})`, async ({
+            page,
+        }) => {
+            await page.goto(
+                `/?reboot=full&host=customer360${build === 'unlayered' ? '&build=unlayered' : ''}`
+            );
+            await page.getByTestId('open-mui-overlays').click();
+            const muiContent = page.getByTestId('mui-overlays-content');
+            await expect(muiContent).toBeVisible();
+            const trigger = page.getByTestId('mui-dialog-trigger');
+            await trigger.focus();
+            await page.keyboard.press('Enter');
+            const dialog = page.getByRole('dialog', { name: 'Overlay dialog' });
+            await expect(dialog).toBeVisible();
+            await dialog.evaluate((el) =>
+                Promise.all(el.getAnimations().map((a) => a.finished))
+            );
+            expect(
+                await dialog.evaluate((el) => getComputedStyle(el).zIndex)
+            ).toBe('1350');
+            const muiZ = await page
+                .locator('.MuiDialog-root')
+                .first()
+                .evaluate((el) => getComputedStyle(el).zIndex);
+            expect(muiZ).toBe('1300');
+            // The Horizon panel is the topmost element at its centre.
+            const box = await dialog.boundingBox();
+            if (!box) throw new Error('no dialog box');
+            expect(
+                await hitTestId(
+                    page,
+                    box.x + box.width / 2,
+                    box.y + box.height / 2
+                )
+            ).toMatchObject({ horizonDialog: true });
+            // Outside the panel the Horizon scrim covers the MUI dialog and
+            // its backdrop, so nothing behind can be clicked through.
+            expect(await hitTestId(page, 4, 4)).toMatchObject({
+                horizonScrim: true,
+            });
+            // Focus is in the Horizon dialog and Tab stays there (MUI's
+            // focus trap accepts it: the inner provider is inside its DOM).
+            await expect(page.getByTestId('mui-dialog-input')).toBeFocused();
+            for (let i = 0; i < 6; i++) {
+                await page.keyboard.press('Tab');
+                expect(
+                    await dialog.evaluate((el) =>
+                        el.contains(document.activeElement)
+                    )
+                ).toBe(true);
+            }
+            // Escape closes only the Horizon dialog; focus returns to its
+            // trigger inside the still-open MUI dialog.
+            await page.keyboard.press('Escape');
+            await expect(dialog).toHaveCount(0);
+            await expect(muiContent).toBeVisible();
+            await expect(trigger).toBeFocused();
+            // Pointer: a scrim click closes only the Horizon dialog.
+            await trigger.click();
+            await expect(dialog).toBeVisible();
+            await page.mouse.click(4, 4);
+            await expect(dialog).toHaveCount(0);
+            await expect(muiContent).toBeVisible();
+            // A second Escape now closes the MUI dialog itself.
+            await trigger.focus();
+            await page.keyboard.press('Escape');
+            await expect(muiContent).toHaveCount(0);
+        });
+
+    test('NOT supported (measured): an MUI Dialog opened from a Horizon Dialog renders below it', async ({
+        page,
+    }) => {
+        await page.goto('/?build=unlayered&reboot=full&host=customer360');
+        await page.getByTestId('hz-dialog-trigger').click();
+        const dialog = page.getByRole('dialog', { name: 'Overlay dialog' });
+        await expect(dialog).toBeVisible();
+        await page.getByTestId('open-mui-from-hz').click();
+        const mui = page.getByTestId('mui-from-hz-content');
+        await expect(mui).toBeAttached();
+        const order = await page.evaluate(() => {
+            const muiRoot = document
+                .querySelector('[data-testid="mui-from-hz-content"]')
+                ?.closest('.MuiDialog-root');
+            const hz = document.querySelector('[data-dialog-content]');
+            const z = (el: Element | null | undefined) =>
+                el ? Number(getComputedStyle(el).zIndex) : NaN;
+            return {
+                mui: z(muiRoot),
+                horizon: z(hz),
+                // Both are root-level stacking contexts (no transformed or
+                // z-indexed ancestor), so the numbers decide the order.
+                muiParentIsBody: muiRoot?.parentElement === document.body,
+                muiPointerEvents: muiRoot
+                    ? getComputedStyle(muiRoot).pointerEvents
+                    : '',
+            };
+        });
+        // Horizon (1350) paints above the MUI dialog (1300) ...
+        expect(order.mui).toBe(1300);
+        expect(order.horizon).toBe(1350);
+        expect(order.muiParentIsBody).toBe(true);
+        // ... and the modal Horizon dialog blocks pointer input outside
+        // itself (Radix sets pointer-events: none on body), so the MUI
+        // dialog can be neither seen on top nor clicked.
+        expect(order.muiPointerEvents).toBe('none');
+        const muiBox = await mui.boundingBox();
+        if (!muiBox) throw new Error('no mui box');
+        const hit = await hitTestId(
+            page,
+            muiBox.x + muiBox.width / 2,
+            muiBox.y + muiBox.height / 2
+        );
+        expect(hit.muiDialog).toBe(false);
+    });
 });
 
 test('horizon inside dir=rtl subtree and MUI in ltr do not affect each other', async ({

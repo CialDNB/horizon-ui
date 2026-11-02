@@ -115,5 +115,9 @@ for (const build of ['layered', 'unlayered'] as const)
             visibleBorder(await style(page, byTestId('hz-tooltip')));
             await page.getByTestId('hz-popover-trigger').click();
             visibleBorder(await style(page, byTestId('hz-popover')));
+            await page.keyboard.press('Escape');
+            await page.getByTestId('hz-dialog-trigger').click();
+            visibleBorder(await style(page, byTestId('hz-dialog')));
+            await page.keyboard.press('Escape');
         });
     });

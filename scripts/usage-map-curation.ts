@@ -229,7 +229,10 @@ export const curation: Record<string, Curation> = {
     Dialog: {
         batch: 2,
         horizon: 'Dialog',
-        note: 'Planned: compound `Dialog.*`; full-screen at mobile.',
+        note: 'Done in Task 11b (Radix Dialog, compound): `<DialogV2 open onClose dialogTitle dialogContent dialogActions>` becomes `<Dialog open onOpenChange><DialogContent><DialogHeader><DialogTitle/></DialogHeader><DialogBody/><DialogFooter/></DialogContent></Dialog>`; `isStickyHeader`/`isStickyFooter` are the default (body scrolls); `maxWidth` -> `size` (xs/sm -> sm 570, md/tablet -> md 600, lg/laptop -> lg 900, xl/desktop -> xl 1136); full screen below tablet as x-core; `onClose(event, reason)` -> `onOpenChange(false)`; `disableEscapeKeyDown` -> `dismissible={false}`; `sx`/`PaperProps`/`dialogContentSx`/`dialogActionsSx`/`TransitionProps`/`transitionDirection` dropped (className on the part). New: dev warnings for a missing title/description. Opening an MUI dialog from a Horizon dialog is not supported (renders below). Dropped props warn in development.',
+        status: 'done',
+        supersededNote:
+            'Call sites (27 files: `open`, `onClose`, `maxWidth` sm/md/xs/xl/tablet/laptop/desktop, `sx`, `TransitionProps`, `scroll`, `fullScreen`, `PaperProps`) migrate to `Dialog` like DialogV2: children become DialogHeader/DialogBody/DialogFooter parts, `maxWidth` -> `size`.',
     },
     ConfirmationDialog: {
         batch: 2,
