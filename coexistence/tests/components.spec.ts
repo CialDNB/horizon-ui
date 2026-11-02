@@ -604,6 +604,30 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    RadioGroup: {
+        targets: [
+            { key: 'group', selector: byTestId('hz-radiogroup') },
+            ...plain(['', '-checked', '-disabled'].map((v) => `hz-radio${v}`)),
+            ...['', '-checked', '-disabled'].map((v) => ({
+                key: `hz-radio${v} circle`,
+                selector: `${byTestId(`hz-radio${v}`)} > span`,
+            })),
+            {
+                key: 'dot',
+                selector: `${byTestId('hz-radio-checked')} > span > span`,
+            },
+            {
+                key: 'circle, focused',
+                selector: `${byTestId('hz-radio-checked')} > span`,
+                focus: byTestId('hz-radio-checked'),
+            },
+            {
+                key: 'label',
+                selector: `[data-radio]:has(> ${byTestId('hz-radio')}) > label`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1340,6 +1364,14 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
         'hz-checkbox-mixed': ['borderRadius: 4px -> 0px'],
         label: choiceLabelLimit('rgb(15, 23, 42)'),
         wrapper: ['width: changed', 'height: changed'],
+    },
+    // As Checkbox: circle, dot and focus ring are spans and survive.
+    RadioGroup: {
+        group: ['height: changed'],
+        'hz-radio': ['borderRadius: 4px -> 0px'],
+        'hz-radio-checked': ['borderRadius: 4px -> 0px'],
+        'hz-radio-disabled': ['borderRadius: 4px -> 0px'],
+        label: choiceLabelLimit('rgb(15, 23, 42)'),
     },
     FormField: {
         description: ['marginBottom: 0px -> 16px'],

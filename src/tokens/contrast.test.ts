@@ -297,6 +297,21 @@ nonTextPairs.push(
     },
     { use: 'Checkbox focus ring', text: 'ring', surface: 'background' },
     {
+        use: 'Radio circle (unchecked)',
+        text: 'control-border',
+        surface: 'background',
+    },
+    {
+        use: 'Radio checked ring and dot',
+        text: 'primary',
+        surface: 'background',
+    },
+    {
+        use: 'Radio invalid ring and dot',
+        text: 'destructive',
+        surface: 'background',
+    },
+    {
         use: 'form control boundary on a popover',
         text: 'control-border',
         surface: 'popover',

@@ -21,6 +21,8 @@ import {
     Label,
     Link,
     Progress,
+    RadioGroup,
+    RadioGroupItem,
     Separator,
     Spinner,
     Textarea,
@@ -595,6 +597,28 @@ function App() {
                                 data-testid="hz-checkbox-disabled"
                             />
                         </div>
+                        <RadioGroup
+                            aria-label="Plan"
+                            defaultValue="pro"
+                            data-testid="hz-radiogroup"
+                        >
+                            <RadioGroupItem
+                                value="basic"
+                                label="Basic"
+                                data-testid="hz-radio"
+                            />
+                            <RadioGroupItem
+                                value="pro"
+                                label="Pro"
+                                data-testid="hz-radio-checked"
+                            />
+                            <RadioGroupItem
+                                value="team"
+                                label="Team"
+                                disabled
+                                data-testid="hz-radio-disabled"
+                            />
+                        </RadioGroup>
                         <Textarea
                             aria-label="Comment"
                             placeholder="Add a comment"

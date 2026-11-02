@@ -7,8 +7,8 @@ const useIsomorphicLayoutEffect =
 export type Direction = 'ltr' | 'rtl';
 
 /**
- * `dir` when given, otherwise the element's computed CSS direction once it
- * is mounted (`ltr` before). Radix primitives need the direction as a prop
+ * `dir` when given, otherwise the computed CSS direction of the element's
+ * parent once mounted (`ltr` before). Radix primitives need the direction as a prop
  * for RTL arrow keys; reading it from the DOM works with `HorizonProvider
  * dir="rtl"` and with any `dir="rtl"` ancestor in a host page.
  */
@@ -22,7 +22,9 @@ export function useResolvedDir(
             setResolved(dir);
             return;
         }
-        const el = ref.current;
+        // The parent, not the element: Radix roots render the `dir` they are
+        // given as an attribute, which would echo the initial 'ltr'.
+        const el = ref.current?.parentElement;
         if (!el) return;
         const rtl =
             getComputedStyle(el).direction === 'rtl' ||

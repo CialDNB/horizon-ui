@@ -202,12 +202,14 @@ export const curation: Record<string, Curation> = {
     Radio: {
         batch: 2,
         horizon: 'RadioGroup',
-        note: 'Planned: Radiov2 is the item of `RadioGroup` (Radix RadioGroup).',
+        note: 'Done in Task 11a, see RadioGroup section below. `Radiov2` becomes `RadioGroupItem` inside a `RadioGroup` (a lone radio has no use without a group); `checked`/`onChange` move to the group (`value`/`onValueChange`); `size` moves to the group (small -> sm); `color`, `sx`, `inputProps`, `disableRipple` dropped with a dev warning. v1 `Radio` call sites (8 files: `size`, `checked`, `value`, `onChange`, `sx`) migrate the same way.',
+        status: 'done',
     },
     RadioGroup: {
         batch: 2,
         horizon: 'RadioGroup',
-        note: 'Planned: same component as above.',
+        note: 'Done in Task 11a, see RadioGroup section below. `options` array becomes `RadioGroupItem` children; `row` becomes `orientation="horizontal"`; `onChange(event, value)` becomes `onValueChange(value)` (string values); `label`, `error`, `errorText` move to FormField; `other` (radio + free-text TextField) is composed from RadioGroupItem + Input; `sx` dropped with a dev warning.',
+        status: 'done',
     },
     Switch: {
         batch: 2,

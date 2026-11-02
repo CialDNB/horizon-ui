@@ -71,6 +71,14 @@ export type {
     ProgressVariant,
     ProgressVariantOptions,
 } from './Progress';
+export { RadioGroup, RadioGroupItem, radioGroupVariants } from './RadioGroup';
+export type {
+    RadioGroupItemProps,
+    RadioGroupOrientation,
+    RadioGroupProps,
+    RadioGroupSize,
+    RadioGroupVariantOptions,
+} from './RadioGroup';
 export { Separator, separatorVariants } from './Separator';
 export type {
     SeparatorOrientation,
