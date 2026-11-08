@@ -14,7 +14,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../lib/cn';
 import { brands, type Brand } from '../tokens';
 import type { DnbBase } from '../types/DnbBase';
-import { registerLayer } from './layers';
+import { registerHostLayer } from './layers';
 import { HorizonScopeContext, PortalContext } from './portal-context';
 
 /** Props for {@link HorizonProvider}. */
@@ -80,7 +80,7 @@ export const HorizonProvider = forwardRef<HTMLDivElement, HorizonProviderProps>(
             if (!nested || !element) return;
             if (!element.closest('[role="dialog"], [role="alertdialog"]'))
                 return;
-            return registerLayer(element, { horizonModal: false });
+            return registerHostLayer(element);
         }, [nested, element]);
         // Mirror React's ref semantics when the consumer's ref changes.
         useLayoutEffect(() => {

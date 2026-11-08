@@ -169,3 +169,68 @@ describe('Toasts while a modal is open', () => {
         );
     });
 });
+
+describe('Toast layers follow host dialog visibility (closed keepMounted MUI Dialog)', () => {
+    function App() {
+        return (
+            <HorizonProvider data-testid="app">
+                <ToastProvider />
+                {/* A keepMounted MUI Dialog while closed: still in the DOM,
+                    hidden (MUI: aria-hidden + .MuiModal-hidden). */}
+                <div
+                    className="MuiModal-root MuiModal-hidden"
+                    aria-hidden="true"
+                    data-testid="mui-root"
+                >
+                    <div role="dialog" aria-label="Filters">
+                        <HorizonProvider data-testid="inner">
+                            {null}
+                        </HorizonProvider>
+                    </div>
+                </div>
+            </HorizonProvider>
+        );
+    }
+    const hostOf = () => viewport()?.closest('.hz-root');
+
+    it('closed: toasts stay in the app root, visible and reachable', async () => {
+        render(<App />);
+        showActionToast();
+        expect(
+            await screen.findByRole('button', { name: 'Cancel request' })
+        ).toBeVisible();
+        expect(hostOf()).toBe(screen.getByTestId('app'));
+    });
+
+    it('opening moves the list into the dialog without losing the toast; closing moves it back', async () => {
+        render(<App />);
+        showActionToast();
+        await screen.findByRole('button', { name: 'Cancel request' });
+        const muiRoot = screen.getByTestId('mui-root');
+        act(() => {
+            muiRoot.classList.remove('MuiModal-hidden');
+            muiRoot.removeAttribute('aria-hidden');
+        });
+        await waitFor(() => expect(hostOf()).toBe(screen.getByTestId('inner')));
+        // The toast re-portals into the moved list on the next render.
+        expect(
+            await screen.findByRole('button', { name: 'Cancel request' })
+        ).toBeVisible();
+        act(() => {
+            muiRoot.classList.add('MuiModal-hidden');
+            muiRoot.setAttribute('aria-hidden', 'true');
+        });
+        await waitFor(() => expect(hostOf()).toBe(screen.getByTestId('app')));
+        expect(
+            await screen.findByRole('button', { name: 'Cancel request' })
+        ).toBeVisible();
+    });
+
+    it('disconnects the host observer when the inner provider unmounts', () => {
+        const disconnect = vi.spyOn(MutationObserver.prototype, 'disconnect');
+        const { unmount } = render(<App />);
+        expect(disconnect).not.toHaveBeenCalled();
+        unmount();
+        expect(disconnect).toHaveBeenCalled();
+    });
+});

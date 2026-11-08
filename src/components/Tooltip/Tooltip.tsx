@@ -41,7 +41,7 @@ export type TooltipProviderProps = {
     delayDuration?: number;
     /**
      * Within this many ms of one tooltip closing, the next opens without
-     * the delay (moving along a toolbar). @default 300
+     * the delay (moving along a toolbar). @default 800 (as HorizonProvider)
      */
     skipDelayDuration?: number;
     children: ReactNode;
@@ -54,7 +54,7 @@ export type TooltipProviderProps = {
  */
 export function TooltipProvider({
     delayDuration = DEFAULT_DELAY,
-    skipDelayDuration = 300,
+    skipDelayDuration = 800,
     children,
 }: TooltipProviderProps) {
     return (
@@ -268,7 +268,10 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         );
         if (shared) return tooltip;
         return (
-            <TooltipPrimitive.Provider delayDuration={DEFAULT_DELAY}>
+            <TooltipPrimitive.Provider
+                delayDuration={DEFAULT_DELAY}
+                skipDelayDuration={800}
+            >
                 {tooltip}
             </TooltipPrimitive.Provider>
         );

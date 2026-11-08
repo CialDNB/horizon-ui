@@ -371,9 +371,12 @@ const openMuiOverlays = async (
     await expect(content).toBeVisible();
     // Let the MUI transition (Fade, or DialogV2's Slide) finish.
     await page.waitForFunction(() => {
-        const paper = document.querySelector('.MuiDialog-paper');
+        const paper = document
+            .querySelector('[data-testid="mui-overlays-content"]')
+            ?.closest('.MuiDialog-paper');
         return (
             paper !== null &&
+            paper !== undefined &&
             paper.getAnimations({ subtree: true }).length === 0 &&
             ['none', ''].includes(getComputedStyle(paper).transform)
         );
@@ -710,7 +713,7 @@ for (const build of ['layered', 'unlayered'] as const)
             await openMuiOverlays(page, build, 'v2');
             expect(
                 await page
-                    .locator('.MuiDialog-paper')
+                    .getByTestId('mui-overlays-content')
                     .evaluate(
                         (el) => el.closest('[aria-hidden="true"]')?.id ?? null
                     )
@@ -720,8 +723,13 @@ for (const build of ['layered', 'unlayered'] as const)
             // block for fixed-position Horizon overlays.
             expect(
                 await page
-                    .locator('.MuiDialog-paper')
-                    .evaluate((el) => getComputedStyle(el).transform)
+                    .getByTestId('mui-overlays-content')
+                    .evaluate(
+                        (el) =>
+                            getComputedStyle(
+                                el.closest('.MuiDialog-paper') ?? el
+                            ).transform
+                    )
             ).toBe('none');
         });
 
@@ -863,3 +871,47 @@ for (const build of ['layered', 'unlayered'] as const)
             ).toBeVisible();
         });
     });
+
+test.describe('toasts and a keepMounted MUI Dialog with an inner HorizonProvider', () => {
+    for (const build of ['layered', 'unlayered'] as const)
+        test(`closed: toasts stay in the app root; opening moves them in; closing moves them back (${build})`, async ({
+            page,
+        }) => {
+            await page.goto(url(build, { reboot: 'full', host: true }));
+            // The kept dialog is in the DOM (hidden) before it ever opens.
+            await expect(page.getByTestId('mui-kept-provider')).toBeAttached();
+            await page.getByTestId('hz-toast-trigger').click();
+            const item = page.locator('[data-did="hz-toast"]');
+            await expect(item).toBeVisible();
+            const host = () =>
+                item.evaluate((el) => ({
+                    inKept:
+                        el.closest('[data-testid="mui-kept-provider"]') !==
+                        null,
+                    ariaHidden: el.closest('[aria-hidden="true"]') !== null,
+                }));
+            expect(await host()).toEqual({ inKept: false, ariaHidden: false });
+            await expect(
+                item.getByRole('button', { name: 'Dismiss' })
+            ).toBeVisible();
+            // Open: the showing toast moves into the dialog, still reachable.
+            await page.getByTestId('open-mui-kept').click();
+            await expect(page.getByTestId('mui-kept-content')).toBeVisible();
+            await expect
+                .poll(host)
+                .toEqual({ inKept: true, ariaHidden: false });
+            await expect(
+                item.getByRole('button', { name: 'Dismiss' })
+            ).toBeVisible();
+            // Close: back to the app root, not hidden with the dialog.
+            await page.getByTestId('mui-kept-close').click();
+            await expect(page.getByTestId('mui-kept-content')).toBeHidden();
+            await expect
+                .poll(host)
+                .toEqual({ inKept: false, ariaHidden: false });
+            await expect(item).toBeVisible();
+            await expect(
+                item.getByRole('button', { name: 'Dismiss' })
+            ).toBeVisible();
+        });
+});

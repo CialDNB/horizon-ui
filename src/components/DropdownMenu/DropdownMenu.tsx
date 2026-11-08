@@ -21,7 +21,6 @@ import {
     anchorGuard,
     anchoredMotion,
     containEscape,
-    ignoreToastPresses,
     overlaySurface,
     physicalPlacement,
     type Direction,
@@ -116,8 +115,6 @@ export const DropdownMenuContent = forwardRef<
         sideOffset = 4,
         collisionPadding = 8,
         onEscapeKeyDown,
-        onPointerDownOutside,
-        onInteractOutside,
         className,
         ...props
     },
@@ -151,8 +148,6 @@ export const DropdownMenuContent = forwardRef<
                 sideOffset={sideOffset}
                 collisionPadding={collisionPadding}
                 onEscapeKeyDown={containEscape(onEscapeKeyDown)}
-                onPointerDownOutside={ignoreToastPresses(onPointerDownOutside)}
-                onInteractOutside={ignoreToastPresses(onInteractOutside)}
                 data-hz-menu-sheet=""
                 data-menu-content=""
                 className={cn(panelStyles, className)}

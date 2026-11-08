@@ -31,8 +31,6 @@ export { clearAction, inlineActionBase } from './inlineAction';
 export {
     anchoredMotion,
     containEscape,
-    fromToast,
-    ignoreToastPresses,
     overlayCloseBase,
     overlaySurface,
     panelMotion,

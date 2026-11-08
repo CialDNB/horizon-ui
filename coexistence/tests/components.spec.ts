@@ -1830,9 +1830,12 @@ test.describe('Select inside x-core DialogV2 (disablePortal + Slide)', () => {
             );
             await page.getByTestId('open-mui-dialog').click();
             await page.waitForFunction(() => {
-                const paper = document.querySelector('.MuiDialog-paper');
+                const paper = document
+                    .querySelector('[data-testid="mui-dialog-content"]')
+                    ?.closest('.MuiDialog-paper');
                 return (
                     paper !== null &&
+                    paper !== undefined &&
                     getComputedStyle(paper).transform === 'none'
                 );
             });

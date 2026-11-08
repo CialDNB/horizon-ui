@@ -19,7 +19,6 @@ import { omitLegacyProps, resolveOption } from '../../lib/options';
 import {
     anchoredMotion,
     containEscape,
-    ignoreToastPresses,
     overlayCloseBase,
     overlaySurface,
     physicalPlacement,
@@ -190,8 +189,6 @@ export const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
             sideOffset = 8,
             collisionPadding = 8,
             onEscapeKeyDown,
-            onPointerDownOutside,
-            onInteractOutside,
             className,
             style,
             children,
@@ -239,12 +236,6 @@ export const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
                             sideOffset={sideOffset}
                             collisionPadding={collisionPadding}
                             onEscapeKeyDown={containEscape(onEscapeKeyDown)}
-                            onPointerDownOutside={ignoreToastPresses(
-                                onPointerDownOutside
-                            )}
-                            onInteractOutside={ignoreToastPresses(
-                                onInteractOutside
-                            )}
                             style={
                                 {
                                     '--hz-popover-width':

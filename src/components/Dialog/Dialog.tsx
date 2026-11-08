@@ -21,7 +21,6 @@ import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
 import {
     composeRefs,
     containEscape,
-    fromToast,
     overlayCloseBase,
     overlaySurface,
     panelMotion,
@@ -257,12 +256,10 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
                         })}
                         onPointerDownOutside={(event) => {
                             onPointerDownOutside?.(event);
-                            if (fromToast(event)) event.preventDefault();
                             if (!dismissible) event.preventDefault();
                         }}
                         onInteractOutside={(event) => {
                             onInteractOutside?.(event);
-                            if (fromToast(event)) event.preventDefault();
                             if (!dismissible) event.preventDefault();
                         }}
                         onOpenAutoFocus={(event) => {

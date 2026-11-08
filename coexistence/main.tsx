@@ -534,6 +534,38 @@ function Overlays({ scope }: { scope: string }) {
     );
 }
 
+/**
+ * An MUI Dialog with `keepMounted` (x-core Dialog v1, customer360
+ * FilterModal) holding an inner HorizonProvider: in the DOM, hidden, while
+ * closed.
+ */
+function KeptMuiDialog() {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <MuiButton
+                data-testid="open-mui-kept"
+                onClick={() => setOpen(true)}
+            >
+                Open kept MUI dialog
+            </MuiButton>
+            <MuiDialog open={open} onClose={() => setOpen(false)} keepMounted>
+                <MuiDialogContent data-testid="mui-kept-content">
+                    <HorizonProvider data-testid="mui-kept-provider">
+                        <Button
+                            variant="secondary"
+                            data-testid="mui-kept-close"
+                            onClick={() => setOpen(false)}
+                        >
+                            Close
+                        </Button>
+                    </HorizonProvider>
+                </MuiDialogContent>
+            </MuiDialog>
+        </>
+    );
+}
+
 /** A real MUI Dialog (z-index 1300) whose content holds every overlay. */
 function OverlaysInMuiDialog() {
     const [open, setOpen] = useState(false);
@@ -1058,6 +1090,7 @@ function App() {
                     <HorizonProvider>
                         <Overlays scope="hz" />
                         <OverlaysInMuiDialog />
+                        <KeptMuiDialog />
                         <ToastProvider />
                     </HorizonProvider>
                 </section>

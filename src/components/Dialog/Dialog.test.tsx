@@ -361,4 +361,20 @@ describe('Dialog', () => {
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
         expect(isWatchingForMuiOverlays()).toBe(false);
     });
+
+    it('dev: no warning for an MUI overlay rendered inside the Horizon panel (container/disablePortal)', async () => {
+        const user = userEvent.setup();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        render(<Edit />);
+        await user.click(screen.getByRole('button', { name: 'Edit company' }));
+        const dialog = await screen.findByRole('dialog');
+        const inside = document.createElement('div');
+        inside.className = 'MuiPopover-root';
+        dialog.append(inside);
+        await new Promise((r) => setTimeout(r, 20));
+        expect(warn).not.toHaveBeenCalledWith(
+            expect.stringContaining('An MUI overlay')
+        );
+        inside.remove();
+    });
 });

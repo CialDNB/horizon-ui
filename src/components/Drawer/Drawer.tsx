@@ -20,7 +20,6 @@ import { omitLegacyProps, resolveOption } from '../../lib/options';
 import {
     composeRefs,
     containEscape,
-    ignoreToastPresses,
     overlayCloseBase,
     overlaySurface,
     panelMotion,
@@ -159,8 +158,6 @@ export const Drawer = forwardRef<HTMLDivElement, DrawerProps>(function Drawer(
                         {...rest}
                         ref={composeRefs(ref, layerRef)}
                         onEscapeKeyDown={containEscape()}
-                        onPointerDownOutside={ignoreToastPresses()}
-                        onInteractOutside={ignoreToastPresses()}
                         onOpenAutoFocus={() => {
                             openerRef.current = document.activeElement;
                         }}
