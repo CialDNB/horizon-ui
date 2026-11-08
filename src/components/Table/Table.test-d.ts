@@ -97,3 +97,25 @@ export const sortHead: TableHeadProps = {
 };
 // @ts-expect-error alignment is logical: start, center or end
 export const badAlign: TableHeadProps = { align: 'left' };
+
+// customer360 patterns (strict): an untyped `Column[]` whose render takes an
+// interface-typed row, and interface-typed rowData (no index signature).
+interface DecisionRow {
+    id: string;
+    status: string;
+}
+export const untypedColumns: Column[] = [
+    {
+        id: 'status',
+        label: 'Status',
+        render: (row: DecisionRow) => row.status,
+        dataTestId: (row: DecisionRow) => `status-${row.id}`,
+    },
+];
+const decision: DecisionRow = { id: 'd1', status: 'open' };
+export const interfaceRows: TableCellData[] = [{ id: 1, rowData: decision }];
+export const typedRows: TableCellData<DecisionRow>[] = [
+    { id: 1, rowData: decision },
+];
+// @ts-expect-error rowData must be an object
+export const primitiveRow: TableCellData = { id: 1, rowData: 'x' };

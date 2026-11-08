@@ -48,8 +48,12 @@ export type Order = 'asc' | 'desc';
 /** A breakpoint below which a column is hidden (shown in the row details). */
 export type ColumnHideBelow = 'tablet' | 'laptop';
 
-/** A row of table data: any object keyed by column id. */
-export type TableRowData = Record<string, unknown>;
+/**
+ * A row of table data: any object keyed by column id. `object` (not an
+ * index-signature record) so interface-typed rows (no index signature)
+ * are accepted, as x-core's `{ [key: string]: any }` was.
+ */
+export type TableRowData = object;
 
 /**
  * One column of a data-driven {@link Table} (x-core `Column`, without the
@@ -72,9 +76,11 @@ export interface Column<Row extends object = TableRowData> {
     /** No sort button for this column (it is sortable when the table has `onRequestSort`). */
     disableSort?: boolean;
     /** Renders the cell from the row (replaces the built-in renderer). */
-    render?: (row: Row) => ReactNode;
+    // Method syntax: parameters are checked bivariantly, so an untyped
+    // `Column[]` accepts `render: (row: MyRow) => ...` (x-core rows were `any`).
+    render?(row: Row): ReactNode;
     /** `data-testid` of each cell, from the row (x-core). */
-    dataTestId?: (row: Row) => string;
+    dataTestId?(row: Row): string;
     /** Built-in renderer for the value. @default 'text' */
     type?: ColumnDataType;
     /**
