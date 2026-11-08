@@ -290,7 +290,8 @@ export const curation: Record<string, Curation> = {
     SearchBar: {
         batch: 2,
         horizon: 'SearchBar',
-        note: 'Planned: input with search icon and clear button.',
+        note: 'Done in Task 11c, see SearchBar section below. Input in a `role="search"` landmark: `searchValue` -> `value`, `onSearchChange` -> `onValueChange`, `onSearch` kept (Enter, search button, and `""` after clearing, as x-core); `loader` -> `loading`; `hasError` -> `invalid`; `label`/`helperText`/`isLabelContainer` -> FormField; `iconSize`, `actions`, `sx`, `minWidth 300` dropped (dev warning; full width). No debounce (x-core has none). customer360 FilterComponent.jsx passes MUI `value`/`onChange`/`InputProps.startAdornment` and SearchAutocomplete.jsx spreads Autocomplete `params` into it: the latter becomes a Combobox.',
+        status: 'done',
     },
     LabelColorActionsPopover: {
         batch: 2,

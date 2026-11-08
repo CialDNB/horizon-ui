@@ -89,6 +89,8 @@ export type {
     RadioGroupSize,
     RadioGroupVariantOptions,
 } from './RadioGroup';
+export { SearchBar } from './SearchBar';
+export type { SearchBarProps } from './SearchBar';
 export {
     Select,
     SelectGroup,

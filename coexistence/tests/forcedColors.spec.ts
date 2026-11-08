@@ -44,8 +44,20 @@ for (const build of ['layered', 'unlayered'] as const)
                 byTestId('hz-textarea'),
                 byTestId('hz-select'),
                 '[data-combobox-field]:has(> [data-testid="hz-combobox"])',
+                fieldOf('hz-searchbar'),
             ])
                 visibleBorder(await style(page, sel));
+            await page.locator(byTestId('hz-searchbar')).focus();
+            visibleOutline(await style(page, fieldOf('hz-searchbar')));
+            await page
+                .locator(`${fieldOf('hz-searchbar')} [data-search-button]`)
+                .focus();
+            visibleOutline(
+                await style(
+                    page,
+                    `${fieldOf('hz-searchbar')} [data-search-button]`
+                )
+            );
             await page.locator(byTestId('hz-combobox')).focus();
             visibleOutline(
                 await style(

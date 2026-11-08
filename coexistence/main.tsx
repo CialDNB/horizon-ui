@@ -35,6 +35,7 @@ import {
     Textarea,
     Tooltip,
     Typography,
+    SearchBar,
     Popover,
     PopoverClose,
     PopoverContent,
@@ -1092,6 +1093,17 @@ function App() {
                             defaultValue={['Acme Ltd.', 'Globex']}
                             options={COMBOBOX_OPTIONS}
                             data-testid="hz-combobox-multi"
+                        />
+                        <SearchBar
+                            aria-label="Search companies"
+                            defaultValue="Acme"
+                            data-testid="hz-searchbar"
+                        />
+                        <SearchBar
+                            aria-label="Search loading"
+                            loading
+                            placeholder="Search"
+                            data-testid="hz-searchbar-loading"
                         />
                         <SelectInMuiDialog />
                         <Textarea

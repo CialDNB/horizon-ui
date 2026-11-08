@@ -704,6 +704,35 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    SearchBar: {
+        targets: [
+            ...plain(['hz-searchbar', 'hz-searchbar-loading']),
+            { key: 'field', selector: fieldOf('hz-searchbar') },
+            {
+                key: 'field, focused',
+                selector: fieldOf('hz-searchbar'),
+                focus: byTestId('hz-searchbar'),
+            },
+            {
+                key: 'search button',
+                selector: `${fieldOf('hz-searchbar')} [data-search-button]`,
+            },
+            {
+                key: 'search button, focused',
+                selector: `${fieldOf('hz-searchbar')} [data-search-button]`,
+                focus: `${fieldOf('hz-searchbar')} [data-search-button]`,
+            },
+            {
+                key: 'clear button',
+                selector: `${fieldOf('hz-searchbar')} button[aria-label="Clear"]`,
+            },
+            {
+                key: 'landmark',
+                selector: `[data-search-bar]:has(${byTestId('hz-searchbar')})`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1484,6 +1513,36 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // end buttons and the chip remove button lose their radius, and
     // customer360's `button:focus { outline: none }` removes the clear
     // button's ring.
+    // As Input (type=search): the reboot's `[type='search']` outline offset
+    // and `input { line-height }`; both buttons lose radius and their
+    // negative tuck margin; the focused search button loses its ring to
+    // customer360's `button:focus { outline: none }`.
+    SearchBar: {
+        'clear button': [
+            'marginInlineEnd: -8px -> 0px',
+            'borderRadius: 100px -> 0px',
+        ],
+        'hz-searchbar': [
+            'width: changed',
+            'lineHeight: 14px -> 21px',
+            'outlineOffset: 0px -> -2px',
+        ],
+        'hz-searchbar-loading': [
+            'width: changed',
+            'lineHeight: 14px -> 21px',
+            'outlineOffset: 0px -> -2px',
+        ],
+        'search button': [
+            'marginInlineStart: -8px -> 0px',
+            'borderRadius: 100px -> 0px',
+        ],
+        'search button, focused': [
+            'marginInlineStart: -8px -> 0px',
+            'borderRadius: 100px -> 0px',
+            'outlineStyle: solid -> none',
+            'outlineWidth: 2px -> 3px',
+        ],
+    },
     Combobox: {
         'chip remove button': ['borderRadius: 100px -> 0px'],
         'clear button': ['borderRadius: 100px -> 0px'],

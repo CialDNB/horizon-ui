@@ -129,6 +129,7 @@ describe('architecture', () => {
                 "Progress",
                 "RadioGroup",
                 "RadioGroupItem",
+                "SearchBar",
                 "Select",
                 "SelectGroup",
                 "SelectItem",
