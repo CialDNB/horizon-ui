@@ -418,6 +418,12 @@ textPairs.push(
     }
 );
 nonTextPairs.push(
+    { use: 'SearchBar search icon', text: 'primary', surface: 'background' },
+    {
+        use: 'SearchBar search icon hover',
+        text: 'primary-hover',
+        surface: 'background',
+    },
     {
         use: 'Combobox selected check on the list',
         text: 'primary',
