@@ -119,6 +119,12 @@ export type {
     SpinnerTone,
     SpinnerVariantOptions,
 } from './Spinner';
+export { SplitButton } from './SplitButton';
+export type {
+    SplitButtonOption,
+    SplitButtonProps,
+    SplitButtonVariant,
+} from './SplitButton';
 export { Switch, switchVariants } from './Switch';
 export type { SwitchProps, SwitchVariantOptions } from './Switch';
 export { Textarea, textareaVariants } from './Textarea';

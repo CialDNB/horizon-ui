@@ -136,6 +136,7 @@ describe('architecture', () => {
                 "SelectSeparator",
                 "Separator",
                 "Spinner",
+                "SplitButton",
                 "Switch",
                 "Textarea",
                 "ToastProvider",

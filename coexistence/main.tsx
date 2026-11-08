@@ -36,6 +36,7 @@ import {
     Tooltip,
     Typography,
     SearchBar,
+    SplitButton,
     Popover,
     PopoverClose,
     PopoverContent,
@@ -1105,6 +1106,17 @@ function App() {
                             placeholder="Search"
                             data-testid="hz-searchbar-loading"
                         />
+                        <div>
+                            <SplitButton
+                                options={['New decision', 'Import']}
+                                data-testid="hz-split"
+                            />
+                            <SplitButton
+                                variant="secondary"
+                                options={['New decision', 'Import']}
+                                data-testid="hz-split-secondary"
+                            />
+                        </div>
                         <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"

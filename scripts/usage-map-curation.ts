@@ -274,7 +274,8 @@ export const curation: Record<string, Curation> = {
     SplitButton: {
         batch: 2,
         horizon: 'SplitButton',
-        note: 'Not in the plan. Button + DropdownMenu composition (DropdownMenu done in Task 11b).',
+        note: 'Done in Task 11c, see SplitButton section below. Button + DropdownMenu in a `role="group"`: `options` (strings or `{ label, onClick?, disabled?, ...extra }`), `onOptionClick(option, index)`, `headline`, `disabled`, `loading`, `size` kept; `variant` contained/outlined/text -> `primary`/`secondary` (unknown values fall back to primary with a warning; `text` has no split look); `color` (incl. `bright`), `sx` dropped with a dev warning; new `menuLabel` (caret name, x-core "select strategy"), `defaultSelectedIndex`. Menu items are `menuitemradio` (selected checked); bottom sheet below tablet (replaces customer360 MobileSplitButton). customer360 SegmentNewRequestButton passes wrapper-only `isHeaderButton`/`isSmallScreen`/`isMobile`: dropped with a warning.',
+        status: 'done',
     },
     Filter: {
         batch: 2,

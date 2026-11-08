@@ -733,6 +733,31 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    // Two buttons in a row: customer360's `button + button { margin-left }`
+    // must not split the pill.
+    SplitButton: {
+        targets: ['hz-split', 'hz-split-secondary'].flatMap((id) => [
+            { key: `${id} group`, selector: byTestId(id) },
+            {
+                key: `${id} main`,
+                selector: `${byTestId(id)} [data-split-main]`,
+            },
+            {
+                key: `${id} menu`,
+                selector: `${byTestId(id)} [data-split-menu]`,
+            },
+            {
+                key: `${id} menu, focused`,
+                selector: `${byTestId(id)} [data-split-menu]`,
+                focus: `${byTestId(id)} [data-split-menu]`,
+            },
+        ]),
+        props: [
+            ...FIELD_PROPS,
+            'borderInlineStartColor',
+            'borderInlineStartWidth',
+        ],
+    },
     Textarea: {
         targets: [
             ...plain(
@@ -1517,6 +1542,54 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // and `input { line-height }`; both buttons lose radius and their
     // negative tuck margin; the focused search button loses its ring to
     // customer360's `button:focus { outline: none }`.
+    // Layered build: Bootstrap's `button` radius/font and customer360's
+    // `button + button { margin-left: 8px }` split the pill (the unlayered
+    // build keeps it joined, asserted above).
+    SplitButton: {
+        'hz-split group': ['width: changed'],
+        'hz-split main': [
+            'width: changed',
+            'borderRadius: 20px 0px 0px 20px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+        ],
+        'hz-split menu': [
+            'marginInlineStart: 0px -> 8px',
+            'borderRadius: 0px 20px 20px 0px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+        ],
+        'hz-split menu, focused': [
+            'marginInlineStart: 0px -> 8px',
+            'borderRadius: 0px 20px 20px 0px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+            'outlineStyle: solid -> none',
+            'outlineWidth: 2px -> 3px',
+            'outlineColor: rgb(0, 80, 240) -> rgb(255, 255, 255)',
+        ],
+        'hz-split-secondary group': ['width: changed'],
+        'hz-split-secondary main': [
+            'width: changed',
+            'borderRadius: 20px 0px 0px 20px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+        ],
+        'hz-split-secondary menu': [
+            'marginInlineStart: -1px -> 8px',
+            'borderRadius: 0px 20px 20px 0px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+        ],
+        'hz-split-secondary menu, focused': [
+            'marginInlineStart: -1px -> 8px',
+            'borderRadius: 0px 20px 20px 0px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+            'outlineStyle: solid -> none',
+            'outlineWidth: 2px -> 3px',
+        ],
+    },
     SearchBar: {
         'clear button': [
             'marginInlineEnd: -8px -> 0px',
