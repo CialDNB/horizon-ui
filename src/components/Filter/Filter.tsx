@@ -124,8 +124,9 @@ const pill = cn(
     'hz:[&_svg]:size-4 hz:[&_svg]:shrink-0'
 );
 
+// Forced colors drop the fill: a CanvasText ring keeps the bubble shape.
 const bubble =
-    'hz:inline-flex hz:h-5 hz:min-w-5 hz:items-center hz:justify-center hz:rounded-full hz:px-1.5 hz:text-label-sm hz:tabular-nums';
+    'hz:forced-colors:border hz:forced-colors:border-solid hz:forced-colors:border-[CanvasText] hz:inline-flex hz:h-5 hz:min-w-5 hz:items-center hz:justify-center hz:rounded-full hz:px-1.5 hz:text-label-sm hz:tabular-nums';
 
 // Selected count: primary bubble, inverted on the open/pressed primary fill.
 const countBubble = cn(
@@ -281,7 +282,7 @@ export const Filter = forwardRef<HTMLButtonElement, FilterProps>(
 
         const optionsList = loading ? (
             <div
-                role="status"
+                data-filter-message=""
                 className="hz:flex hz:min-h-11 hz:items-center hz:gap-2 hz:text-body-secondary hz:text-muted-foreground"
             >
                 <Spinner aria-hidden="true" size="sm" tone="muted" />
@@ -289,7 +290,7 @@ export const Filter = forwardRef<HTMLButtonElement, FilterProps>(
             </div>
         ) : visible.length === 0 ? (
             <p
-                role="status"
+                data-filter-message=""
                 className="hz:m-0 hz:py-2 hz:text-body-secondary hz:text-muted-foreground"
             >
                 {emptyMessage}
@@ -344,77 +345,101 @@ export const Filter = forwardRef<HTMLButtonElement, FilterProps>(
             </RadioGroup>
         );
 
+        // One always-mounted polite region (outside the panel, which mounts
+        // already filled): screen readers announce text changes, not new
+        // regions that arrive with their text.
+        const status = !open
+            ? ''
+            : loading
+              ? loadingMessage
+              : visible.length === 0
+                ? emptyMessage
+                : '';
         return (
-            <Popover open={open} onOpenChange={changeOpen}>
-                <PopoverTrigger asChild>
-                    <button
-                        {...rest}
-                        ref={ref}
-                        type="button"
-                        disabled={disabled}
-                        aria-haspopup="dialog"
-                        aria-label={labelled}
-                        className={cn(pill, className)}
-                        data-filter=""
-                    >
-                        {pillInner}
-                    </button>
-                </PopoverTrigger>
-                <PopoverContent
-                    align="start"
-                    aria-label={label}
-                    width="296px"
-                    data-filter-panel=""
-                    footer={
-                        applyLabel !== undefined ? (
-                            <>
-                                {staged.length > 0 && (
+            <>
+                <span
+                    role="status"
+                    className="hz:sr-only"
+                    data-filter-status=""
+                >
+                    {status}
+                </span>
+                <Popover open={open} onOpenChange={changeOpen}>
+                    <PopoverTrigger asChild>
+                        <button
+                            {...rest}
+                            ref={ref}
+                            type="button"
+                            disabled={disabled}
+                            aria-haspopup="dialog"
+                            aria-label={labelled}
+                            className={cn(pill, className)}
+                            data-filter=""
+                        >
+                            {pillInner}
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                        align="start"
+                        aria-label={label}
+                        width="296px"
+                        data-filter-panel=""
+                        footer={
+                            applyLabel !== undefined ? (
+                                <>
+                                    {staged.length > 0 && (
+                                        <Button
+                                            variant="tertiary"
+                                            size="sm"
+                                            disabled={loading}
+                                            onClick={() => {
+                                                setStaged([]);
+                                                commit([]);
+                                                setOpen(false);
+                                            }}
+                                        >
+                                            {resetLabel}
+                                        </Button>
+                                    )}
                                     <Button
-                                        variant="tertiary"
                                         size="sm"
-                                        disabled={loading}
+                                        disabled={
+                                            loading || same(staged, value)
+                                        }
                                         onClick={() => {
-                                            setStaged([]);
-                                            commit([]);
+                                            commit(staged);
                                             setOpen(false);
                                         }}
                                     >
-                                        {resetLabel}
+                                        {applyLabel}
                                     </Button>
-                                )}
-                                <Button
+                                </>
+                            ) : undefined
+                        }
+                    >
+                        <div
+                            className="hz:flex hz:flex-col hz:gap-2"
+                            id={groupId}
+                        >
+                            {searchable && (
+                                <Input
+                                    type="search"
                                     size="sm"
-                                    disabled={loading || same(staged, value)}
-                                    onClick={() => {
-                                        commit(staged);
-                                        setOpen(false);
-                                    }}
-                                >
-                                    {applyLabel}
-                                </Button>
-                            </>
-                        ) : undefined
-                    }
-                >
-                    <div className="hz:flex hz:flex-col hz:gap-2" id={groupId}>
-                        {searchable && (
-                            <Input
-                                type="search"
-                                size="sm"
-                                aria-label={searchLabel}
-                                placeholder={searchLabel}
-                                value={query}
-                                disabled={loading}
-                                clearable
-                                onChange={(e) => setQuery(e.target.value)}
-                            />
-                        )}
-                        <div className="hz:max-h-60 hz:overflow-y-auto">
-                            {optionsList}
+                                    aria-label={searchLabel}
+                                    placeholder={searchLabel}
+                                    value={query}
+                                    disabled={loading}
+                                    clearable
+                                    onChange={(e) => setQuery(e.target.value)}
+                                />
+                            )}
+                            <div className="hz:max-h-60 hz:overflow-y-auto">
+                                {optionsList}
+                            </div>
                         </div>
-                    </div>
-                </PopoverContent>
-            </Popover>
+                    </PopoverContent>
+                </Popover>
+            </>
         );
     }
 );

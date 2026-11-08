@@ -123,6 +123,26 @@ for (const build of ['layered', 'unlayered'] as const)
             visibleOutline(await style(page, byTestId('hz-filter')));
         });
 
+        test('SplitButton buttons and the Filter count bubble keep a border; a highlighted Combobox row is outlined', async ({
+            page,
+        }) => {
+            for (const sel of [
+                `${byTestId('hz-split')} [data-split-main]`,
+                `${byTestId('hz-split')} [data-split-menu]`,
+                `${byTestId('hz-filter')} [data-filter-count]`,
+                `${byTestId('hz-filter')} [data-filter-total]`,
+            ])
+                visibleBorder(await style(page, sel));
+            await page.locator(byTestId('hz-combobox')).click();
+            await page.keyboard.press('ArrowDown');
+            const row =
+                '[data-combobox-content] [role="option"][data-highlighted]';
+            await expect(page.locator(row)).toBeVisible();
+            visibleOutline(await style(page, row));
+            visibleBorder(await style(page, '[data-combobox-content]'));
+            await page.keyboard.press('Escape');
+        });
+
         test('outline chips keep a border; status dots keep a system-colour fill', async ({
             page,
         }) => {

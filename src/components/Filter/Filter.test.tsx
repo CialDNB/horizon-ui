@@ -135,17 +135,27 @@ describe('Filter', () => {
                 .getAllByRole('checkbox')
                 .map((c) => c.getAttribute('aria-label') ?? c.textContent)
         ).toHaveLength(1);
+        const region = screen.getByRole('status');
+        const node = region;
         await user.type(search, 'zz');
-        expect(screen.getByRole('status')).toHaveTextContent('No options');
+        expect(region).toHaveTextContent('No options');
+        // The same element (mounted before the text) carries the message.
+        expect(screen.getByRole('status')).toBe(node);
     });
 
-    it('loading shows a status in the panel', async () => {
+    it('loading: the always-mounted status region (present before opening) announces it', async () => {
         const user = userEvent.setup();
         render(<Controlled loading loadingMessage="Loading severities" />);
+        const region = screen.getByRole('status');
+        expect(region).toHaveTextContent('');
         await user.click(pill());
-        expect(await screen.findByRole('status')).toHaveTextContent(
-            'Loading severities'
-        );
+        const status = screen.getByRole('status');
+        expect(
+            await screen.findByText('Loading severities', {
+                selector: '[data-filter-message]',
+            })
+        ).toBeVisible();
+        expect(status).toHaveTextContent('Loading severities');
     });
 
     it('toggle: no panel, aria-pressed follows the value, onClick does the work', async () => {
