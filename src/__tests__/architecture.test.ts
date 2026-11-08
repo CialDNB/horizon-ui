@@ -72,11 +72,14 @@ describe('architecture', () => {
     describe('public API', () => {
         let api: Record<string, unknown>;
         // The test body takes ~200 ms; the first import of src/index.ts is slow
-        // because it cold-transforms every Radix-based component, and that
-        // stretches under parallel load. The hook timeout covers that, not the test.
+        // because it cold-transforms every component (and Phosphor icons).
+        // Measured: ~1.2s alone; it exceeded 30s in 2 of 3 full runs while
+        // the unit and browser projects ran in parallel on a machine with a
+        // load average of 10-26 (Task 11c). Not a race: the import only
+        // waits for the transform. The hook timeout covers that, not the test.
         beforeAll(async () => {
             api = await import('../index');
-        }, 30_000);
+        }, 120_000);
 
         it('matches snapshot', () => {
             expect(Object.keys(api).sort()).toMatchInlineSnapshot(`

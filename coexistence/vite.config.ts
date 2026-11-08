@@ -48,6 +48,10 @@ export default defineConfig(async () => {
                 },
             ],
         },
-        server: { port: 4173, strictPort: true, fs: { allow: [repoRoot] } },
+        server: {
+            port: Number(process.env['COEX_PORT'] ?? 4173),
+            strictPort: true,
+            fs: { allow: [repoRoot] },
+        },
     };
 });

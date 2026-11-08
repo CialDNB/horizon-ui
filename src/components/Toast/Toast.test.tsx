@@ -101,14 +101,18 @@ describe('Toast', () => {
 
     it('the timer pauses while the pointer is over the toasts', async () => {
         render(<App />);
+        // The duration leaves room for the pointer move under load (a 100ms
+        // timer raced it: the toast could close before the hover landed).
+        // Radix does not start a toast paused, so hover after it appears.
         act(() => {
-            toast({ description: 'Hover me', duration: 100 });
+            toast({ description: 'Hover me', duration: 1000 });
         });
         await waitFor(() => expect(toasts()).toHaveLength(1));
         const viewport = document.querySelector('[data-toast-viewport]');
         if (!viewport) throw new Error('no viewport');
         fireEvent.pointerMove(viewport);
-        await act(() => new Promise((r) => setTimeout(r, 250)));
+        // Well past the duration: still open while hovered.
+        await act(() => new Promise((r) => setTimeout(r, 1300)));
         expect(toasts()[0]).toHaveAttribute('data-state', 'open');
         // Radix listens on the viewport's wrapper (pointerleave does not bubble).
         fireEvent.pointerLeave(viewport.parentElement ?? viewport);
