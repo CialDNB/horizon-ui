@@ -143,7 +143,8 @@ const legacyComboboxProps = {
     noOptionsText: 'use emptyMessage',
     loadingText: 'use loadingMessage',
     disablePortal: 'not needed: the list portals into the HorizonProvider root',
-    disableClearable: 'use clearable (off by default)',
+    disableClearable:
+        'use clearable={false} (the clear button is on by default)',
     disableCloseOnSelect: 'multiple keeps the list open by itself',
     popupIcon: 'not supported',
     clearIcon: 'not supported',
@@ -243,8 +244,10 @@ type ComboboxBaseProps = Omit<
         /** Invalid look and `aria-invalid` (set by a FormField `error`). */
         invalid?: boolean;
         /**
-         * Shows a clear button while something is selected or typed (MUI
-         * shows one by default; `disableClearable` -> `clearable={false}`).
+         * Shows a clear button while something is selected or typed, on by
+         * default as MUI's (`disableClearable` -> `clearable={false}`). Like
+         * MUI's it is not a Tab stop (`tabIndex=-1`, pointer only); from the
+         * keyboard, Escape on a closed list clears (see the component docs).
          * @default true
          */
         clearable?: boolean;
@@ -333,9 +336,12 @@ function toList(value: unknown): string[] {
  * politely. The list portals into the HorizonProvider root
  * (`--z-dropdown`). Name it with `FormField` or `aria-label`.
  *
- * Not implemented (deferred): Page Up/Page Down jumps in the list, and a
- * second Escape clearing the text (APG optional; MUI `clearOnEscape` is
- * off by default). Home/End move the caret in the input.
+ * Keyboard clearing: Escape on an open list closes it and restores the
+ * label; Escape again (list closed) clears the text, and for a single
+ * Combobox the value (APG; MUI's `clearOnEscape`). Backspace in an empty
+ * multi-select removes the last chip. The clear button is pointer-only.
+ * Tab closes the list without picking. Not implemented (deferred): Page
+ * Up/Page Down jumps in the list. Home/End move the caret in the input.
  */
 export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
     function Combobox(props, ref) {
@@ -600,6 +606,31 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                         event.preventDefault();
                         if (!multiple) setOpen(false);
                     }
+                    return;
+                }
+                case 'Tab': {
+                    // ARIA 1.2: Tab closes the popup and moves on. It does
+                    // not accept the highlighted option (as Enter does):
+                    // this combobox picks only on Enter or click (MUI
+                    // `autoSelect` off).
+                    if (open) setOpen(false);
+                    return;
+                }
+                case 'Escape': {
+                    // Reached only while the list is closed (an open list's
+                    // Escape is handled by its layer and contained). APG:
+                    // Escape on a closed popup clears the textbox. Single:
+                    // text and value; multiple: the typed text (chips go
+                    // with Backspace). Nothing to clear: let it bubble (an
+                    // enclosing dialog may close).
+                    const hasSingle = !multiple && selected.length > 0;
+                    if (text === '' && !hasSingle) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (multiple) {
+                        setText('', 'clear');
+                        setPristine(true);
+                    } else clear();
                     return;
                 }
                 case 'Backspace': {
@@ -877,6 +908,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                             {showClear && (
                                 <button
                                     type="button"
+                                    tabIndex={-1}
                                     aria-label={clearLabel}
                                     className={endAction}
                                     onMouseDown={(e) => e.preventDefault()}

@@ -146,12 +146,90 @@ describe('Combobox', () => {
         await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
         expect(input()).toHaveValue('France');
         await user.type(input(), 'x');
-        // Tab reaches the clear button (still the field), then leaves it.
-        await user.tab();
-        expect(screen.getByRole('button', { name: 'Clear' })).toHaveFocus();
-        expect(input()).toHaveValue('Francex');
         await user.tab();
         expect(input()).toHaveValue('France');
+    });
+
+    it('Tab from an open list closes it, picks nothing, and moves past the combobox (Clear is not a Tab stop)', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        render(
+            <HorizonProvider>
+                <Combobox
+                    aria-label="Country"
+                    options={COUNTRIES}
+                    defaultValue="fr"
+                    onValueChange={onValueChange}
+                />
+                <button type="button">After</button>
+            </HorizonProvider>
+        );
+        expect(screen.getByRole('button', { name: 'Clear' })).toHaveAttribute(
+            'tabindex',
+            '-1'
+        );
+        input().focus();
+        await user.keyboard('{ArrowDown}{ArrowDown}');
+        expect(screen.getByRole('listbox')).toBeVisible();
+        await user.tab();
+        expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+        expect(input()).toHaveAttribute('aria-expanded', 'false');
+        expect(onValueChange).not.toHaveBeenCalled();
+        expect(input()).toHaveValue('France');
+        await user.tab({ shift: true });
+        expect(input()).toHaveFocus();
+    });
+
+    it('Shift+Tab from an open multi-select list to a chip closes the list', async () => {
+        const user = userEvent.setup();
+        render(<Multi defaultValue={['fr']} />);
+        input().focus();
+        await user.keyboard('{ArrowDown}');
+        expect(screen.getByRole('listbox')).toBeVisible();
+        await user.tab({ shift: true });
+        expect(
+            screen.getByRole('button', { name: 'Remove France' })
+        ).toHaveFocus();
+        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+    });
+
+    it('keyboard clearing: Escape closes the list, Escape again clears a single value', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        render(<Single defaultValue="fr" onValueChange={onValueChange} />);
+        input().focus();
+        await user.keyboard('{ArrowDown}');
+        expect(screen.getByRole('listbox')).toBeVisible();
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+        expect(onValueChange).not.toHaveBeenCalled();
+        await user.keyboard('{Escape}');
+        expect(onValueChange).toHaveBeenCalledWith(null);
+        expect(input()).toHaveValue('');
+    });
+
+    it('Escape on a closed multi-select clears only the typed text; with nothing to clear it bubbles', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        const onOuterKey = vi.fn();
+        render(
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- test: a host's keydown listener
+            <div onKeyDown={(e) => e.key === 'Escape' && onOuterKey()}>
+                <Multi defaultValue={['fr']} onValueChange={onValueChange} />
+            </div>
+        );
+        await user.type(input(), 'ja');
+        await user.keyboard('{Alt>}{ArrowUp}{/Alt}');
+        await waitFor(() =>
+            expect(document.querySelector('[data-combobox-content]')).toBeNull()
+        );
+        await user.keyboard('{Escape}');
+        expect(input()).toHaveValue('');
+        expect(onValueChange).not.toHaveBeenCalled();
+        expect(onOuterKey).not.toHaveBeenCalled();
+        await user.keyboard('{Escape}');
+        expect(onOuterKey).toHaveBeenCalledTimes(1);
     });
 
     it('blur restores the selected label even after the list was closed with Alt+ArrowUp', async () => {
