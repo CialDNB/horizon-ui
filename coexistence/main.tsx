@@ -2,6 +2,7 @@ import {
     Button as MuiButton,
     CssBaseline,
     Dialog as MuiDialog,
+    Slide,
     DialogContent as MuiDialogContent,
     ThemeProvider,
     Typography as MuiTypography,
@@ -111,6 +112,27 @@ if (params.get('order') === 'horizon-first') {
     if (withReboot) reboot();
     if (withHorizon) horizon();
 }
+
+/*
+ * ?mui=v2 renders the harness MUI dialogs like x-core DialogV2
+ * (x-core/src/components/DialogV2/DialogV2.tsx): `disablePortal` (the
+ * dialog stays in the React parent's DOM, here inside the app's
+ * HorizonProvider) and a `Slide` (direction up) transition, `fullWidth`,
+ * `scroll="paper"`, `keepMounted={false}`. Default: a plain portaled MUI
+ * Dialog (x-core Dialog v1).
+ */
+const muiV2 = params.get('mui') === 'v2';
+// Typed loosely: MUI's Slide props do not satisfy exactOptionalPropertyTypes.
+const muiDialogVariant: object = muiV2
+    ? {
+          disablePortal: true,
+          TransitionComponent: Slide,
+          TransitionProps: { direction: 'up' } as object,
+          fullWidth: true,
+          scroll: 'paper' as const,
+          keepMounted: false,
+      }
+    : {};
 
 // Mirrors x-core Legacy: MUI htmlFontSize 14 against the browser-default 16px
 // root, as in customer360 (it sets no html font-size). Tests also stress 14px.
@@ -225,7 +247,11 @@ function SelectInMuiDialog() {
             >
                 Open MUI dialog
             </MuiButton>
-            <MuiDialog open={open} onClose={() => setOpen(false)}>
+            <MuiDialog
+                open={open}
+                onClose={() => setOpen(false)}
+                {...muiDialogVariant}
+            >
                 <MuiDialogContent data-testid="mui-dialog-content">
                     <HorizonProvider>
                         <Input
@@ -523,6 +549,7 @@ function OverlaysInMuiDialog() {
                 open={open}
                 onClose={() => setOpen(false)}
                 data-testid="mui-overlays-dialog"
+                {...muiDialogVariant}
             >
                 <MuiDialogContent data-testid="mui-overlays-content">
                     <HorizonProvider>

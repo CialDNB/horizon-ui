@@ -1819,3 +1819,42 @@ test.describe('Horizon controls inside an MUI dialog (unlayered + host CSS)', ()
         await expect(page.getByTestId('mui-dialog-content')).toBeVisible();
     });
 });
+
+test.describe('Select inside x-core DialogV2 (disablePortal + Slide)', () => {
+    for (const build of ['layered', 'unlayered'] as const)
+        test(`the list opens under its trigger above the dialog and selects (${build})`, async ({
+            page,
+        }) => {
+            await page.goto(
+                `${url(build, { reboot: 'full', host: true })}&mui=v2`
+            );
+            await page.getByTestId('open-mui-dialog').click();
+            await page.waitForFunction(() => {
+                const paper = document.querySelector('.MuiDialog-paper');
+                return (
+                    paper !== null &&
+                    getComputedStyle(paper).transform === 'none'
+                );
+            });
+            const trigger = page.getByTestId('hz-select-dialog');
+            await trigger.click();
+            // Role queries skip it: x-core DialogV2 sits inside the
+            // aria-hidden #root (measured x-core defect, see overlays.spec).
+            const option = page.locator('[role="option"]', {
+                hasText: 'Initech',
+            });
+            await expect(option).toBeVisible();
+            const tb = await trigger.boundingBox();
+            const list = await page
+                .locator('[data-select-content]')
+                .boundingBox();
+            if (!tb || !list) throw new Error('no box');
+            // Not offset by the Slide transform: right under the trigger.
+            expect(
+                Math.abs(list.y - (tb.y + tb.height) - 4)
+            ).toBeLessThanOrEqual(1);
+            await option.click();
+            await expect(trigger).toHaveText('Initech');
+            await expect(page.getByTestId('mui-dialog-content')).toBeVisible();
+        });
+});
