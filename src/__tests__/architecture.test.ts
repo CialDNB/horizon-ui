@@ -121,6 +121,7 @@ describe('architecture', () => {
                 "Input",
                 "Label",
                 "Link",
+                "NumberInput",
                 "Popover",
                 "PopoverAnchor",
                 "PopoverClose",

@@ -147,7 +147,10 @@ export const curation: Record<string, Curation> = {
     NumberInput: {
         batch: 2,
         horizon: 'NumberInput',
-        note: 'Not in the plan. port only if still needed (otherwise Input type=number).',
+        note: 'Done in Task 11c, see NumberInput section below. Spinbutton on Input: `value`/`onChange(event, number)` -> `value`/`onValueChange(number | null)`; `min`, `max`, `decimalPlaces`, `allowNegative`, `thousandSeparator`, `clearable` kept; `showArrows` -> `showSteppers` (44px side-by-side buttons); `isLoading` -> `loading`; new `step`, `incrementLabel`/`decrementLabel`; `append` text/country selectors, `inputLabel`, `size` small/medium/large -> sm/md/lg (Input sizes).',
+        status: 'done',
+        supersededNote:
+            'The one customer360 call site (NewEnhancedEvaluationForm AddRowsNumberInput: `type="number"`, `min={0}`, `value`, `onChange(e => +e.target.value)`, `onFocus` select, Enter key, styled 32px x 56px) migrates to `NumberInput` with `onValueChange`; `handleIncrement`/`handleDecrement` are built in.',
     },
     PhoneInput: {
         batch: 2,

@@ -418,6 +418,11 @@ textPairs.push(
     }
 );
 nonTextPairs.push(
+    {
+        use: 'NumberInput stepper and Combobox toggle icons',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
     { use: 'SearchBar search icon', text: 'primary', surface: 'background' },
     {
         use: 'SearchBar search icon hover',

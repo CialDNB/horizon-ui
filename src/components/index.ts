@@ -74,6 +74,8 @@ export type {
     LinkVariant,
     LinkVariantOptions,
 } from './Link';
+export { NumberInput } from './NumberInput';
+export type { NumberInputProps } from './NumberInput';
 export { Progress, progressVariants } from './Progress';
 export type {
     ProgressProps,

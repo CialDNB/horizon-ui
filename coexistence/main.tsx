@@ -35,6 +35,7 @@ import {
     Textarea,
     Tooltip,
     Typography,
+    NumberInput,
     SearchBar,
     SplitButton,
     Popover,
@@ -1117,6 +1118,13 @@ function App() {
                                 data-testid="hz-split-secondary"
                             />
                         </div>
+                        <NumberInput
+                            aria-label="Rows"
+                            defaultValue={5}
+                            min={0}
+                            max={10}
+                            data-testid="hz-number"
+                        />
                         <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"

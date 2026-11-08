@@ -733,6 +733,26 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    NumberInput: {
+        targets: [
+            ...plain(['hz-number']),
+            { key: 'field', selector: fieldOf('hz-number') },
+            {
+                key: 'field, focused',
+                selector: fieldOf('hz-number'),
+                focus: byTestId('hz-number'),
+            },
+            {
+                key: 'decrease (button + button target)',
+                selector: `${fieldOf('hz-number')} button[aria-label="Decrease"]`,
+            },
+            {
+                key: 'increase',
+                selector: `${fieldOf('hz-number')} button[aria-label="Increase"]`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     // Two buttons in a row: customer360's `button + button { margin-left }`
     // must not split the pill.
     SplitButton: {
@@ -1545,6 +1565,16 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // Layered build: Bootstrap's `button` radius/font and customer360's
     // `button + button { margin-left: 8px }` split the pill (the unlayered
     // build keeps it joined, asserted above).
+    // As Input; the steppers lose their circle and the increase button
+    // takes customer360's `button + button { margin-left: 8px }`.
+    NumberInput: {
+        'decrease (button + button target)': ['borderRadius: 100px -> 0px'],
+        'hz-number': ['width: changed', 'lineHeight: 14px -> 21px'],
+        increase: [
+            'marginInlineStart: 0px -> 8px',
+            'borderRadius: 100px -> 0px',
+        ],
+    },
     SplitButton: {
         'hz-split group': ['width: changed'],
         'hz-split main': [
