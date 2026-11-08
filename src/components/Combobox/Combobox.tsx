@@ -247,10 +247,17 @@ type ComboboxBaseProps = Omit<
          * Shows a clear button while something is selected or typed, on by
          * default as MUI's (`disableClearable` -> `clearable={false}`). Like
          * MUI's it is not a Tab stop (`tabIndex=-1`, pointer only); from the
-         * keyboard, Escape on a closed list clears (see the component docs).
+         * keyboard, delete the text (single) or use `clearOnEscape`.
          * @default true
          */
         clearable?: boolean;
+        /**
+         * Escape on a CLOSED list clears the text (single: also the value)
+         * instead of bubbling (MUI `clearOnEscape`). Off by default so
+         * Escape still closes an enclosing Dialog without losing the value.
+         * @default false
+         */
+        clearOnEscape?: boolean;
         /** Status text after a picked label (translate it). @default 'selected' */
         selectedAnnouncement?: string;
         /** Status text after a removed label (translate it). @default 'removed' */
@@ -336,10 +343,11 @@ function toList(value: unknown): string[] {
  * politely. The list portals into the HorizonProvider root
  * (`--z-dropdown`). Name it with `FormField` or `aria-label`.
  *
- * Keyboard clearing: Escape on an open list closes it and restores the
- * label; Escape again (list closed) clears the text, and for a single
- * Combobox the value (APG; MUI's `clearOnEscape`). Backspace in an empty
- * multi-select removes the last chip. The clear button is pointer-only.
+ * Keyboard clearing: deleting all the text of a single Combobox clears its
+ * value (MUI); Backspace in an empty multi-select removes the last chip.
+ * Escape on an open list closes it and restores the label; on a closed
+ * list it bubbles (an enclosing Dialog closes, the value is kept) unless
+ * `clearOnEscape` is set. The clear button is pointer-only.
  * Tab closes the list without picking. Not implemented (deferred): Page
  * Up/Page Down jumps in the list. Home/End move the caret in the input.
  */
@@ -360,6 +368,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
             size: sizeProp,
             invalid: invalidProp,
             clearable = true,
+            clearOnEscape = false,
             selectedAnnouncement: selectedText_ = 'selected',
             removedAnnouncement: removedText = 'removed',
             requiredMessage = 'Select at least one option',
@@ -618,11 +627,12 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                 }
                 case 'Escape': {
                     // Reached only while the list is closed (an open list's
-                    // Escape is handled by its layer and contained). APG:
-                    // Escape on a closed popup clears the textbox. Single:
-                    // text and value; multiple: the typed text (chips go
-                    // with Backspace). Nothing to clear: let it bubble (an
-                    // enclosing dialog may close).
+                    // Escape is handled by its layer and contained). By
+                    // default it bubbles, so an enclosing Dialog/Drawer
+                    // closes and the value is kept (MUI). With
+                    // `clearOnEscape` (APG optional, MUI prop) it clears:
+                    // single text and value; multiple the typed text.
+                    if (!clearOnEscape) return;
                     const hasSingle = !multiple && selected.length > 0;
                     if (text === '' && !hasSingle) return;
                     event.preventDefault();
@@ -646,6 +656,13 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
 
         const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
             const next = event.target.value;
+            // MUI: emptying the text of a single Combobox clears its value
+            // (the keyboard clear path; not with clearable={false}, as
+            // MUI's disableClearable).
+            if (next === '' && !multiple && clearable && selected.length > 0) {
+                commitValue([]);
+                lastSelectedText.current = '';
+            }
             setText(next, 'input');
             setAnnouncement('');
             setPristine(false);

@@ -4,6 +4,13 @@ import { createRef, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetWarnings } from '../../lib/options';
 import { HorizonProvider } from '../../provider';
+import {
+    Dialog,
+    DialogBody,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '../Dialog';
 import { FormField } from '../FormField';
 import {
     Combobox,
@@ -139,8 +146,9 @@ describe('Combobox', () => {
     it('Escape closes and restores the selected label; blur does too', async () => {
         const user = userEvent.setup();
         render(<Single defaultValue="fr" />);
-        await user.clear(input());
-        await user.type(input(), 'ja');
+        // Replace the selected text (typing over it never empties it).
+        await user.tripleClick(input());
+        await user.keyboard('ja');
         expect(screen.getByRole('listbox')).toBeVisible();
         await user.keyboard('{Escape}');
         await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
@@ -194,30 +202,83 @@ describe('Combobox', () => {
         await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
     });
 
-    it('keyboard clearing: Escape closes the list, Escape again clears a single value', async () => {
-        const user = userEvent.setup();
-        const onValueChange = vi.fn();
-        render(<Single defaultValue="fr" onValueChange={onValueChange} />);
-        input().focus();
-        await user.keyboard('{ArrowDown}');
-        expect(screen.getByRole('listbox')).toBeVisible();
-        await user.keyboard('{Escape}');
-        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
-        expect(onValueChange).not.toHaveBeenCalled();
-        await user.keyboard('{Escape}');
-        expect(onValueChange).toHaveBeenCalledWith(null);
-        expect(input()).toHaveValue('');
-    });
-
-    it('Escape on a closed multi-select clears only the typed text; with nothing to clear it bubbles', async () => {
+    it('default: Escape on a closed list bubbles and keeps the value (MUI clearOnEscape off)', async () => {
         const user = userEvent.setup();
         const onValueChange = vi.fn();
         const onOuterKey = vi.fn();
         render(
             // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- test: a host's keydown listener
             <div onKeyDown={(e) => e.key === 'Escape' && onOuterKey()}>
-                <Multi defaultValue={['fr']} onValueChange={onValueChange} />
+                <Single defaultValue="fr" onValueChange={onValueChange} />
             </div>
+        );
+        input().focus();
+        await user.keyboard('{ArrowDown}');
+        expect(screen.getByRole('listbox')).toBeVisible();
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+        expect(onOuterKey).not.toHaveBeenCalled();
+        await user.keyboard('{Escape}');
+        expect(onOuterKey).toHaveBeenCalledTimes(1);
+        expect(onValueChange).not.toHaveBeenCalled();
+        expect(input()).toHaveValue('France');
+    });
+
+    it('keyboard clear path: deleting all the text of a single Combobox clears its value (MUI)', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        render(<Single defaultValue="fr" onValueChange={onValueChange} />);
+        await user.clear(input());
+        expect(onValueChange).toHaveBeenCalledWith(null);
+        await user.click(document.body);
+        expect(input()).toHaveValue('');
+    });
+
+    it('clearable={false}: deleting the text keeps the value (MUI disableClearable)', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        render(
+            <Single
+                defaultValue="fr"
+                clearable={false}
+                onValueChange={onValueChange}
+            />
+        );
+        await user.clear(input());
+        expect(onValueChange).not.toHaveBeenCalled();
+        await user.click(document.body);
+        expect(input()).toHaveValue('France');
+    });
+
+    it('clearOnEscape: Escape on a closed list clears (single: text and value; multiple: text) and stops there', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        const onOuterKey = vi.fn();
+        const { unmount } = render(
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- test: a host's keydown listener
+            <div onKeyDown={(e) => e.key === 'Escape' && onOuterKey()}>
+                <Single
+                    clearOnEscape
+                    defaultValue="fr"
+                    onValueChange={onValueChange}
+                />
+            </div>
+        );
+        input().focus();
+        await user.keyboard('{Escape}');
+        expect(onValueChange).toHaveBeenCalledWith(null);
+        expect(input()).toHaveValue('');
+        expect(onOuterKey).not.toHaveBeenCalled();
+        await user.keyboard('{Escape}');
+        expect(onOuterKey).toHaveBeenCalledTimes(1);
+        unmount();
+        const onMulti = vi.fn();
+        render(
+            <Multi
+                clearOnEscape
+                defaultValue={['fr']}
+                onValueChange={onMulti}
+            />
         );
         await user.type(input(), 'ja');
         await user.keyboard('{Alt>}{ArrowUp}{/Alt}');
@@ -226,10 +287,50 @@ describe('Combobox', () => {
         );
         await user.keyboard('{Escape}');
         expect(input()).toHaveValue('');
-        expect(onValueChange).not.toHaveBeenCalled();
-        expect(onOuterKey).not.toHaveBeenCalled();
+        expect(onMulti).not.toHaveBeenCalled();
+    });
+
+    it('inside a Horizon Dialog: Escape closes the list, then the dialog; the value is kept', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        function InDialog() {
+            const [value, setValue] = useState<string | null>('fr');
+            return (
+                <HorizonProvider>
+                    <Dialog defaultOpen>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Billing</DialogTitle>
+                            </DialogHeader>
+                            <DialogBody>
+                                <Combobox
+                                    aria-label="Country"
+                                    options={COUNTRIES}
+                                    value={value}
+                                    onValueChange={(v) => {
+                                        setValue(v);
+                                        onValueChange(v);
+                                    }}
+                                />
+                            </DialogBody>
+                        </DialogContent>
+                    </Dialog>
+                    <output data-testid="kept">{String(value)}</output>
+                </HorizonProvider>
+            );
+        }
+        render(<InDialog />);
+        const dialog = await screen.findByRole('dialog');
+        input().focus();
+        await user.keyboard('{ArrowDown}');
+        expect(screen.getByRole('listbox')).toBeVisible();
         await user.keyboard('{Escape}');
-        expect(onOuterKey).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+        expect(dialog).toBeInTheDocument();
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        expect(onValueChange).not.toHaveBeenCalled();
+        expect(screen.getByTestId('kept')).toHaveTextContent('fr');
     });
 
     it('blur restores the selected label even after the list was closed with Alt+ArrowUp', async () => {

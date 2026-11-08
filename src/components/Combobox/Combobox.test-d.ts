@@ -17,6 +17,7 @@ export const single: ComboboxProps = {
     loading: true,
     size: 'sm',
     clearable: true,
+    clearOnEscape: true,
     'aria-label': 'Company',
     'data-did': 'company',
 };
