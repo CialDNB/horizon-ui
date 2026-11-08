@@ -102,7 +102,12 @@ describe('EmailsField', () => {
             'eve@x.org',
             'f@g.io',
         ]);
-        expect(box()).toHaveValue('');
+        // The invalid part is kept in the input with the error, not dropped.
+        expect(box()).toHaveValue('bad');
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            'Enter a valid email address'
+        );
+        expect(screen.getByRole('status')).toHaveTextContent('3 added');
     });
 
     it('paste with nothing valid lands in the input', async () => {
@@ -233,5 +238,18 @@ describe('EmailsField', () => {
         expect(warn).toHaveBeenCalledWith(
             expect.stringContaining('emailValidationFunc')
         );
+    });
+
+    it('announces additions and removals in the polite status region', async () => {
+        const user = userEvent.setup();
+        render(<Controlled value={['a@b.co']} />);
+        const status = screen.getByRole('status');
+        expect(status).toHaveTextContent('');
+        await user.type(box(), 'c@d.com{Enter}');
+        expect(status).toHaveTextContent('c@d.com added');
+        await user.click(screen.getByRole('button', { name: 'Remove a@b.co' }));
+        expect(status).toHaveTextContent('a@b.co removed');
+        await user.keyboard('{Backspace}');
+        expect(status).toHaveTextContent('c@d.com removed');
     });
 });

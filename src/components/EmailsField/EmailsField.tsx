@@ -83,6 +83,10 @@ export type EmailsFieldProps = Omit<
         clearable?: boolean;
         /** Accessible name of the clear-all button. @default 'Clear all' */
         clearLabel?: string;
+        /** Status text after an added address (translate it). @default 'added' */
+        addedAnnouncement?: string;
+        /** Status text after a removed address (translate it). @default 'removed' */
+        removedAnnouncement?: string;
         /** Spinner and `aria-busy`. @default false */
         loading?: boolean;
         /** Form field name: one hidden input per address. */
@@ -92,7 +96,12 @@ export type EmailsFieldProps = Omit<
     };
 
 /**
- * Collects email addresses as removable Chips. Enter, comma, semicolon,
+ * Collects email addresses as removable Chips. Enter on an EMPTY input is
+ * not swallowed, so the enclosing form (e.g. in a dialog) submits; x-core
+ * always prevented it. Invalid parts of a pasted list stay in the input
+ * with the error message instead of being dropped. Additions and removals
+ * are announced in a polite status region.
+ * Enter, comma, semicolon,
  * space and leaving the field add the typed address when it is valid;
  * pasting a list ("a@x.com, b@y.com; Name <c@z.com>") adds every valid one;
  * an invalid address stays in the input with an error message; Backspace
@@ -112,6 +121,8 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
             clearable = false,
             clearLabel = 'Clear all',
             loading = false,
+            addedAnnouncement = 'added',
+            removedAnnouncement = 'removed',
             name,
             form,
             className,
@@ -164,6 +175,8 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
         ]);
         const emails = valueProp !== undefined ? [...valueProp] : inner;
         const [text, setText] = useState('');
+        // Additions and removals are spoken (chips change silently).
+        const [announcement, setAnnouncement] = useState('');
         const full = validLimit !== undefined && emails.length >= validLimit;
 
         const commitList = (next: string[]) => {
@@ -183,12 +196,16 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
                 setTypedInvalid(true);
                 return false;
             }
-            if (!emails.includes(email)) commitList([...emails, email]);
+            if (!emails.includes(email)) {
+                commitList([...emails, email]);
+                setAnnouncement(`${email} ${addedAnnouncement}`);
+            }
             setText('');
             setTypedInvalid(false);
             return true;
         };
         const remove = (email: string) => {
+            setAnnouncement(`${email} ${removedAnnouncement}`);
             commitList(emails.filter((e) => e !== email));
             inputRef.current?.focus();
         };
@@ -211,20 +228,38 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
             onPaste?.(event);
             if (event.defaultPrevented) return;
             const pasted = event.clipboardData.getData('text/plain');
-            const found = pasted
-                .split(/[,;\n\r\t]+|\s(?![^<]*>)/)
+            // Entries split on , ; tabs and new lines; an entry with
+            // "Name <address>" stays whole, others also split on spaces.
+            const parts = pasted
+                .split(/[,;\n\r\t]+/)
+                .flatMap((entry) =>
+                    entry.includes('<') ? [entry] : entry.split(/\s+/)
+                )
+                .map((part) => part.trim())
+                .filter((part) => part !== '');
+            const found = parts
                 .map(accept)
                 .filter((e): e is string => e !== null);
             // Nothing valid: let the text land in the input to be fixed.
             if (found.length === 0) return;
             event.preventDefault();
+            // Invalid parts are not dropped silently: they stay in the input,
+            // with the error message, to be fixed.
+            const rejected = parts.filter((part) => accept(part) === null);
+            setText(rejected.join(', '));
+            setTypedInvalid(rejected.length > 0);
             const next = [...emails];
             for (const email of found) {
                 if (validLimit !== undefined && next.length >= validLimit)
                     break;
                 if (!next.includes(email)) next.push(email);
             }
-            if (next.length > emails.length) commitList(next);
+            if (next.length > emails.length) {
+                commitList(next);
+                setAnnouncement(
+                    `${next.length - emails.length} ${addedAnnouncement}`
+                );
+            }
         };
 
         const state = fieldStateOf({
@@ -309,6 +344,13 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
                                 <XIcon aria-hidden="true" />
                             </button>
                         )}
+                    </span>
+                    <span
+                        role="status"
+                        className="hz:sr-only"
+                        data-emails-status=""
+                    >
+                        {announcement}
                     </span>
                     {name !== undefined &&
                         emails.map((email) => (
