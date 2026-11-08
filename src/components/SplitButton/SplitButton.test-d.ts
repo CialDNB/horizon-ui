@@ -12,6 +12,7 @@ export const full: SplitButtonProps = {
     loading: false,
     defaultSelectedIndex: 1,
     menuLabel: 'More options',
+    groupSuffix: 'actions',
     'aria-label': 'New decision',
     'data-did': 'split',
 };

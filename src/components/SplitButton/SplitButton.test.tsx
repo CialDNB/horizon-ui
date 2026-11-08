@@ -28,7 +28,9 @@ function Split(props: Partial<SplitButtonProps>) {
 describe('SplitButton', () => {
     it('is a named group of a main button and a menu button', () => {
         render(<Split />);
-        const group = screen.getByRole('group', { name: 'New Decision V1' });
+        const group = screen.getByRole('group', {
+            name: 'New Decision V1 actions',
+        });
         const main = screen.getByRole('button', { name: 'New Decision V1' });
         const menu = screen.getByRole('button', { name: 'More options' });
         expect(group).toContainElement(main);
@@ -147,5 +149,21 @@ describe('SplitButton', () => {
         expect(warn).toHaveBeenCalledWith(
             expect.stringContaining('isHeaderButton')
         );
+    });
+
+    it('names the group distinctly; aria-label wins; a ReactNode headline without aria-label warns', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const { rerender } = render(<Split aria-label="Decision" />);
+        expect(screen.getByRole('group')).toHaveAccessibleName('Decision');
+        rerender(<Split headline={<span>New</span>} />);
+        expect(screen.getByRole('group')).not.toHaveAttribute('aria-label');
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining('aria-label')
+        );
+        rerender(<Split headline="Create" groupSuffix="choices" />);
+        expect(screen.getByRole('group')).toHaveAccessibleName(
+            'Create choices'
+        );
+        expect(screen.getByRole('button', { name: 'Create' })).toBeVisible();
     });
 });

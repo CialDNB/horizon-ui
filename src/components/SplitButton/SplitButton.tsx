@@ -11,7 +11,7 @@ import {
     type ReactNode,
 } from 'react';
 import { cn } from '../../lib/cn';
-import { omitLegacyProps, resolveOption } from '../../lib/options';
+import { omitLegacyProps, resolveOption, warnOnce } from '../../lib/options';
 import type { DnbBase } from '../../types/DnbBase';
 import { Button, type ButtonSize } from '../Button';
 import {
@@ -83,6 +83,12 @@ export type SplitButtonProps = Omit<
         defaultSelectedIndex?: number;
         /** Accessible name of the menu button. Translate it. @default 'More options' */
         menuLabel?: string;
+        /**
+         * Word appended to the visible label to name the group ("New
+         * decision actions"), so it does not repeat the main button's name.
+         * Ignored when `aria-label` is given. Translate it. @default 'actions'
+         */
+        groupSuffix?: string;
         /** Decorative icon before the main label (x-core forwarded `startIcon`). */
         startIcon?: ReactNode;
     };
@@ -125,6 +131,7 @@ export const SplitButton = forwardRef<HTMLDivElement, SplitButtonProps>(
             loading = false,
             defaultSelectedIndex = 0,
             menuLabel = 'More options',
+            groupSuffix = 'actions',
             startIcon,
             className,
             'aria-label': ariaLabel,
@@ -161,15 +168,23 @@ export const SplitButton = forwardRef<HTMLDivElement, SplitButtonProps>(
             else onOptionClick?.(option, i);
         };
         const mainLabel = headline ?? labelOf(current);
+        // The group gets its own name, not a copy of the main button's:
+        // "<label> actions" from visible text, or the caller's aria-label.
+        const groupName =
+            ariaLabel ??
+            (typeof mainLabel === 'string' && mainLabel !== ''
+                ? `${mainLabel} ${groupSuffix}`
+                : undefined);
+        if (groupName === undefined)
+            warnOnce(
+                'SplitButton: a non-text headline leaves the group unnamed; pass aria-label.'
+            );
         return (
             <div
                 {...rest}
                 ref={ref}
                 role="group"
-                aria-label={
-                    ariaLabel ??
-                    (typeof mainLabel === 'string' ? mainLabel : undefined)
-                }
+                aria-label={groupName}
                 className={cn(
                     'hz:inline-flex hz:max-w-full hz:min-w-0 hz:items-stretch',
                     className
