@@ -332,6 +332,10 @@ function toList(value: unknown): string[] {
  * optional custom values, async loading and empty states announced
  * politely. The list portals into the HorizonProvider root
  * (`--z-dropdown`). Name it with `FormField` or `aria-label`.
+ *
+ * Not implemented (deferred): Page Up/Page Down jumps in the list, and a
+ * second Escape clearing the text (APG optional; MUI `clearOnEscape` is
+ * off by default). Home/End move the caret in the input.
  */
 export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
     function Combobox(props, ref) {
