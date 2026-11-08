@@ -143,7 +143,9 @@ describe('Toasts while a modal is open', () => {
             <HorizonProvider>
                 <ToastProvider />
                 <div role="dialog" aria-label="Host dialog">
-                    <HorizonProvider data-testid="inner" />
+                    <HorizonProvider data-testid="inner">
+                        {null}
+                    </HorizonProvider>
                 </div>
             </HorizonProvider>
         );
