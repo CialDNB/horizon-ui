@@ -10,6 +10,7 @@ export const full: EmailsFieldProps = {
     size: 'lg',
     clearable: true,
     clearLabel: 'Remove all',
+    clearedAnnouncement: 'All removed',
     loading: false,
     name: 'emails',
     placeholder: 'Type an email and press Enter',

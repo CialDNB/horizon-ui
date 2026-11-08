@@ -252,4 +252,28 @@ describe('EmailsField', () => {
         await user.keyboard('{Backspace}');
         expect(status).toHaveTextContent('c@d.com removed');
     });
+
+    it('a paste with only valid parts keeps the text typed before it; rejected parts go in at the caret', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        render(<Controlled onValueChange={onValueChange} />);
+        await user.type(box(), 'draft');
+        paste('a@b.co, c@d.com');
+        expect(onValueChange).toHaveBeenLastCalledWith(['a@b.co', 'c@d.com']);
+        expect(box()).toHaveValue('draft');
+        expect(screen.queryByRole('alert')).toBeNull();
+        (box() as HTMLInputElement).setSelectionRange(2, 2);
+        paste('e@f.com; oops');
+        expect(box()).toHaveValue('droopsaft');
+        expect(screen.getByRole('alert')).toBeVisible();
+    });
+
+    it('Clear all is announced', async () => {
+        const user = userEvent.setup();
+        render(<Controlled clearable value={['a@b.co']} />);
+        await user.click(screen.getByRole('button', { name: 'Clear all' }));
+        expect(screen.getByRole('status')).toHaveTextContent(
+            'All emails removed'
+        );
+    });
 });

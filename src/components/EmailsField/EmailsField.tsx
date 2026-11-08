@@ -87,6 +87,8 @@ export type EmailsFieldProps = Omit<
         addedAnnouncement?: string;
         /** Status text after a removed address (translate it). @default 'removed' */
         removedAnnouncement?: string;
+        /** Status text after Clear all (translate it). @default 'All emails removed' */
+        clearedAnnouncement?: string;
         /** Spinner and `aria-busy`. @default false */
         loading?: boolean;
         /** Form field name: one hidden input per address. */
@@ -123,6 +125,7 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
             loading = false,
             addedAnnouncement = 'added',
             removedAnnouncement = 'removed',
+            clearedAnnouncement = 'All emails removed',
             name,
             form,
             className,
@@ -246,8 +249,17 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
             // Invalid parts are not dropped silently: they stay in the input,
             // with the error message, to be fixed.
             const rejected = parts.filter((part) => accept(part) === null);
-            setText(rejected.join(', '));
-            setTypedInvalid(rejected.length > 0);
+            // Only the rejected parts are inserted, at the caret, as the
+            // input would have; text typed before the paste is kept.
+            if (rejected.length > 0) {
+                const el = event.currentTarget;
+                const start = el.selectionStart ?? text.length;
+                const end = el.selectionEnd ?? start;
+                setText(
+                    text.slice(0, start) + rejected.join(', ') + text.slice(end)
+                );
+                setTypedInvalid(true);
+            }
             const next = [...emails];
             for (const email of found) {
                 if (validLimit !== undefined && next.length >= validLimit)
@@ -338,6 +350,7 @@ export const EmailsField = forwardRef<HTMLInputElement, EmailsFieldProps>(
                                 className={cn(clearAction, 'hz:self-center')}
                                 onClick={() => {
                                     commitList([]);
+                                    setAnnouncement(clearedAnnouncement);
                                     inputRef.current?.focus();
                                 }}
                             >
