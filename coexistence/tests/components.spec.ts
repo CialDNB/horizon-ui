@@ -2329,3 +2329,199 @@ test.describe('Filter panel against Bootstrap 4.4.1 and customer360 host CSS', (
                 expect(without.panel['zIndex']).toBe('1450');
             });
 });
+
+/*
+ * Mouse (pointer) focus. The probes above focus with keyboard modality
+ * (`:focus-visible`). A mouse press, or focus returning to a trigger after
+ * a pointer-closed overlay, matches `:focus` only, where Bootstrap's
+ * `button:focus { outline: 5px auto }` (0,1,1) and customer360's
+ * `button:focus` apply. Each button-like control must show no ring, and
+ * nothing from the host, in the unlayered build.
+ */
+type PointerTarget = {
+    key: string;
+    selector: string;
+    /** Steps that leave the element focused by the pointer (default: press without click). */
+    focus?: (page: Page, selector: string) => Promise<void>;
+};
+
+/** Press on the element, leave it, release elsewhere: focus without activation. */
+const pressWithoutClick = async (page: Page, selector: string) => {
+    const box = await page.locator(selector).boundingBox();
+    if (!box) throw new Error(`no box for ${selector}`);
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(1, 1);
+    await page.mouse.up();
+};
+
+const POINTER_TARGETS: PointerTarget[] = [
+    ...BUTTON_VARIANTS.map((v) => ({
+        key: `Button ${v}`,
+        selector: byTestId(`hz-variant-${v}`),
+    })),
+    { key: 'IconButton', selector: byTestId('hz-iconbutton-ghost') },
+    {
+        key: 'Chip action',
+        selector: `${byTestId('hz-chip-action')} [data-chip-action]`,
+    },
+    {
+        key: 'Chip remove',
+        selector: `${byTestId('hz-chip-action')} [aria-label^="Remove"]`,
+    },
+    {
+        key: 'Alert dismiss',
+        selector: alertPart('button[aria-label="Dismiss"]'),
+    },
+    { key: 'Checkbox', selector: byTestId('hz-checkbox') },
+    { key: 'Radio', selector: byTestId('hz-radio') },
+    { key: 'Switch', selector: byTestId('hz-switch') },
+    { key: 'Select trigger', selector: byTestId('hz-select') },
+    {
+        key: 'Input clear',
+        selector: `${fieldOf('hz-input-search')} button[aria-label="Clear"]`,
+    },
+    {
+        key: 'SearchBar search button',
+        selector: `${fieldOf('hz-searchbar')} [data-search-button]`,
+    },
+    // The Combobox clear and toggle buttons never take pointer focus
+    // (mousedown is prevented so focus stays in the input).
+    {
+        key: 'Combobox chip remove',
+        selector: `${comboboxField('hz-combobox-multi')} button[aria-label="Remove Globex"]`,
+    },
+    {
+        key: 'EmailsField chip remove',
+        selector: `[data-emails-field]:has(> ${byTestId('hz-emails')}) button[aria-label="Remove dana@example.com"]`,
+    },
+    {
+        key: 'EmailsField clear all',
+        selector: `[data-emails-field]:has(> ${byTestId('hz-emails')}) button[aria-label="Clear all"]`,
+    },
+    {
+        key: 'SplitButton main',
+        selector: `${byTestId('hz-split')} [data-split-main]`,
+    },
+    {
+        key: 'SplitButton menu, focus returned after a pointer pick',
+        selector: `${byTestId('hz-split')} [data-split-menu]`,
+        focus: async (page, selector) => {
+            await page.locator(selector).click();
+            await page.getByRole('menuitemradio', { name: 'Import' }).click();
+            await expect(page.getByRole('menu')).toHaveCount(0);
+            await expect(page.locator(selector)).toBeFocused();
+        },
+    },
+    { key: 'Filter pill', selector: byTestId('hz-filter') },
+    {
+        key: 'Filter pill, focus returned after a pointer close',
+        selector: byTestId('hz-filter'),
+        focus: async (page, selector) => {
+            await page.locator(selector).click();
+            await expect(page.locator('[data-filter-panel]')).toBeVisible();
+            await page.locator(selector).click();
+            await expect(page.locator('[data-filter-panel]')).toHaveCount(0);
+            await expect(page.locator(selector)).toBeFocused();
+        },
+    },
+    { key: 'Filter toggle', selector: byTestId('hz-filter-toggle') },
+    {
+        key: 'DropdownMenu trigger, focus returned after a pointer pick',
+        selector: byTestId('hz-menu-trigger'),
+        focus: async (page, selector) => {
+            await page.locator(selector).click();
+            await page.getByTestId('hz-menu-item').click();
+            await expect(page.locator(selector)).toBeFocused();
+        },
+    },
+    { key: 'Popover trigger', selector: byTestId('hz-popover-trigger') },
+    {
+        key: 'Toast dismiss',
+        selector: '[data-did="hz-toast"] button[aria-label="Dismiss"]',
+        focus: async (page, selector) => {
+            await page.getByTestId('hz-toast-trigger').click();
+            await expect(page.locator(selector)).toBeVisible();
+            await pressWithoutClick(page, selector);
+        },
+    },
+];
+
+const RING_PROPS = [
+    'outlineStyle',
+    'outlineWidth',
+    'outlineColor',
+    'boxShadow',
+];
+
+const mouseFocused = async (page: Page, path: string) => {
+    const out: Record<string, Record<string, string>> = {};
+    await page.goto(path);
+    for (const target of POINTER_TARGETS) {
+        await page.evaluate(() =>
+            (document.activeElement as HTMLElement | null)?.blur()
+        );
+        if (target.focus) await target.focus(page, target.selector);
+        else {
+            await page.locator(target.selector).scrollIntoViewIfNeeded();
+            await pressWithoutClick(page, target.selector);
+        }
+        out[target.key] = await page
+            .locator(target.selector)
+            .first()
+            .evaluate(async (el, props) => {
+                await Promise.all(
+                    el
+                        .getAnimations()
+                        .map((a) => a.finished.catch(() => undefined))
+                );
+                const cs = getComputedStyle(el);
+                const read = Object.fromEntries(
+                    props.map((p) => [
+                        p,
+                        cs[p as keyof CSSStyleDeclaration] as string,
+                    ])
+                );
+                // Width and colour of a style-none outline draw nothing.
+                if (read['outlineStyle'] === 'none') {
+                    delete read['outlineWidth'];
+                    delete read['outlineColor'];
+                }
+                return {
+                    ...read,
+                    focused: String(el === document.activeElement),
+                    focusVisible: String(el.matches(':focus-visible')),
+                };
+            }, RING_PROPS);
+    }
+    return out;
+};
+
+test.describe('mouse focus: button-like controls show no ring and nothing from the host', () => {
+    test.describe.configure({ timeout: 120_000 });
+    test('baseline (unlayered, no host CSS): focused by the pointer, not focus-visible, no outline', async ({
+        page,
+    }) => {
+        const styles = await mouseFocused(page, url('unlayered'));
+        for (const [key, s] of Object.entries(styles)) {
+            expect([key, s['focused'], s['focusVisible']]).toEqual([
+                key,
+                'true',
+                'false',
+            ]);
+            expect([key, s['outlineStyle']]).toEqual([key, 'none']);
+        }
+    });
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await mouseFocused(page, url('unlayered'));
+                const withHost = await mouseFocused(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+            });
+});
