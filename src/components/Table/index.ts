@@ -1,4 +1,6 @@
 export { Table } from './Table';
+export { DateCell, formatCellDate } from './tableCells';
+export type { DateCellProps } from './tableCells';
 export type { TableLabels, TablePaginationOptions, TableProps } from './Table';
 export {
     TableBody,

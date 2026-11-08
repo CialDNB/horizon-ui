@@ -141,6 +141,8 @@ export { Switch, switchVariants } from './Switch';
 export type { SwitchProps, SwitchVariantOptions } from './Switch';
 export {
     ColumnDataType,
+    DateCell,
+    formatCellDate,
     Table,
     TableBody,
     TableCaption,
@@ -154,6 +156,7 @@ export {
 export type {
     Column,
     ColumnHideBelow,
+    DateCellProps,
     Order,
     RowOptions,
     TableAlign,

@@ -85,6 +85,12 @@ export function parseCellDate(value: unknown): Date | undefined {
     return undefined;
 }
 
+/** `YYYY-MM-DD` from the date's local parts (toISOString would shift a local date to the previous day east of UTC). */
+export function localIsoDate(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 /** "Jan 05 2026" (x-core `MMM DD YYYY`). */
 export function formatCellDate(date: Date): string {
     const parts = Object.fromEntries(
@@ -119,7 +125,7 @@ export function renderCellValue(
         case 'date': {
             const date = parseCellDate(value);
             return date ? (
-                <time dateTime={date.toISOString()}>
+                <time dateTime={localIsoDate(date)}>
                     {formatCellDate(date)}
                 </time>
             ) : (
@@ -254,4 +260,26 @@ export function renderCellValue(
         default:
             return fallbackText(value);
     }
+}
+
+/** Props for {@link DateCell}. */
+export type DateCellProps = {
+    /** The row (x-core `rowData`). */
+    row: object;
+    /** The column; only `id` (a dotted path into `row`) is read. */
+    column: Pick<Column, 'id'>;
+};
+
+/**
+ * The built-in `date` cell as a component (x-core
+ * `Table/Cell/Types/date.index` `DateCell`), for use inside a column
+ * `render`: "Jan 05 2026" in a `<time>`, "-" when the value is missing.
+ */
+export function DateCell({ row, column }: DateCellProps) {
+    const value = valueAt(row, column.id);
+    return (
+        <>
+            {isEmptyValue(value) ? '-' : renderCellValue('date', value, column)}
+        </>
+    );
 }
