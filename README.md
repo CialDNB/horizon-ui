@@ -36,6 +36,8 @@ Import exactly one of the two, once, and render components inside `HorizonProvid
 
 **Inside MUI dialogs (and other MUI portals) wrap the content in its own `<HorizonProvider>`.** MUI renders them into `document.body`, outside your app's provider; a nested provider with no props inherits `brand` and `dir` from the parent. Without it the controls are unstyled and a Select list is hidden from screen readers (measured; see [docs/architecture/05](docs/architecture/05-migration-and-coexistence.md#horizon-controls-inside-mui-dialogs)).
 
+**The reverse is not supported: do not open portaled MUI overlays (dialogs, confirmations, Select/Autocomplete lists, popovers, menus) from a Horizon Dialog or Drawer.** They render below it and cannot be used. Migrate a modal together with everything it opens, or render the MUI overlay inside it (`container`/`disablePortal`); development builds warn once when this happens ([docs/architecture/05](docs/architecture/05-migration-and-coexistence.md#overlays-and-mui-dialogs-stacking-escape-focus-task-11b)).
+
 ```tsx
 <HorizonProvider brand="cial" dir={dir}>      {/* app root */}
     ...

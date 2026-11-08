@@ -6,7 +6,7 @@
 
 const warned = new Set<string>();
 
-function isProduction(): boolean {
+export function isProduction(): boolean {
     // Bundlers replace `process.env.NODE_ENV` textually (Vite library mode
     // keeps it for the consumer); a bare browser has no `process`.
     try {

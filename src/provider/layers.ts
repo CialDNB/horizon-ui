@@ -7,7 +7,45 @@
  * HorizonProviders rendered inside a host dialog (an MUI Dialog's content).
  */
 
+import { isProduction, warnOnce } from '../lib/options';
+
 const stack: HTMLElement[] = [];
+
+/** MUI overlays portal to body at z-index 1300: below an open Horizon modal. */
+const MUI_OVERLAY = '.MuiModal-root, .MuiPopover-root, .MuiPopper-root';
+let observer: MutationObserver | null = null;
+
+/*
+ * Development only: while a Horizon modal is open, watch for an MUI overlay
+ * being mounted (a confirmation dialog, Select menu, Popover, Autocomplete
+ * list opened from inside it). It would render below the Horizon modal and
+ * be inert (modal focus trap, pointer-events). No observer exists while no
+ * Horizon modal is open, and none at all in production.
+ */
+function watchForMuiOverlays() {
+    if (observer || isProduction() || typeof MutationObserver === 'undefined')
+        return;
+    observer = new MutationObserver((records) => {
+        for (const record of records)
+            for (const node of record.addedNodes)
+                if (
+                    node instanceof Element &&
+                    (node.matches(MUI_OVERLAY) ||
+                        node.querySelector(MUI_OVERLAY))
+                ) {
+                    warnOnce(
+                        'An MUI overlay (Dialog/Menu/Popover/Popper) opened while a Horizon Dialog or Drawer is open. It renders below the Horizon modal and cannot be used. Port the overlays opened from a Horizon modal too, or render the MUI one inside it (MUI `container` / `disablePortal`). See docs/architecture/05.'
+                    );
+                    return;
+                }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+function stopWatching() {
+    observer?.disconnect();
+    observer = null;
+}
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -15,14 +53,32 @@ function emit() {
 }
 
 /** Registers `el` as the topmost layer; returns the unregister function. */
-export function registerLayer(el: HTMLElement): () => void {
+export function registerLayer(
+    el: HTMLElement,
+    { horizonModal = true }: { horizonModal?: boolean } = {}
+): () => void {
     stack.push(el);
+    if (horizonModal) {
+        modals += 1;
+        watchForMuiOverlays();
+    }
     emit();
     return () => {
         const i = stack.lastIndexOf(el);
         if (i !== -1) stack.splice(i, 1);
+        if (horizonModal) {
+            modals -= 1;
+            if (modals === 0) stopWatching();
+        }
         emit();
     };
+}
+
+let modals = 0;
+
+/** Test helper (not public API): whether the dev observer is running. */
+export function isWatchingForMuiOverlays(): boolean {
+    return observer !== null;
 }
 
 /** Subscribes to layer changes (useSyncExternalStore). */

@@ -80,7 +80,7 @@ export const HorizonProvider = forwardRef<HTMLDivElement, HorizonProviderProps>(
             if (!nested || !element) return;
             if (!element.closest('[role="dialog"], [role="alertdialog"]'))
                 return;
-            return registerLayer(element);
+            return registerLayer(element, { horizonModal: false });
         }, [nested, element]);
         // Mirror React's ref semantics when the consumer's ref changes.
         useLayoutEffect(() => {

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetWarnings } from '../../lib/options';
 import { HorizonProvider } from '../../provider';
 import { resetFallbackPortalRoot } from '../../provider/portal-context';
+import { isWatchingForMuiOverlays } from '../../provider/layers';
 import {
     Dialog,
     DialogBody,
@@ -337,5 +338,27 @@ describe('Dialog', () => {
         );
         await screen.findByRole('dialog', { name: 'Alone' });
         expect(panel()?.closest('[data-hz-portal-root]')).not.toBeNull();
+    });
+
+    it('dev: warns once when an MUI overlay mounts while it is open; watches nothing when closed', async () => {
+        const user = userEvent.setup();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        render(<Edit />);
+        expect(isWatchingForMuiOverlays()).toBe(false);
+        await user.click(screen.getByRole('button', { name: 'Edit company' }));
+        await screen.findByRole('dialog');
+        expect(isWatchingForMuiOverlays()).toBe(true);
+        const mui = document.createElement('div');
+        mui.className = 'MuiModal-root MuiDialog-root';
+        document.body.append(mui);
+        await waitFor(() =>
+            expect(warn).toHaveBeenCalledWith(
+                expect.stringContaining('An MUI overlay')
+            )
+        );
+        mui.remove();
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        expect(isWatchingForMuiOverlays()).toBe(false);
     });
 });

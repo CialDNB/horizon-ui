@@ -56,6 +56,7 @@ customer360 ships an unlayered Bootstrap 4.4.1 reboot that beats every `@layer`,
 - [ ] Buttons, inputs, selects and textareas set their own type, radius, focus ring and box model explicitly (the reboot restyles `button`, `input`, `select`, `textarea`, `label`, `table`, `fieldset`, `h1`-`h6`, `p`, `ul`).
 - [ ] The component is added to the **coexistence harness** (`coexistence/main.tsx`) and checked against **both CSS builds** (`styles.css` layered and `styles.unlayered.css`) **with the Bootstrap reboot loaded in both load orders** (`?reboot=1`, `?order=horizon-first`). Add a Playwright assertion for the properties that matter (font-size, padding, radius, colour, focus ring) and run `npm run test:coexistence`.
 - [ ] Overlays are added to the stacking test (above MUI modal 1300) and portal into `.hz-root` via `usePortalContainer()`; opened outside a provider they still render styled (dev warning, no crash).
+- [ ] Migration order for modals: a Horizon Dialog/Drawer must not open portaled MUI overlays (Dialog, confirmation, Select/Autocomplete list, Popover, Menu): they render below it and are inert. Port the modal with everything it opens, or keep the MUI overlay in the modal's DOM (`container`/`disablePortal`). A dev warning flags it (docs/architecture/05).
 
 ## 6. Accessibility
 
