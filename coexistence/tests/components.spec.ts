@@ -1733,7 +1733,8 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
             'outlineColor: rgb(0, 80, 240) -> rgb(71, 85, 105)',
         ],
         'hz-combobox': ['lineHeight: 14px -> 21px'],
-        'hz-combobox-multi': ['lineHeight: 14px -> 21px'],
+        // The (default) clear button's radius change shifts the input width.
+        'hz-combobox-multi': ['width: changed', 'lineHeight: 14px -> 21px'],
         'hz-combobox-value': ['width: changed', 'lineHeight: 14px -> 21px'],
         'toggle button': ['borderRadius: 100px -> 0px'],
     },
@@ -2207,64 +2208,80 @@ test.describe('Combobox open list against Bootstrap 4.4.1 and customer360 host C
 test.describe('Combobox inside MUI dialogs (inner HorizonProvider)', () => {
     for (const build of ['layered', 'unlayered'] as const)
         for (const v2 of [false, true])
-            test(`the list opens above the dialog; keyboard picks; Escape closes only the list (${build}${v2 ? ', x-core DialogV2' : ''})`, async ({
-                page,
-            }) => {
-                await page.goto(
-                    `${url(build, { reboot: 'full', host: true })}${v2 ? '&mui=v2' : ''}`
-                );
-                await page.getByTestId('open-mui-dialog').click();
-                const input = page.getByTestId('hz-combobox-dialog');
-                await expect(input).toBeVisible();
-                if (v2)
-                    await page.waitForFunction(() => {
-                        const paper = document
-                            .querySelector('[data-testid="mui-dialog-content"]')
-                            ?.closest('.MuiDialog-paper');
-                        return (
-                            paper !== null &&
-                            paper !== undefined &&
-                            getComputedStyle(paper).transform === 'none'
-                        );
+            for (const horizonFirst of [false, true])
+                test(`the list opens above the dialog; keyboard picks; Escape closes only the list; pointer pick (${build}${v2 ? ', x-core DialogV2' : ''}, ${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                    page,
+                }) => {
+                    await page.goto(
+                        `${url(build, { reboot: 'full', host: true, horizonFirst })}${v2 ? '&mui=v2' : ''}`
+                    );
+                    await page.getByTestId('open-mui-dialog').click();
+                    const input = page.getByTestId('hz-combobox-dialog');
+                    await expect(input).toBeVisible();
+                    if (v2)
+                        await page.waitForFunction(() => {
+                            const paper = document
+                                .querySelector(
+                                    '[data-testid="mui-dialog-content"]'
+                                )
+                                ?.closest('.MuiDialog-paper');
+                            return (
+                                paper !== null &&
+                                paper !== undefined &&
+                                getComputedStyle(paper).transform === 'none'
+                            );
+                        });
+                    await input.click();
+                    await page.keyboard.type('init');
+                    // Role queries skip DialogV2 content (aria-hidden #root, x-core defect).
+                    const option = page.locator('[role="option"]', {
+                        hasText: 'Initech',
                     });
-                await input.click();
-                await page.keyboard.type('init');
-                // Role queries skip DialogV2 content (aria-hidden #root, x-core defect).
-                const option = page.locator('[role="option"]', {
-                    hasText: 'Initech',
+                    await expect(option).toBeVisible();
+                    const box = await option.boundingBox();
+                    if (!box) throw new Error('no option box');
+                    const top = await page.evaluate(
+                        ([x, y]) =>
+                            document
+                                .elementFromPoint(x ?? 0, y ?? 0)
+                                ?.closest('[role="option"]')?.textContent ??
+                            null,
+                        [box.x + box.width / 2, box.y + box.height / 2]
+                    );
+                    expect(top).toBe('Initech');
+                    const ib = await input.locator('xpath=..').boundingBox();
+                    const list = await page
+                        .locator('[data-combobox-content]')
+                        .boundingBox();
+                    if (!ib || !list) throw new Error('no box');
+                    expect(
+                        Math.abs(list.y - (ib.y + ib.height) - 4)
+                    ).toBeLessThanOrEqual(1);
+                    await page.keyboard.press('Enter');
+                    await expect(input).toHaveValue('Initech');
+                    await expect(input).toBeFocused();
+                    await input.press('ArrowDown');
+                    await expect(option).toBeVisible();
+                    await page.keyboard.press('Escape');
+                    await expect(
+                        page.locator('[data-combobox-content]')
+                    ).toHaveCount(0);
+                    await expect(
+                        page.getByTestId('mui-dialog-content')
+                    ).toBeVisible();
+                    // Pointer pick: the click lands on the portaled option, the
+                    // MUI dialog stays open and focus stays in the input.
+                    await input.click();
+                    const acme = page.locator('[role="option"]', {
+                        hasText: 'Acme Ltd.',
+                    });
+                    await acme.click();
+                    await expect(input).toHaveValue('Acme Ltd.');
+                    await expect(input).toBeFocused();
+                    await expect(
+                        page.getByTestId('mui-dialog-content')
+                    ).toBeVisible();
                 });
-                await expect(option).toBeVisible();
-                const box = await option.boundingBox();
-                if (!box) throw new Error('no option box');
-                const top = await page.evaluate(
-                    ([x, y]) =>
-                        document
-                            .elementFromPoint(x ?? 0, y ?? 0)
-                            ?.closest('[role="option"]')?.textContent ?? null,
-                    [box.x + box.width / 2, box.y + box.height / 2]
-                );
-                expect(top).toBe('Initech');
-                const ib = await input.locator('xpath=..').boundingBox();
-                const list = await page
-                    .locator('[data-combobox-content]')
-                    .boundingBox();
-                if (!ib || !list) throw new Error('no box');
-                expect(
-                    Math.abs(list.y - (ib.y + ib.height) - 4)
-                ).toBeLessThanOrEqual(1);
-                await page.keyboard.press('Enter');
-                await expect(input).toHaveValue('Initech');
-                await expect(input).toBeFocused();
-                await input.press('ArrowDown');
-                await expect(option).toBeVisible();
-                await page.keyboard.press('Escape');
-                await expect(
-                    page.locator('[data-combobox-content]')
-                ).toHaveCount(0);
-                await expect(
-                    page.getByTestId('mui-dialog-content')
-                ).toBeVisible();
-            });
 });
 
 test.describe('Filter panel against Bootstrap 4.4.1 and customer360 host CSS', () => {

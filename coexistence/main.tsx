@@ -382,6 +382,69 @@ function ConfirmDelete({ scope }: { scope: string }) {
     );
 }
 
+const LONG_OPTIONS = Array.from({ length: 40 }, (_, i) => ({
+    value: `c${i}`,
+    label: `Company ${i + 1}`,
+}));
+
+/** Combobox (single and multiple) inside a Horizon Dialog and a Drawer. */
+function ComboboxInModals() {
+    const [drawer, setDrawer] = useState(false);
+    const fields = (scope: string) => (
+        <>
+            <Combobox
+                aria-label={`${scope} company`}
+                options={LONG_OPTIONS}
+                data-testid={`hz-combobox-${scope}`}
+            />
+            <Combobox
+                multiple
+                aria-label={`${scope} companies`}
+                options={LONG_OPTIONS}
+                defaultValue={['c0']}
+                data-testid={`hz-combobox-${scope}-multi`}
+            />
+        </>
+    );
+    return (
+        <>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button
+                        variant="secondary"
+                        data-testid="hz-combobox-dialog-trigger"
+                    >
+                        Combobox dialog
+                    </Button>
+                </DialogTrigger>
+                <DialogContent data-testid="hz-combobox-modal-dialog">
+                    <DialogHeader>
+                        <DialogTitle>Pick companies</DialogTitle>
+                        <DialogDescription>
+                            Combobox in a dialog
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogBody>{fields('dlg')}</DialogBody>
+                </DialogContent>
+            </Dialog>
+            <Button
+                variant="secondary"
+                data-testid="hz-combobox-drawer-trigger"
+                onClick={() => setDrawer(true)}
+            >
+                Combobox drawer
+            </Button>
+            <Drawer
+                open={drawer}
+                onOpenChange={setDrawer}
+                title="Pick companies"
+                data-testid="hz-combobox-modal-drawer"
+                content={fields('drw')}
+            />
+        </>
+    );
+}
+
 /** Opens a Drawer (customer360 passes widths like "90%"). */
 function DetailsDrawer({ scope }: { scope: string }) {
     const [open, setOpen] = useState(false);
@@ -1175,6 +1238,7 @@ function App() {
                 <section data-testid="hz-overlays">
                     <HorizonProvider>
                         <Overlays scope="hz" />
+                        <ComboboxInModals />
                         <OverlaysInMuiDialog />
                         <KeptMuiDialog />
                         <ToastProvider />

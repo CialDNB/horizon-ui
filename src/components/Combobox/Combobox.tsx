@@ -228,8 +228,22 @@ type ComboboxBaseProps = Omit<
         size?: ComboboxSize;
         /** Invalid look and `aria-invalid` (set by a FormField `error`). */
         invalid?: boolean;
-        /** Shows a clear button while something is selected or typed. @default false */
+        /**
+         * Shows a clear button while something is selected or typed (MUI
+         * shows one by default; `disableClearable` -> `clearable={false}`).
+         * @default true
+         */
         clearable?: boolean;
+        /** Status text after a picked label (translate it). @default 'selected' */
+        selectedAnnouncement?: string;
+        /** Status text after a removed label (translate it). @default 'removed' */
+        removedAnnouncement?: string;
+        /**
+         * Validation message when `required` and `multiple` with nothing
+         * selected: the input blocks form submission (`setCustomValidity`).
+         * @default 'Select at least one option'
+         */
+        requiredMessage?: string;
         /** Accessible name of the clear button. @default 'Clear' */
         clearLabel?: string;
         /** Accessible name of the list toggle button. @default 'Show options' */
@@ -320,7 +334,10 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
             emptyMessage = 'No options',
             size: sizeProp,
             invalid: invalidProp,
-            clearable = false,
+            clearable = true,
+            selectedAnnouncement: selectedText_ = 'selected',
+            removedAnnouncement: removedText = 'removed',
+            requiredMessage = 'Select at least one option',
             clearLabel = 'Clear',
             toggleLabel = 'Show options',
             open: openProp,
@@ -473,18 +490,26 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                 ?.scrollIntoView?.({ block: 'nearest' });
         });
 
+        // Picks and removals are spoken through the status region (the
+        // input value alone changes silently for many screen readers).
+        const [announcement, setAnnouncement] = useState('');
         const pick = (option: ComboboxOption) => {
             if (option.disabled) return;
             if (multiple) {
-                const next = selected.includes(option.value)
+                const had = selected.includes(option.value);
+                const next = had
                     ? selected.filter((v) => v !== option.value)
                     : [...selected, option.value];
                 commitValue(next);
+                setAnnouncement(
+                    `${option.label} ${had ? removedText : selectedText_}`
+                );
                 if (text !== '') setText('', 'reset');
                 setPristine(true);
                 return;
             }
             commitValue([option.value]);
+            setAnnouncement(`${option.label} ${selectedText_}`);
             lastSelectedText.current = option.label;
             setText(option.label, 'reset');
             setPristine(true);
@@ -506,6 +531,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
         };
         const removeValue = (v: string) => {
             commitValue(selected.filter((s) => s !== v));
+            setAnnouncement(`${labelOf(v)} ${removedText}`);
             inputRef.current?.focus();
         };
         const clear = () => {
@@ -571,6 +597,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
         const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
             const next = event.target.value;
             setText(next, 'input');
+            setAnnouncement('');
             setPristine(false);
             setOpen(true);
             // Highlight the first match (list autocomplete with automatic
@@ -586,11 +613,37 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
             setPristine(true);
         };
 
+        // Focus leaving the whole field (input, chips, clear button) closes
+        // the list and restores the label. A native listener: the field box
+        // is not itself interactive.
+        const leaveField = useRef(() => {});
+        leaveField.current = () => {
+            setOpen(false);
+            resetText();
+        };
+        useEffect(() => {
+            const field = fieldRef.current;
+            if (!field) return;
+            const onFocusOut = (event: FocusEvent) => {
+                if (!field.contains(event.relatedTarget as Node | null))
+                    leaveField.current();
+            };
+            field.addEventListener('focusout', onFocusOut);
+            return () => field.removeEventListener('focusout', onFocusOut);
+        }, []);
+
         // Keep the first-match highlight valid after filtering.
         useEffect(() => {
             if (highlighted >= 0 && visible[highlighted]?.disabled)
                 setHighlighted(enabledIndex(highlighted - 1, 1));
         }, [visible]);
+
+        // `required` on a multi-select: the visible input is empty even with
+        // chips, so native `required` cannot work; validity follows the values.
+        const missing = multiple && control.required && selected.length === 0;
+        useEffect(() => {
+            inputRef.current?.setCustomValidity(missing ? requiredMessage : '');
+        }, [missing, requiredMessage]);
 
         const empty = visible.length === 0;
         const showList = open && !empty;
@@ -601,6 +654,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
               : empty
                 ? emptyMessage
                 : '';
+        const status = message || announcement;
         const showClear =
             clearable &&
             !control.disabled &&
@@ -766,18 +820,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                                 onClick?.(event);
                                 if (!open) setOpen(true);
                             }}
-                            onBlur={(event) => {
-                                onBlur?.(event);
-                                // Focus stays in the field (toggle, chips).
-                                if (
-                                    fieldRef.current?.contains(
-                                        event.relatedTarget as Node | null
-                                    )
-                                )
-                                    return;
-                                setOpen(false);
-                                resetText();
-                            }}
+                            onBlur={onBlur}
                             className={cn(
                                 fieldInputElement,
                                 fieldInputText[size],
@@ -843,7 +886,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                             className="hz:sr-only"
                             data-combobox-status=""
                         >
-                            {message}
+                            {status}
                         </span>
                         {name !== undefined &&
                             selected.map((v) => (

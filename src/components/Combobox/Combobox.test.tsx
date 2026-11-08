@@ -146,6 +146,10 @@ describe('Combobox', () => {
         await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
         expect(input()).toHaveValue('France');
         await user.type(input(), 'x');
+        // Tab reaches the clear button (still the field), then leaves it.
+        await user.tab();
+        expect(screen.getByRole('button', { name: 'Clear' })).toHaveFocus();
+        expect(input()).toHaveValue('Francex');
         await user.tab();
         expect(input()).toHaveValue('France');
     });
@@ -158,7 +162,7 @@ describe('Combobox', () => {
         await waitFor(() =>
             expect(document.querySelector('[data-combobox-content]')).toBeNull()
         );
-        await user.tab();
+        await user.click(document.body);
         expect(input()).toHaveValue('France');
     });
 
@@ -398,5 +402,67 @@ describe('Combobox', () => {
         await user.click(input());
         expect(screen.getAllByRole('option')).toHaveLength(100);
         act(() => input().blur());
+    });
+
+    it('shows the clear button by default (MUI parity); clearable={false} hides it', () => {
+        const { rerender } = render(<Single defaultValue="fr" />);
+        expect(screen.getByRole('button', { name: 'Clear' })).toBeVisible();
+        rerender(<Single defaultValue="fr" clearable={false} />);
+        expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
+    });
+
+    it('announces picks and removals once in the polite status region', async () => {
+        const user = userEvent.setup();
+        render(<Multi />);
+        const status = screen.getByRole('status');
+        await user.click(input());
+        await user.click(screen.getByRole('option', { name: 'France' }));
+        expect(status).toHaveTextContent('France selected');
+        await user.click(screen.getByRole('option', { name: 'Japan' }));
+        expect(status).toHaveTextContent('Japan selected');
+        await user.click(screen.getByRole('option', { name: 'Japan' }));
+        expect(status).toHaveTextContent('Japan removed');
+        await user.click(screen.getByRole('button', { name: 'Remove France' }));
+        expect(status).toHaveTextContent('France removed');
+        await user.click(screen.getByRole('option', { name: 'Israel' }));
+        input().focus();
+        await user.keyboard('{Backspace}');
+        expect(status).toHaveTextContent('Israel removed');
+        // Typing replaces the announcement (empty, or the list state).
+        await user.type(input(), 'j');
+        expect(status).toHaveTextContent('');
+    });
+
+    it('single pick is announced', async () => {
+        const user = userEvent.setup();
+        render(<Single />);
+        await user.click(input());
+        await user.click(screen.getByRole('option', { name: 'Israel' }));
+        expect(screen.getByRole('status')).toHaveTextContent('Israel selected');
+    });
+
+    it('required multiple: an empty selection blocks form submission; a value unblocks it', async () => {
+        const user = userEvent.setup();
+        render(
+            <HorizonProvider>
+                <form id="req">
+                    <Combobox
+                        multiple
+                        required
+                        aria-label="Countries"
+                        options={COUNTRIES}
+                    />
+                </form>
+            </HorizonProvider>
+        );
+        const form = document.getElementById('req') as HTMLFormElement;
+        expect(form.checkValidity()).toBe(false);
+        expect(input()).toHaveAttribute('aria-required', 'true');
+        expect((input() as HTMLInputElement).validationMessage).toBe(
+            'Select at least one option'
+        );
+        await user.click(input());
+        await user.click(screen.getByRole('option', { name: 'France' }));
+        expect(form.checkValidity()).toBe(true);
     });
 });
