@@ -196,7 +196,10 @@ export const curation: Record<string, Curation> = {
     EmailsField: {
         batch: 2,
         horizon: 'EmailsField',
-        note: 'Not in the plan. tag input composed from Input and Chip.',
+        note: 'Done in Task 11c, see EmailsField section below. `value`/`onChange(event, emails)` -> `value`/`onValueChange(emails)`; `emailValidationFunc` -> `validate` (default: the ported x-core rule, also exported as `validateEmail`); `limit`, `clearable`, `placeholder`, `disabled` kept; `isLoading` -> `loading`; `label`/`labelContainer`/`helperText`/`error`/`info` -> FormField; `AutocompleteProps`, `endAdornment` dropped (dev warning). New: an invalid typed address shows an error message (x-core ignored it silently); paste also splits on spaces and new lines.',
+        status: 'done',
+        supersededNote:
+            'v1 call sites (5 files) migrate the same way: `TextFieldProps.label`/`placeholder` -> FormField label / `placeholder`; `emailValidationFunc` -> `validate`; `onChange(event, value)` -> `onValueChange(value)`; EmailsTab.jsx puts a submit Button in `TextFieldProps.endAdornment`: render the Button next to the field.',
     },
     Select: {
         batch: 2,

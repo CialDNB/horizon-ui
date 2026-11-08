@@ -391,6 +391,21 @@ nonTextPairs.push(
 // Task 11c: Combobox, SearchBar, SplitButton, Filter, EmailsField, NumberInput.
 textPairs.push(
     {
+        use: 'EmailsField chip (primary soft)',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'EmailsField invalid message',
+        text: 'destructive-strong',
+        surface: 'background',
+    },
+    {
+        use: 'EmailsField counter',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    {
         use: 'Combobox/SearchBar/EmailsField/NumberInput value',
         text: 'foreground',
         surface: 'background',

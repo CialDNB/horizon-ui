@@ -53,6 +53,8 @@ export type {
     ComboboxSize,
     ComboboxVariantOptions,
 } from './Combobox';
+export { EmailsField } from './EmailsField';
+export type { EmailsFieldProps } from './EmailsField';
 export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { IconButton, iconButtonVariants } from './IconButton';

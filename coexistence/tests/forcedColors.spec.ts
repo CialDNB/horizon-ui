@@ -46,6 +46,7 @@ for (const build of ['layered', 'unlayered'] as const)
                 '[data-combobox-field]:has(> [data-testid="hz-combobox"])',
                 fieldOf('hz-searchbar'),
                 fieldOf('hz-number'),
+                '[data-emails-field]:has(> [data-testid="hz-emails"])',
             ])
                 visibleBorder(await style(page, sel));
             await page.locator(byTestId('hz-searchbar')).focus();

@@ -35,6 +35,7 @@ import {
     Textarea,
     Tooltip,
     Typography,
+    EmailsField,
     NumberInput,
     SearchBar,
     SplitButton,
@@ -1124,6 +1125,13 @@ function App() {
                             min={0}
                             max={10}
                             data-testid="hz-number"
+                        />
+                        <EmailsField
+                            aria-label="Recipients"
+                            defaultValue={['dana@example.com']}
+                            limit={3}
+                            clearable
+                            data-testid="hz-emails"
                         />
                         <SelectInMuiDialog />
                         <Textarea

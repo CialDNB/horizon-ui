@@ -115,6 +115,7 @@ describe('architecture', () => {
                 "DropdownMenuSubContent",
                 "DropdownMenuSubTrigger",
                 "DropdownMenuTrigger",
+                "EmailsField",
                 "FormField",
                 "HorizonProvider",
                 "IconButton",
@@ -159,8 +160,10 @@ describe('architecture', () => {
                 "inputVariants",
                 "labelVariants",
                 "linkVariants",
+                "normalizeEmailInput",
                 "progressVariants",
                 "radioGroupVariants",
+                "sanitizeEmail",
                 "selectVariants",
                 "separatorVariants",
                 "spinnerVariants",
@@ -170,6 +173,7 @@ describe('architecture', () => {
                 "typographyVariants",
                 "usePortalContainer",
                 "useToast",
+                "validateEmail",
               ]
             `);
         });

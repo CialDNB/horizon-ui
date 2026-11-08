@@ -733,6 +733,33 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    EmailsField: {
+        targets: [
+            ...plain(['hz-emails']),
+            {
+                key: 'field',
+                selector: `[data-emails-field]:has(> ${byTestId('hz-emails')})`,
+            },
+            {
+                key: 'field, focused',
+                selector: `[data-emails-field]:has(> ${byTestId('hz-emails')})`,
+                focus: byTestId('hz-emails'),
+            },
+            {
+                key: 'chip remove button',
+                selector: `[data-emails-field]:has(> ${byTestId('hz-emails')}) button[aria-label="Remove dana@example.com"]`,
+            },
+            {
+                key: 'clear all',
+                selector: `[data-emails-field]:has(> ${byTestId('hz-emails')}) button[aria-label="Clear all"]`,
+            },
+            {
+                key: 'counter',
+                selector: `[data-emails-field]:has(> ${byTestId('hz-emails')}) + div [data-emails-counter]`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     NumberInput: {
         targets: [
             ...plain(['hz-number']),
@@ -1567,6 +1594,12 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // build keeps it joined, asserted above).
     // As Input; the steppers lose their circle and the increase button
     // takes customer360's `button + button { margin-left: 8px }`.
+    // As Combobox: input line-height and the round buttons' radius.
+    EmailsField: {
+        'chip remove button': ['borderRadius: 100px -> 0px'],
+        'clear all': ['borderRadius: 100px -> 0px'],
+        'hz-emails': ['lineHeight: 14px -> 21px'],
+    },
     NumberInput: {
         'decrease (button + button target)': ['borderRadius: 100px -> 0px'],
         'hz-number': ['width: changed', 'lineHeight: 14px -> 21px'],
