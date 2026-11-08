@@ -41,6 +41,8 @@ import {
     Pagination,
     SearchBar,
     SplitButton,
+    Table,
+    TableCell,
     Popover,
     PopoverClose,
     PopoverContent,
@@ -387,6 +389,137 @@ const LONG_OPTIONS = Array.from({ length: 40 }, (_, i) => ({
     value: `c${i}`,
     label: `Company ${i + 1}`,
 }));
+
+type HarnessRow = {
+    name: string;
+    city: string;
+    employees: number;
+    risk: { label: string; color: string };
+};
+
+const TABLE_ROWS = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+        id: i + 1,
+        rowData: {
+            name: `Company ${i + 1}`,
+            city: ['Haifa', 'Tel Aviv', 'Eilat'][i % 3] ?? '',
+            employees: (i * 37) % 500,
+            risk: { label: ['Low', 'High'][i % 2] ?? '', color: 'error' },
+        },
+    }));
+
+const TABLE_COLUMNS = [
+    { id: 'name', label: 'Company' },
+    { id: 'city', label: 'City', info: 'Head office' },
+    { id: 'employees', label: 'Employees', type: 'numeric' as const },
+    { id: 'risk', label: 'Risk', type: 'chip' as const, disableSort: true },
+];
+
+/**
+ * A data Table with everything Bootstrap's table rules can reach: caption,
+ * sortable headers, row headers, a selection column, a selected and a
+ * clickable row, an open details row (dl/dt/dd), a footer and pagination.
+ */
+function HarnessTable() {
+    return (
+        <Table<HarnessRow>
+            caption="Harness companies"
+            columns={TABLE_COLUMNS}
+            data={TABLE_ROWS(3).map((row, i) =>
+                i === 0
+                    ? {
+                          ...row,
+                          rowOptions: {
+                              collapseData: 'Opened details',
+                              expanded: true,
+                          },
+                      }
+                    : row
+            )}
+            order="asc"
+            orderBy="name"
+            onRequestSort={() => undefined}
+            selectable
+            selectedItems={[2]}
+            onRowClick={() => undefined}
+            page={1}
+            limit={3}
+            totalCount={9}
+            paginationProps={{ showTotalItems: true }}
+            footerRow={
+                <>
+                    <TableCell />
+                    <TableCell />
+                    <TableCell>Total</TableCell>
+                    <TableCell />
+                    <TableCell numeric>111</TableCell>
+                    <TableCell />
+                </>
+            }
+            data-testid="hz-table"
+        />
+    );
+}
+
+/** Tall tables in a Horizon Dialog (own scroll area) and a Drawer (body scrolls). */
+function TableInModals() {
+    const [drawer, setDrawer] = useState(false);
+    return (
+        <>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button
+                        variant="secondary"
+                        data-testid="hz-table-dialog-trigger"
+                    >
+                        Table dialog
+                    </Button>
+                </DialogTrigger>
+                <DialogContent data-testid="hz-table-modal-dialog">
+                    <DialogHeader>
+                        <DialogTitle>Companies</DialogTitle>
+                        <DialogDescription>
+                            A table in a dialog
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogBody>
+                        <Table<HarnessRow>
+                            caption="Dialog companies"
+                            columns={TABLE_COLUMNS}
+                            data={TABLE_ROWS(30)}
+                            disablePagination
+                            stickyHeader
+                            maxBlockSize={200}
+                            data-testid="hz-table-dialog"
+                        />
+                    </DialogBody>
+                </DialogContent>
+            </Dialog>
+            <Button
+                variant="secondary"
+                data-testid="hz-table-drawer-trigger"
+                onClick={() => setDrawer(true)}
+            >
+                Table drawer
+            </Button>
+            <Drawer
+                open={drawer}
+                onOpenChange={setDrawer}
+                title="Companies"
+                data-testid="hz-table-modal-drawer"
+                content={
+                    <Table<HarnessRow>
+                        caption="Drawer companies"
+                        columns={TABLE_COLUMNS}
+                        data={TABLE_ROWS(40)}
+                        disablePagination
+                        data-testid="hz-table-drawer"
+                    />
+                }
+            />
+        </>
+    );
+}
 
 /** Combobox (single and multiple) inside a Horizon Dialog and a Drawer. */
 function ComboboxInModals() {
@@ -1225,6 +1358,7 @@ function App() {
                             aria-label="Harness pagination"
                             data-testid="hz-pagination"
                         />
+                        <HarnessTable />
                         <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"
@@ -1249,6 +1383,7 @@ function App() {
                     <HorizonProvider>
                         <Overlays scope="hz" />
                         <ComboboxInModals />
+                        <TableInModals />
                         <OverlaysInMuiDialog />
                         <KeptMuiDialog />
                         <ToastProvider />

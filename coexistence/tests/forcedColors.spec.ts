@@ -169,6 +169,43 @@ for (const build of ['layered', 'unlayered'] as const)
             visibleOutline(await style(page, other));
         });
 
+        test('Table: the selected-row bar and header separator stay; a focused row is outlined', async ({
+            page,
+        }) => {
+            const table = (part: string) => `${byTestId('hz-table')} ${part}`;
+            const bar = await page
+                .locator(table('tr[data-selected] > :first-child'))
+                .evaluate((el) => {
+                    const cs = getComputedStyle(el);
+                    return [
+                        cs.borderInlineStartStyle,
+                        cs.borderInlineStartWidth,
+                        cs.borderInlineStartColor,
+                    ];
+                });
+            expect(bar.slice(0, 2)).toEqual(['solid', '4px']);
+            expect(bar[2]).not.toBe('rgba(0, 0, 0, 0)');
+            // An unselected row's bar matches its cell (Canvas): invisible,
+            // and different from the selected bar.
+            const rest = await page
+                .locator(table('tr[data-testid="row-0"] > :first-child'))
+                .evaluate((el) => {
+                    const cs = getComputedStyle(el);
+                    return [cs.borderInlineStartColor, cs.backgroundColor];
+                });
+            expect(rest[0]).toBe(rest[1]);
+            expect(rest[0]).not.toBe(bar[2]);
+            const separator = await page
+                .locator(table('thead th:nth-child(3)'))
+                .evaluate((el) => {
+                    const cs = getComputedStyle(el);
+                    return `${cs.borderBottomStyle} ${cs.borderBottomWidth}`;
+                });
+            expect(separator).toBe('solid 1px');
+            await page.locator(table('tr[data-testid="row-2"]')).focus();
+            visibleOutline(await style(page, table('tr[data-testid="row-2"]')));
+        });
+
         test('overlays keep a visible boundary', async ({ page }) => {
             await page
                 .getByTestId('hz-tooltip-trigger')

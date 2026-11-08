@@ -529,6 +529,23 @@ const BUTTON: Target[] = [
 
 const pagination = (part: string) => `${byTestId('hz-pagination')} ${part}`;
 
+const table = (part: string) => `${byTestId('hz-table')} ${part}`;
+const TABLE_PROPS = [
+    ...FIELD_PROPS,
+    'borderCollapse',
+    'borderSpacing',
+    'captionSide',
+    'textAlign',
+    'paddingBottom',
+    'borderBottomWidth',
+    'borderBottomColor',
+    'borderInlineStartWidth',
+    'borderInlineStartColor',
+    'whiteSpace',
+    'position',
+    'fontVariantNumeric',
+] as const;
+
 const PROBES: Record<string, Probe> = {
     Button: {
         targets: BUTTON,
@@ -825,6 +842,67 @@ const PROBES: Record<string, Probe> = {
             'borderInlineStartColor',
             'borderInlineStartWidth',
         ],
+    },
+    // Bootstrap reboot: `table { border-collapse: collapse }`, `th {
+    // text-align: inherit }`, `caption { padding; color: #6c757d; text-align:
+    // left; caption-side: bottom }`, `body { text-align: left }`, button
+    // rules; full bootstrap's `.table` classes never match (unprefixed).
+    Table: {
+        targets: [
+            { key: 'wrapper', selector: byTestId('hz-table') },
+            { key: 'table', selector: table('table') },
+            { key: 'caption', selector: table('caption') },
+            { key: 'column header', selector: table('thead th:nth-child(3)') },
+            {
+                key: 'sort button',
+                selector: table('thead th:nth-child(3) [data-sort-button]'),
+            },
+            {
+                key: 'sort button, focused',
+                selector: table('thead th:nth-child(4) [data-sort-button]'),
+                focus: table('thead th:nth-child(4) [data-sort-button]'),
+            },
+            {
+                key: 'select-all checkbox',
+                selector: table('thead [role="checkbox"]'),
+            },
+            {
+                key: 'row header (th scope=row)',
+                selector: table('tr[data-testid="row-0"] th[scope="row"]'),
+            },
+            {
+                key: 'cell',
+                selector: table(
+                    'tr[data-testid="row-0"] td[data-testid="city"]'
+                ),
+            },
+            {
+                key: 'numeric cell',
+                selector: table(
+                    'tr[data-testid="row-0"] td[data-testid="employees"]'
+                ),
+            },
+            {
+                key: 'selected row first cell (bar)',
+                selector: table('tr[data-selected] > :first-child'),
+            },
+            {
+                key: 'selected row cell',
+                selector: table('tr[data-selected] td[data-testid="city"]'),
+            },
+            {
+                key: 'details toggle',
+                selector: table(
+                    'tr[data-testid="row-1"] [data-details-toggle]'
+                ),
+            },
+            {
+                key: 'details row cell',
+                selector: table('tr[data-details]:not([hidden]) td'),
+            },
+            { key: 'footer cell', selector: table('tfoot td:nth-child(3)') },
+        ],
+        props: TABLE_PROPS,
     },
     // Bootstrap reboot: `ul { margin-bottom: 1rem }`, `p { margin-bottom:
     // 1rem }`, `button` font/radius/focus; customer360: `ul { margin: 0 }`,
@@ -2491,6 +2569,22 @@ const POINTER_TARGETS: PointerTarget[] = [
         },
     },
     { key: 'Filter toggle', selector: byTestId('hz-filter-toggle') },
+    {
+        key: 'Table sort button',
+        selector: table('thead th:nth-child(3) [data-sort-button]'),
+    },
+    {
+        key: 'Table row checkbox',
+        selector: table('tr[data-testid="row-1"] [role="checkbox"]'),
+    },
+    {
+        key: 'Table details toggle',
+        selector: table('tr[data-testid="row-1"] [data-details-toggle]'),
+    },
+    {
+        key: 'Table clickable row',
+        selector: table('tr[data-testid="row-2"]'),
+    },
     { key: 'Pagination page', selector: pagination('[aria-label="Page 2"]') },
     {
         key: 'Pagination next',
@@ -2604,8 +2698,13 @@ test.describe('mouse focus: button-like controls show no ring and nothing from t
 // customer360 itself shows no mouse-focus ring even in the layered build
 // (its other layered losses are in LAYERED_FORMS_DIFF).
 // Measured: EVERY probed control gets Bootstrap's auto ring.
+// A clickable table row is a `tr`, not a button: no Bootstrap focus rule
+// reaches it, in either build.
 const LAYERED_MOUSE_FOCUS: Record<string, string[]> = Object.fromEntries(
-    POINTER_TARGETS.map((t) => [t.key, ['outlineStyle: none -> auto']])
+    POINTER_TARGETS.filter((t) => t.key !== 'Table clickable row').map((t) => [
+        t.key,
+        ['outlineStyle: none -> auto'],
+    ])
 );
 
 test.describe('layered build (known limit): mouse focus against Bootstrap', () => {
@@ -2630,4 +2729,94 @@ test.describe('layered build (known limit): mouse focus against Bootstrap', () =
         );
         expect(diff(without, withHost)).toEqual({});
     });
+});
+
+// LAYERED build (known limit, asserted as measured): Bootstrap's unlayered
+// element rules beat the layered Table and Pagination utilities (reboot
+// `nav { display: block }`, `table { border-collapse }`, `caption`, `p`,
+// `button` radius and `button:focus`). Widths and heights are left out:
+// they are layout consequences. customer360 uses styles.unlayered.css,
+// which is unchanged (PROBES above).
+const collapsed = 'borderCollapse: separate -> collapse';
+const squaredButton = 'borderRadius: 4px -> 0px';
+const focusLost = (color: string) => [
+    'outlineStyle: solid -> none',
+    'outlineWidth: 2px -> 3px',
+    `outlineColor: rgb(0, 80, 240) -> ${color}`,
+];
+const LAYERED_TABLE_DIFF: Record<string, Record<string, string[]>> = {
+    Table: {
+        table: [collapsed],
+        caption: [
+            'paddingTop: 0px -> 12px',
+            'color: rgb(15, 23, 42) -> rgb(108, 117, 125)',
+            'outlineColor: rgb(15, 23, 42) -> rgb(108, 117, 125)',
+            collapsed,
+            'captionSide: top -> bottom',
+            'textAlign: start -> left',
+        ],
+        'column header': [collapsed],
+        'sort button': [
+            'marginInlineStart: -4px -> 0px',
+            'marginInlineEnd: -4px -> 0px',
+            squaredButton,
+            collapsed,
+        ],
+        'sort button, focused': [
+            'marginInlineStart: -4px -> 0px',
+            'marginInlineEnd: -4px -> 0px',
+            squaredButton,
+            ...focusLost('rgb(51, 65, 85)'),
+            collapsed,
+        ],
+        'select-all checkbox': [squaredButton, collapsed],
+        'row header (th scope=row)': [collapsed],
+        cell: [collapsed],
+        'numeric cell': [collapsed],
+        'selected row first cell (bar)': [collapsed],
+        'selected row cell': [collapsed],
+        'details toggle': ['borderRadius: 100px -> 0px', collapsed],
+        'details row cell': [collapsed],
+        'footer cell': [collapsed],
+    },
+    Pagination: {
+        nav: ['display: flex -> block'],
+        'page button': ['borderRadius: 100px -> 0px'],
+        'current page': ['borderRadius: 100px -> 0px'],
+        'page button, focused': [
+            'borderRadius: 100px -> 0px',
+            ...focusLost('rgb(15, 23, 42)'),
+        ],
+        previous: ['borderRadius: 100px -> 0px'],
+        next: ['borderRadius: 100px -> 0px'],
+        'range (p)': ['marginBottom: 0px -> 16px'],
+        'rows-per-page trigger': ['borderRadius: 20px -> 0px'],
+    },
+};
+const withoutSizes = (changed: Record<string, string[]>) =>
+    Object.fromEntries(
+        Object.entries(changed)
+            .map(([key, props]): [string, string[]] => [
+                key,
+                props.filter((p) => !/^(width|height): /.test(p)),
+            ])
+            .filter(([, props]) => props.length > 0)
+    );
+test.describe('layered build (known limit): Table and Pagination against full Bootstrap + customer360 host CSS', () => {
+    for (const name of ['Table', 'Pagination'] as const)
+        test(`${name}: exactly the measured properties change`, async ({
+            page,
+        }) => {
+            const probe = PROBES[name];
+            if (!probe) throw new Error(`no probe ${name}`);
+            const without = await measure(page, url('layered'), probe);
+            const withHost = await measure(
+                page,
+                url('layered', { reboot: 'full', host: true }),
+                probe
+            );
+            expect(withoutSizes(diff(without, withHost))).toEqual(
+                LAYERED_TABLE_DIFF[name]
+            );
+        });
 });

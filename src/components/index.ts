@@ -139,6 +139,40 @@ export type {
 } from './SplitButton';
 export { Switch, switchVariants } from './Switch';
 export type { SwitchProps, SwitchVariantOptions } from './Switch';
+export {
+    ColumnDataType,
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRoot,
+    TableRow,
+} from './Table';
+export type {
+    Column,
+    ColumnHideBelow,
+    Order,
+    RowOptions,
+    TableAlign,
+    TableBodyProps,
+    TableCaptionProps,
+    TableCellData,
+    TableCellProps,
+    TableDensity,
+    TableFooterProps,
+    TableHeadProps,
+    TableHeaderProps,
+    TableLabels,
+    TablePaginationOptions,
+    TableProps,
+    TableResponsive,
+    TableRootProps,
+    TableRowData,
+    TableRowProps,
+} from './Table';
 export { Textarea, textareaVariants } from './Textarea';
 export type {
     TextareaProps,

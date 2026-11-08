@@ -551,6 +551,77 @@ nonTextPairs.push(
     { use: 'Pagination focus ring', text: 'ring', surface: 'background' }
 );
 
+// Task 12a: Table (opaque surfaces; zebra and hover mixes are tested below).
+textPairs.push(
+    { use: 'Table cell text', text: 'foreground', surface: 'background' },
+    {
+        use: 'Table secondary text and stacked labels',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Table header text',
+        text: 'neutral-strong',
+        surface: 'neutral-subtle',
+    },
+    {
+        use: 'Table selected row text (muted text switches too)',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'Table caption and footer',
+        text: 'foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Table empty state',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Table error state',
+        text: 'destructive-strong',
+        surface: 'background',
+    }
+);
+nonTextPairs.push(
+    {
+        use: 'Table selected row bar (inline start)',
+        text: 'primary',
+        surface: 'accent',
+    },
+    {
+        use: 'Table header separator',
+        text: 'control-border',
+        surface: 'background',
+    },
+    {
+        use: 'Table header separator against the header fill',
+        text: 'control-border',
+        surface: 'neutral-subtle',
+    },
+    {
+        use: 'Table sort icon and stacked sort pill border',
+        text: 'neutral-strong',
+        surface: 'neutral-subtle',
+    },
+    {
+        use: 'Table stacked sort pill border',
+        text: 'control-border',
+        surface: 'background',
+    },
+    { use: 'Table focus ring on a row', text: 'ring', surface: 'background' },
+    {
+        use: 'Table focus ring on a selected row',
+        text: 'ring',
+        surface: 'accent',
+    }
+    // Not listed: row dividers and stacked card borders (`border`, 1.2:1)
+    // are decorative: rows are identified by alignment and the text itself
+    // (WCAG 1.4.11 does not apply). Skeleton bars are aria-hidden.
+);
+
 describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {
     for (const brand of Object.keys(brands) as Brand[])
         it.each(nonTextPairs)(`${brand}: $use`, ({ text, surface }) => {
@@ -595,4 +666,33 @@ describe('Progress reduced-motion pulse keeps 3:1 against the track at its low p
                 )
             ).toBeGreaterThanOrEqual(3);
         });
+});
+
+/** Table row surfaces: sRGB mixes painted by the cells (TablePrimitives.tsx). */
+const TABLE_ZEBRA_MUTED = 0.3;
+const TABLE_HOVER_ACCENT = 0.5;
+
+describe('Table zebra and hover surfaces (mixed over background)', () => {
+    for (const brand of Object.keys(brands) as Brand[]) {
+        const p = brands[brand];
+        const zebra = over(p.muted, p.background, TABLE_ZEBRA_MUTED);
+        const hover = over(p.accent, p.background, TABLE_HOVER_ACCENT);
+        it.each([
+            ['zebra: cell text', p.foreground, zebra],
+            ['zebra: secondary text', p['muted-foreground'], zebra],
+            [
+                'hover: text (switched to accent-foreground)',
+                p['accent-foreground'],
+                hover,
+            ],
+        ])(`${brand}: %s (4.5:1)`, (_use, text, surface) => {
+            expect(contrast(text, surface)).toBeGreaterThanOrEqual(4.5);
+        });
+        it.each([
+            ['hover: focus ring', p.ring, hover],
+            ['zebra: focus ring', p.ring, zebra],
+        ])(`${brand}: %s (3:1)`, (_use, line, surface) => {
+            expect(contrast(line, surface)).toBeGreaterThanOrEqual(3);
+        });
+    }
 });
