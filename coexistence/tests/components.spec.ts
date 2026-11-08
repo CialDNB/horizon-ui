@@ -2542,3 +2542,39 @@ test.describe('mouse focus: button-like controls show no ring and nothing from t
                 expect(withHost).toEqual(without);
             });
 });
+
+// LAYERED build under mouse focus (known limit, asserted as measured).
+// Full Bootstrap alone: its unlayered `button:focus { outline: 5px auto }`
+// beats the layered `focus:outline-none` on every control listed in
+// LAYERED_MOUSE_FOCUS. With customer360's host CSS on top, its own
+// unlayered `button:focus { outline: none }` hides that ring again, so
+// customer360 itself shows no mouse-focus ring even in the layered build
+// (its other layered losses are in LAYERED_FORMS_DIFF).
+// Measured: EVERY probed control gets Bootstrap's auto ring.
+const LAYERED_MOUSE_FOCUS: Record<string, string[]> = Object.fromEntries(
+    POINTER_TARGETS.map((t) => [t.key, ['outlineStyle: none -> auto']])
+);
+
+test.describe('layered build (known limit): mouse focus against Bootstrap', () => {
+    test.describe.configure({ timeout: 120_000 });
+    test('full bootstrap.css: exactly the measured controls show its ring', async ({
+        page,
+    }) => {
+        const without = await mouseFocused(page, url('layered'));
+        const withBootstrap = await mouseFocused(
+            page,
+            url('layered', { reboot: 'full' })
+        );
+        expect(diff(without, withBootstrap)).toEqual(LAYERED_MOUSE_FOCUS);
+    });
+    test('full bootstrap.css + customer360 host CSS: no control changes (host button:focus outline none)', async ({
+        page,
+    }) => {
+        const without = await mouseFocused(page, url('layered'));
+        const withHost = await mouseFocused(
+            page,
+            url('layered', { reboot: 'full', host: true })
+        );
+        expect(diff(without, withHost)).toEqual({});
+    });
+});

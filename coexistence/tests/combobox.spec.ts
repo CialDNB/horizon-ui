@@ -74,12 +74,66 @@ for (const m of MODALS)
                     speed: 800,
                 });
                 await expect.poll(top).toBeGreaterThan(afterWheel);
-                // The page behind the modal did not scroll.
+                // Focus stayed in the input while scrolling the list.
                 expect(
                     await page.evaluate(() =>
                         document.activeElement?.getAttribute('data-testid')
                     )
                 ).toBe(`hz-combobox-${m.id}`);
+            });
+
+            test('negative control: the lock is active (page and a foreign scroller in the same portal container do not scroll)', async ({
+                page,
+            }) => {
+                const input = page.getByTestId(`hz-combobox-${m.id}`);
+                await input.click();
+                await expect(list(page)).toBeVisible();
+                // A scrollable box in the same container as the list, but
+                // outside the dialog's React tree, on top of everything.
+                await list(page).evaluate((el) => {
+                    const root = el.closest('.hz-root');
+                    const box = document.createElement('div');
+                    box.id = 'foreign-scroller';
+                    box.style.cssText =
+                        'position:fixed;inset-block-start:0;inset-inline-start:0;width:200px;height:120px;overflow:auto;z-index:99999;pointer-events:auto;background:#eee';
+                    box.innerHTML = '<div style="height:2000px">tall</div>';
+                    root?.append(box);
+                });
+                const foreign = page.locator('#foreign-scroller');
+                const fb = await foreign.boundingBox();
+                if (!fb) throw new Error('no foreign box');
+                const scrollYBefore = await page.evaluate(() => window.scrollY);
+                await page.mouse.move(fb.x + 50, fb.y + 50);
+                await page.mouse.wheel(0, 300);
+                await page.waitForTimeout(300);
+                expect(await foreign.evaluate((el) => el.scrollTop)).toBe(0);
+                expect(await page.evaluate(() => window.scrollY)).toBe(
+                    scrollYBefore
+                );
+                // The list itself still scrolls (same wheel, same lock).
+                const lb = await list(page).boundingBox();
+                if (!lb) throw new Error('no list box');
+                await page.mouse.move(
+                    lb.x + lb.width / 2,
+                    lb.y + lb.height / 2
+                );
+                await page.mouse.wheel(0, 300);
+                await expect
+                    .poll(() => list(page).evaluate((el) => el.scrollTop))
+                    .toBeGreaterThan(0);
+                // Control of the control: with the modal closed (no lock) the
+                // same wheel scrolls the foreign box.
+                await page.keyboard.press('Escape');
+                await expect(
+                    page.locator('[data-combobox-content]')
+                ).toHaveCount(0);
+                await page.keyboard.press('Escape');
+                await expect(page.getByTestId(m.modal)).toHaveCount(0);
+                await page.mouse.move(fb.x + 50, fb.y + 50);
+                await page.mouse.wheel(0, 300);
+                await expect
+                    .poll(() => foreign.evaluate((el) => el.scrollTop))
+                    .toBeGreaterThan(0);
             });
 
             test('a pointer pick keeps the modal open, focus in the input, and is announced; Escape closes only the list', async ({
