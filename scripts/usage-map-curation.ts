@@ -286,7 +286,8 @@ export const curation: Record<string, Curation> = {
     Filter: {
         batch: 2,
         horizon: 'Filter',
-        note: 'Not in the plan. composite of Popover, Checkbox and Button. Port after those.',
+        note: 'Done in Task 11c, see Filter section below. Pill + Popover panel with Checkbox (`multiple`) or RadioGroup (`single`) options: `value`, `onChange(values)`, `label`, `options`, `totalCount`, `loading` kept; `variant` `clean` -> `single` (warning), `range`/`switch`/`list` not ported (unused); `enableSearchField` -> `searchable`; `applyButtonText`/`resetButtonText` -> `applyLabel`/`resetLabel`; `disableTotalCountSelected` -> `hideSelectedCount`; `showEndIcond={false}` -> `hideCaret`; `disableMenu` -> `toggle` (`aria-pressed`, use `onClick`); funnel icon now opt-in (`showIcon`; every customer360 call site disabled it); `dataTestId` -> `data-testid`; `menuProps`/`menuHeaderTitle`/`menuHeaderIcon` dropped.',
+        status: 'done',
     },
     FilterInput: {
         batch: 2,

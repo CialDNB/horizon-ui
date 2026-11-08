@@ -36,6 +36,7 @@ import {
     Tooltip,
     Typography,
     EmailsField,
+    Filter,
     NumberInput,
     SearchBar,
     SplitButton,
@@ -1133,6 +1134,24 @@ function App() {
                             clearable
                             data-testid="hz-emails"
                         />
+                        <div>
+                            <Filter
+                                label="Severity"
+                                options={COMBOBOX_OPTIONS}
+                                value={['Globex']}
+                                totalCount={4}
+                                onChange={() => undefined}
+                                data-testid="hz-filter"
+                            />
+                            <Filter
+                                toggle
+                                label="Expired"
+                                options={[]}
+                                value={['1']}
+                                onChange={() => undefined}
+                                data-testid="hz-filter-toggle"
+                            />
+                        </div>
                         <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"

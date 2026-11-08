@@ -116,6 +116,7 @@ describe('architecture', () => {
                 "DropdownMenuSubTrigger",
                 "DropdownMenuTrigger",
                 "EmailsField",
+                "Filter",
                 "FormField",
                 "HorizonProvider",
                 "IconButton",

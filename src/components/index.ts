@@ -55,6 +55,8 @@ export type {
 } from './Combobox';
 export { EmailsField } from './EmailsField';
 export type { EmailsFieldProps } from './EmailsField';
+export { Filter } from './Filter';
+export type { FilterOption, FilterProps, FilterVariant } from './Filter';
 export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { IconButton, iconButtonVariants } from './IconButton';

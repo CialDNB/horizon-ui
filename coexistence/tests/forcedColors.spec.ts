@@ -114,6 +114,15 @@ for (const build of ['layered', 'unlayered'] as const)
             expect(check).toEqual(['block', 'currentColor']);
         });
 
+        test('filter pills keep a border and a focus outline', async ({
+            page,
+        }) => {
+            visibleBorder(await style(page, byTestId('hz-filter')));
+            visibleBorder(await style(page, byTestId('hz-filter-toggle')));
+            await page.locator(byTestId('hz-filter')).focus();
+            visibleOutline(await style(page, byTestId('hz-filter')));
+        });
+
         test('outline chips keep a border; status dots keep a system-colour fill', async ({
             page,
         }) => {

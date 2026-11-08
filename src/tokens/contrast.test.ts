@@ -391,6 +391,31 @@ nonTextPairs.push(
 // Task 11c: Combobox, SearchBar, SplitButton, Filter, EmailsField, NumberInput.
 textPairs.push(
     {
+        use: 'Filter pill at rest',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'Filter pill open or pressed',
+        text: 'primary-foreground',
+        surface: 'primary',
+    },
+    {
+        use: 'Filter count bubble',
+        text: 'primary-foreground',
+        surface: 'primary',
+    },
+    {
+        use: 'Filter count bubble on the open pill',
+        text: 'primary',
+        surface: 'primary-foreground',
+    },
+    {
+        use: 'Filter total bubble',
+        text: 'accent-foreground',
+        surface: 'background',
+    },
+    {
         use: 'EmailsField chip (primary soft)',
         text: 'accent-foreground',
         surface: 'accent',
@@ -433,6 +458,7 @@ textPairs.push(
     }
 );
 nonTextPairs.push(
+    { use: 'Filter pill hover ring', text: 'primary', surface: 'accent' },
     {
         use: 'NumberInput stepper and Combobox toggle icons',
         text: 'muted-foreground',

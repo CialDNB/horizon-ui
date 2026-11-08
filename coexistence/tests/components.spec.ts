@@ -733,6 +733,25 @@ const PROBES: Record<string, Probe> = {
         ],
         props: FIELD_PROPS,
     },
+    Filter: {
+        targets: [
+            ...plain(['hz-filter', 'hz-filter-toggle']),
+            {
+                key: 'pill, focused',
+                selector: byTestId('hz-filter'),
+                focus: byTestId('hz-filter'),
+            },
+            {
+                key: 'count bubble',
+                selector: `${byTestId('hz-filter')} [data-filter-count]`,
+            },
+            {
+                key: 'total bubble',
+                selector: `${byTestId('hz-filter')} [data-filter-total]`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
     EmailsField: {
         targets: [
             ...plain(['hz-emails']),
@@ -1595,6 +1614,31 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
     // As Input; the steppers lose their circle and the increase button
     // takes customer360's `button + button { margin-left: 8px }`.
     // As Combobox: input line-height and the round buttons' radius.
+    // The pills are buttons: Bootstrap's radius/font and customer360's
+    // `button:focus` outline win in the layered build.
+    Filter: {
+        'hz-filter': [
+            'width: changed',
+            'borderRadius: 100px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+        ],
+        'hz-filter-toggle': [
+            'width: changed',
+            'borderRadius: 100px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+        ],
+        'pill, focused': [
+            'width: changed',
+            'borderRadius: 100px -> 0px',
+            'fontSize: 14px -> 16px',
+            'lineHeight: 20px -> 24px',
+            'outlineStyle: solid -> none',
+            'outlineWidth: 2px -> 3px',
+            'outlineColor: rgb(0, 80, 240) -> rgb(31, 50, 88)',
+        ],
+    },
     EmailsField: {
         'chip remove button': ['borderRadius: 100px -> 0px'],
         'clear all': ['borderRadius: 100px -> 0px'],
@@ -2220,5 +2264,68 @@ test.describe('Combobox inside MUI dialogs (inner HorizonProvider)', () => {
                 await expect(
                     page.getByTestId('mui-dialog-content')
                 ).toBeVisible();
+            });
+});
+
+test.describe('Filter panel against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    const openPanel = async (page: Page, path: string) => {
+        await page.goto(path);
+        await page.getByTestId('hz-filter').click();
+        const panel = page.locator('[data-filter-panel]');
+        await expect(panel).toBeVisible();
+        await page.waitForFunction(() =>
+            document
+                .querySelector('[data-filter-panel]')
+                ?.getAnimations()
+                .every((a) => a.playState === 'finished')
+        );
+        return page.evaluate(
+            (props) => {
+                const read = (el: Element | null) => {
+                    if (!el) return {};
+                    const cs = getComputedStyle(el);
+                    // The first option takes focus on open (no ring: mouse
+                    // focus). With `outline-style: none` the width and
+                    // colour (Bootstrap's button:focus values) draw nothing.
+                    const hidden = cs.outlineStyle === 'none';
+                    return Object.fromEntries(
+                        props
+                            .filter(
+                                (p) =>
+                                    !hidden ||
+                                    !['outlineWidth', 'outlineColor'].includes(
+                                        p
+                                    )
+                            )
+                            .map((p) => [
+                                p,
+                                cs[p as keyof CSSStyleDeclaration] as string,
+                            ])
+                    );
+                };
+                const panel = document.querySelector('[data-filter-panel]');
+                return {
+                    panel: read(panel),
+                    checkbox: read(
+                        panel?.querySelector('[role="checkbox"]') ?? null
+                    ),
+                    label: read(panel?.querySelector('label') ?? null),
+                };
+            },
+            [...FIELD_PROPS, 'zIndex']
+        );
+    };
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: panel and options unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openPanel(page, url('unlayered'));
+                const withHost = await openPanel(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.panel['zIndex']).toBe('1450');
             });
 });
