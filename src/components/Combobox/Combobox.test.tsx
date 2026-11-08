@@ -465,4 +465,38 @@ describe('Combobox', () => {
         await user.click(screen.getByRole('option', { name: 'France' }));
         expect(form.checkValidity()).toBe(true);
     });
+
+    it('optionContent replaces the row content; the row keeps role, selection, id and picking', async () => {
+        const user = userEvent.setup();
+        const onValueChange = vi.fn();
+        render(
+            <Single
+                defaultValue="il"
+                onValueChange={onValueChange}
+                optionContent={(option, state) => (
+                    <span data-testid={`content-${option.value}`}>
+                        {option.label} ({state.selected ? 'chosen' : 'free'}
+                        {state.highlighted ? ', active' : ''}, q=
+                        {state.inputValue})
+                    </span>
+                )}
+            />
+        );
+        await user.click(input());
+        const israel = screen.getByRole('option', { name: /Israel \(chosen/ });
+        expect(israel).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByTestId('content-fr')).toHaveTextContent(
+            'France (free, q=Israel)'
+        );
+        await user.keyboard('{ArrowDown}');
+        expect(screen.getByTestId('content-fr')).toHaveTextContent(
+            'France (free, active, q=Israel)'
+        );
+        expect(input()).toHaveAttribute(
+            'aria-activedescendant',
+            screen.getByTestId('content-fr').closest('[role="option"]')?.id
+        );
+        await user.click(screen.getByTestId('content-fr'));
+        expect(onValueChange).toHaveBeenCalledWith('fr');
+    });
 });

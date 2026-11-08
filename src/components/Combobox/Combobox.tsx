@@ -134,7 +134,7 @@ const legacyComboboxProps = {
     isOptionEqualToValue: 'values are option value strings',
     getOptionDisabled: 'use option.disabled',
     renderInput: 'the field is built in; wrap it in FormField for a label',
-    renderOption: 'use option.description',
+    renderOption: 'use optionContent(option, state) (row content only)',
     renderTags: 'selected values render as Chips',
     groupBy: 'use option.group',
     freeSolo: 'use allowCustomValue',
@@ -196,6 +196,25 @@ type ComboboxBaseProps = Omit<
          * as given (server-side search).
          */
         filter?: ((option: ComboboxOption, text: string) => boolean) | false;
+        /**
+         * Custom row content (x-core/MUI `renderOption` rich rows). It
+         * replaces the label and description inside the row; the row itself
+         * (`role="option"`, `aria-selected`, id, check, click and keyboard)
+         * stays Combobox's. Content must be non-interactive (no buttons or
+         * links: the option is the interactive element) and its text should
+         * start with the label, which is also the row's accessible name
+         * source. Different name and signature than MUI's
+         * `renderOption(props, option)` on purpose: those call sites must be
+         * rewritten, not passed through.
+         */
+        optionContent?: (
+            option: ComboboxOption,
+            state: {
+                selected: boolean;
+                highlighted: boolean;
+                inputValue: string;
+            }
+        ) => ReactNode;
         /** Most options rendered at once (x-core `filterOptionsLimit`). @default 100 */
         limit?: number;
         /**
@@ -322,6 +341,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
             defaultInputValue,
             onInputChange,
             filter = defaultFilter,
+            optionContent,
             limit = 100,
             allowCustomValue = false,
             loading = false,
@@ -733,11 +753,23 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                         </span>
                     )}
                     <span className="hz:flex hz:min-w-0 hz:flex-1 hz:flex-col">
-                        <span className="hz:truncate">{option.label}</span>
-                        {option.description && (
-                            <span className="hz:truncate hz:text-caption hz:text-muted-foreground hz:group-data-[highlighted]:text-accent-foreground">
-                                {option.description}
-                            </span>
+                        {optionContent ? (
+                            optionContent(option, {
+                                selected: isSelected,
+                                highlighted: i === active,
+                                inputValue: text,
+                            })
+                        ) : (
+                            <>
+                                <span className="hz:truncate">
+                                    {option.label}
+                                </span>
+                                {option.description && (
+                                    <span className="hz:truncate hz:text-caption hz:text-muted-foreground hz:group-data-[highlighted]:text-accent-foreground">
+                                        {option.description}
+                                    </span>
+                                )}
+                            </>
                         )}
                     </span>
                     {!multiple && isSelected && (

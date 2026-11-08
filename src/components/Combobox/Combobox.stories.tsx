@@ -225,6 +225,42 @@ export const Async: Story = {
     },
 };
 
+/**
+ * Rich rows (MUI `renderOption`): `optionContent` replaces the row content
+ * only; the row stays the option (role, selection, keyboard). Content must
+ * be non-interactive.
+ */
+export const RichRows: Story = {
+    render: () => (
+        <div style={column}>
+            <Combobox
+                aria-label="Company search"
+                placeholder="Search by name or DUNS"
+                options={COMPANIES}
+                defaultOpen
+                optionContent={(option, { inputValue }) => (
+                    <>
+                        <span className="hz:truncate">{option.label}</span>
+                        <span>
+                            DUNS 51-{option.value.length}00-{inputValue.length}
+                            99 · {option.group ?? 'Other'}
+                        </span>
+                    </>
+                )}
+            />
+        </div>
+    ),
+    play: async () => {
+        await page.findByRole('listbox');
+        await waitFor(() =>
+            expect(
+                page.getByRole('option', { name: /Acme Ltd\. DUNS/ })
+            ).toBeVisible()
+        );
+        await closeList();
+    },
+};
+
 /** Custom values (MUI `freeSolo`): Enter commits the typed text. */
 export const CustomValues: Story = {
     render: () => (

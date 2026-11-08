@@ -10,6 +10,8 @@ export const single: ComboboxProps = {
     inputValue: 'A',
     onInputChange: (text, reason) => `${text}${reason}`,
     filter: false,
+    optionContent: (option, state) =>
+        `${option.label}${state.selected ? ' *' : ''}${state.inputValue}`,
     limit: 50,
     allowCustomValue: true,
     loading: true,
