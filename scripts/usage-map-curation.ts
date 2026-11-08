@@ -175,12 +175,14 @@ export const curation: Record<string, Curation> = {
     Autocomplete: {
         batch: 2,
         horizon: 'Combobox',
-        note: 'Not in the plan. Command + Popover combobox. Also covers CountryAutoComplete.',
+        note: 'Done in Task 11c, see Combobox section below. Hand-rolled ARIA 1.2 combobox on Radix Popover (cmdk rejected). `options` become `{ value, label, group?, disabled?, description? }` (map objects with your old `getOptionLabel`); `value` is the option value string (`multiple`: string array), `onChange(event, value)` becomes `onValueChange(value)`; `onInputChange(event, text, reason)` becomes `onInputChange(text, reason)`; `freeSolo` -> `allowCustomValue`; `groupBy` -> `option.group`; `filterOptions` -> `filter` (`false` for server search), `filterOptionsLimit` -> `limit` (default 100); `loading` kept (+ `loadingMessage`), `noOptionsText` -> `emptyMessage`; `renderInput` dropped (field built in; label/helperText/error via FormField); `renderOption`, `renderTags`, `getOptionLabel`, `isOptionEqualToValue`, `disablePortal`, `sx` and MUI flags dropped with a dev warning. Multiple: removable Chips, list stays open. Mobile: anchored field-wide list (not a bottom sheet: on-screen keyboard).',
+        status: 'done',
     },
     CountryAutoComplete: {
         batch: 2,
         horizon: 'Combobox',
-        note: 'Composition of Combobox;',
+        note: 'Done in Task 11c: `<FormField label={label} error={helperText}><Combobox options={countries} /></FormField>`; `subheader` -> `option.group` (sort by group as x-core did); `onChange(event, option)` -> `onValueChange(value)` (look up the label from your list); `loading` kept. The 2 customer360 call sites are single selection.',
+        status: 'done',
     },
     CountryInput: {
         batch: 2,
@@ -196,11 +198,10 @@ export const curation: Record<string, Curation> = {
     Select: {
         batch: 2,
         horizon: 'Select',
-        note: 'PARTIAL (Task 11a): single selection only, see Select section below. `options` array becomes `SelectItem` children (`group` -> `SelectGroup`, `disabled` per item); `onChange(event, value)` becomes `onValueChange(value)`; `placeholderValue` becomes `placeholder`; `clearable` kept (+ `clearLabel`); `size="small"` -> `sm`; label/helperText/error/isLabelContainer/info move to FormField. BLOCKED: multiple selection (`multiple`, `variant` check/radio/switch, apply/reset) and the search field need Combobox (planned, Task 11c): 2 of 4 customer360 SelectV2 files (5 of 7 openings) use `multiple`, 1 opening uses search. Dropped props warn in development.',
-        status: 'partial',
+        note: 'Done in Task 11a for single selection, see Select section below. `options` array becomes `SelectItem` children (`group` -> `SelectGroup`, `disabled` per item); `onChange(event, value)` becomes `onValueChange(value)`; `placeholderValue` becomes `placeholder`; `clearable` kept (+ `clearLabel`); `size="small"` -> `sm`; label/helperText/error/isLabelContainer/info move to FormField. Multiple selection (`multiple`, `variant="check"`) and the search field (`enableSearchField`) migrate to `Combobox` (Task 11c: `multiple`, type to filter; `variant` check -> multiple, apply/reset -> commit on pick, or `Filter` for staged apply/reset): 2 of 4 customer360 SelectV2 files (5 of 7 openings) use `multiple`, 1 opening uses search. Dropped props warn in development.',
+        status: 'done',
         supersededNote:
-            'PARTIAL: 8 of 22 customer360 files (10 of 30 openings) use `multiple` (MUI multi-select with chips): blocked until Combobox (planned, Task 11c); single-value call sites can migrate to `Select` now.',
-        supersededStatus: 'partial',
+            '8 of 22 customer360 files (10 of 30 openings) use `multiple` (MUI multi-select with chips): migrate those to `Combobox multiple` (Task 11c, removable Chips); single-value call sites migrate to `Select`.',
     },
     Checkbox: {
         batch: 2,

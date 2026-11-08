@@ -13,6 +13,8 @@ export { useResolvedDir } from './useResolvedDir';
 export type { Direction } from './useResolvedDir';
 export {
     fieldBase,
+    fieldInputElement,
+    fieldInputText,
     fieldState,
     fieldStateOf,
     forcedBorder,

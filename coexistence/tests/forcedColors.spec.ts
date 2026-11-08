@@ -43,8 +43,16 @@ for (const build of ['layered', 'unlayered'] as const)
                 fieldOf('hz-input'),
                 byTestId('hz-textarea'),
                 byTestId('hz-select'),
+                '[data-combobox-field]:has(> [data-testid="hz-combobox"])',
             ])
                 visibleBorder(await style(page, sel));
+            await page.locator(byTestId('hz-combobox')).focus();
+            visibleOutline(
+                await style(
+                    page,
+                    '[data-combobox-field]:has(> [data-testid="hz-combobox"])'
+                )
+            );
             await page.locator(byTestId('hz-input')).focus();
             visibleOutline(await style(page, fieldOf('hz-input')));
             await page.locator(byTestId('hz-textarea')).focus();

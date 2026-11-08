@@ -70,7 +70,7 @@ const meta = {
                 component: [
                     'Pick one value from a list, on Radix Select. Ported from x-core `SelectV2` (single selection): the `options` array becomes `SelectItem` children (`group` becomes `SelectGroup`, `disabled` per item), `onChange(event, value)` becomes `onValueChange(value)`, `placeholderValue` becomes `placeholder`, `clearable` kept, label/helperText/error move to `FormField`.',
                     '',
-                    '**Not here: multiple selection** (`multiple`, `variant="check" | "radio" | "switch"`, apply/reset buttons) and the **search field**: Radix Select is single-value with typeahead only. They need a Combobox (Popover + listbox), planned with the overlays in Task 11b. Values are non-empty strings.',
+                    '**Not here: multiple selection** (`multiple`, `variant="check" | "radio" | "switch"`, apply/reset buttons) and the **search field**: Radix Select is single-value with typeahead only. They are `Combobox` (`multiple`, type to filter). Values are non-empty strings.',
                     '',
                     '**Why Radix Select, not a native `<select>`:** grouped, disabled and long options look and behave the same in every browser, the list follows Horizon tokens and brand, the trigger matches Input, and Radix still renders a hidden native select so the value submits with forms and autofill works.',
                     '',

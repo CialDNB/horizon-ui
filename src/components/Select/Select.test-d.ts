@@ -28,7 +28,7 @@ export const ref: ComponentRef<typeof Select> | null =
 export const noValue: SelectItemProps = { children: 'A' };
 
 export const multiple: SelectProps = {
-    // @ts-expect-error multiple selection is a Combobox (Task 11b)
+    // @ts-expect-error multiple selection is a Combobox
     multiple: true,
 };
 

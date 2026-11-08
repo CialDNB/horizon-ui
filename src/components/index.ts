@@ -43,6 +43,16 @@ export type {
     ChipVariant,
     ChipVariantOptions,
 } from './Chip';
+export { Combobox, comboboxVariants } from './Combobox';
+export type {
+    ComboboxInputReason,
+    ComboboxMultipleProps,
+    ComboboxOption,
+    ComboboxProps,
+    ComboboxSingleProps,
+    ComboboxSize,
+    ComboboxVariantOptions,
+} from './Combobox';
 export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { IconButton, iconButtonVariants } from './IconButton';

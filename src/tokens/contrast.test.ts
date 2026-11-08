@@ -388,6 +388,70 @@ nonTextPairs.push(
     }
 );
 
+// Task 11c: Combobox, SearchBar, SplitButton, Filter, EmailsField, NumberInput.
+textPairs.push(
+    {
+        use: 'Combobox/SearchBar/EmailsField/NumberInput value',
+        text: 'foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Combobox/SearchBar/EmailsField/NumberInput placeholder',
+        text: 'muted-foreground',
+        surface: 'background',
+    },
+    { use: 'Combobox option', text: 'popover-foreground', surface: 'popover' },
+    {
+        use: 'Combobox highlighted option and its description',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'Combobox group label, description, empty/loading message',
+        text: 'muted-foreground',
+        surface: 'popover',
+    },
+    {
+        use: 'Combobox/EmailsField chip (neutral soft)',
+        text: 'neutral-strong',
+        surface: 'neutral-subtle',
+    }
+);
+nonTextPairs.push(
+    {
+        use: 'Combobox selected check on the list',
+        text: 'primary',
+        surface: 'popover',
+    },
+    {
+        use: 'Combobox selected check on a highlighted row',
+        text: 'primary',
+        surface: 'accent',
+    },
+    {
+        use: 'Combobox multi-select box boundary',
+        text: 'control-border',
+        surface: 'popover',
+    },
+    {
+        // control-border on accent is below 3:1 for dnb and il: the box
+        // switches to accent-foreground on a highlighted row.
+        use: 'Combobox multi-select box boundary on a highlighted row',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'Combobox multi-select checked box fill',
+        text: 'primary',
+        surface: 'popover',
+    },
+    {
+        use: 'Combobox multi-select check on its fill',
+        text: 'primary-foreground',
+        surface: 'primary',
+    }
+);
+
 describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {
     for (const brand of Object.keys(brands) as Brand[])
         it.each(nonTextPairs)(`${brand}: $use`, ({ text, surface }) => {

@@ -4,7 +4,7 @@
  * SelectSeparator) plus clearable and empty state. Replaces x-core
  * `SelectV2` (MUI Select with an `options` array, x-core 2.2.30) for single
  * selection; `Select` (v1) is superseded. Multiple selection and the search
- * field are not here: they need a Combobox (Popover + listbox, Task 11b).
+ * field are not here: use Combobox (`multiple`, typed search).
  */
 import { CaretDownIcon } from '@phosphor-icons/react/dist/csr/CaretDown';
 import { CaretUpIcon } from '@phosphor-icons/react/dist/csr/CaretUp';
@@ -126,19 +126,20 @@ const clearButton = cn(
 const legacySelectProps = {
     options: 'render a SelectItem per option',
     onChange: 'use onValueChange(value)',
-    multiple: 'multiple selection: use Combobox (planned)',
+    multiple: 'multiple selection: use Combobox multiple',
     variant:
-        'check/radio/switch variants are multi-select: use Combobox (planned)',
+        'check/radio/switch variants are multi-select: use Combobox multiple',
     label: 'wrap in FormField label',
     helperText: 'use FormField description or error',
     error: 'use invalid, or FormField error',
     placeholderValue: 'use placeholder',
-    placeholderSearchField: 'search: use Combobox (planned)',
-    enableSearchField: 'search: use Combobox (planned)',
+    placeholderSearchField: 'search: use Combobox (type to filter)',
+    enableSearchField: 'search: use Combobox (type to filter)',
     muiSelectProps: 'not supported',
     menuHeaderTitle: 'use SelectGroup label',
     menuHeaderIcon: 'not supported',
-    applyButtonText: 'multi-select only: use Combobox (planned)',
+    applyButtonText:
+        'multi-select only: use Combobox multiple (or Filter for apply/reset)',
     resetButtonText: 'use clearable',
     resetOnNoValue: 'use clearable',
     loading: 'not supported yet',

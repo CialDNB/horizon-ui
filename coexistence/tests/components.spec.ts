@@ -466,6 +466,8 @@ const FIELD_PROPS = [
 ] as const;
 
 const fieldOf = (id: string) => `[data-input-field]:has(> ${byTestId(id)})`;
+const comboboxField = (id: string) =>
+    `[data-combobox-field]:has(> ${byTestId(id)})`;
 const INPUT_IDS = ['', '-sm', '-lg', '-invalid', '-disabled', '-number'].map(
     (v) => `hz-input${v}`
 );
@@ -667,6 +669,37 @@ const PROBES: Record<string, Probe> = {
             {
                 key: 'clear button',
                 selector: `[data-select-field]:has(${byTestId('hz-select-value')}) > button:not([role])`,
+            },
+        ],
+        props: FIELD_PROPS,
+    },
+    Combobox: {
+        targets: [
+            ...plain(['hz-combobox', 'hz-combobox-value', 'hz-combobox-multi']),
+            ...['hz-combobox', 'hz-combobox-value', 'hz-combobox-multi'].map(
+                (id) => ({ key: `${id} field`, selector: comboboxField(id) })
+            ),
+            {
+                key: 'field, input focused',
+                selector: comboboxField('hz-combobox'),
+                focus: byTestId('hz-combobox'),
+            },
+            {
+                key: 'toggle button',
+                selector: `${comboboxField('hz-combobox')} [data-combobox-toggle]`,
+            },
+            {
+                key: 'clear button',
+                selector: `${comboboxField('hz-combobox-value')} button[aria-label="Clear"]`,
+            },
+            {
+                key: 'clear button, focused',
+                selector: `${comboboxField('hz-combobox-value')} button[aria-label="Clear"]`,
+                focus: `${comboboxField('hz-combobox-value')} button[aria-label="Clear"]`,
+            },
+            {
+                key: 'chip remove button',
+                selector: `${comboboxField('hz-combobox-multi')} button[aria-label="Remove Globex"]`,
             },
         ],
         props: FIELD_PROPS,
@@ -1447,6 +1480,24 @@ const LAYERED_FORMS_DIFF: Record<string, Record<string, string[]>> = {
             'lineHeight: 14px -> 24px',
         ],
     },
+    // As Input: Bootstrap's `input { line-height: inherit }`; the round
+    // end buttons and the chip remove button lose their radius, and
+    // customer360's `button:focus { outline: none }` removes the clear
+    // button's ring.
+    Combobox: {
+        'chip remove button': ['borderRadius: 100px -> 0px'],
+        'clear button': ['borderRadius: 100px -> 0px'],
+        'clear button, focused': [
+            'borderRadius: 100px -> 0px',
+            'outlineStyle: solid -> none',
+            'outlineWidth: 2px -> 3px',
+            'outlineColor: rgb(0, 80, 240) -> rgb(71, 85, 105)',
+        ],
+        'hz-combobox': ['lineHeight: 14px -> 21px'],
+        'hz-combobox-multi': ['lineHeight: 14px -> 21px'],
+        'hz-combobox-value': ['width: changed', 'lineHeight: 14px -> 21px'],
+        'toggle button': ['borderRadius: 100px -> 0px'],
+    },
     Switch: {
         'hz-switch': ['borderRadius: 100px -> 0px'],
         'hz-switch-on': ['borderRadius: 100px -> 0px'],
@@ -1860,4 +1911,119 @@ test.describe('Select inside x-core DialogV2 (disablePortal + Slide)', () => {
             await expect(trigger).toHaveText('Initech');
             await expect(page.getByTestId('mui-dialog-content')).toBeVisible();
         });
+});
+
+/** Styles of the open Combobox list (content and an option). */
+const openCombobox = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.getByTestId('hz-combobox').click();
+    const option = page.getByRole('option', { name: 'Globex' });
+    await expect(option).toBeVisible();
+    await page.waitForFunction(() =>
+        document
+            .querySelector('[data-combobox-content]')
+            ?.getAnimations()
+            .every((a) => a.playState === 'finished')
+    );
+    return page.evaluate(
+        (props) => {
+            const read = (el: Element | null) => {
+                if (!el) return {};
+                const cs = getComputedStyle(el);
+                return Object.fromEntries(
+                    props.map((p) => [
+                        p,
+                        cs[p as keyof CSSStyleDeclaration] as string,
+                    ])
+                );
+            };
+            return {
+                content: read(
+                    document.querySelector('[data-combobox-content]')
+                ),
+                option: read(document.querySelector('[role="option"]')),
+                listbox: read(document.querySelector('[role="listbox"]')),
+            };
+        },
+        [...FIELD_PROPS, 'zIndex']
+    );
+};
+
+test.describe('Combobox open list against Bootstrap 4.4.1 and customer360 host CSS', () => {
+    for (const legacy of LEGACY_CSS)
+        for (const horizonFirst of [false, true])
+            test(`unlayered build: list and options unchanged by ${legacy.label} (${horizonFirst ? 'horizon CSS first' : 'Bootstrap first'})`, async ({
+                page,
+            }) => {
+                const without = await openCombobox(page, url('unlayered'));
+                const withHost = await openCombobox(
+                    page,
+                    url('unlayered', { ...legacy.opts, horizonFirst })
+                );
+                expect(withHost).toEqual(without);
+                expect(without.content['zIndex']).toBe('1400');
+            });
+});
+
+test.describe('Combobox inside MUI dialogs (inner HorizonProvider)', () => {
+    for (const build of ['layered', 'unlayered'] as const)
+        for (const v2 of [false, true])
+            test(`the list opens above the dialog; keyboard picks; Escape closes only the list (${build}${v2 ? ', x-core DialogV2' : ''})`, async ({
+                page,
+            }) => {
+                await page.goto(
+                    `${url(build, { reboot: 'full', host: true })}${v2 ? '&mui=v2' : ''}`
+                );
+                await page.getByTestId('open-mui-dialog').click();
+                const input = page.getByTestId('hz-combobox-dialog');
+                await expect(input).toBeVisible();
+                if (v2)
+                    await page.waitForFunction(() => {
+                        const paper = document
+                            .querySelector('[data-testid="mui-dialog-content"]')
+                            ?.closest('.MuiDialog-paper');
+                        return (
+                            paper !== null &&
+                            paper !== undefined &&
+                            getComputedStyle(paper).transform === 'none'
+                        );
+                    });
+                await input.click();
+                await page.keyboard.type('init');
+                // Role queries skip DialogV2 content (aria-hidden #root, x-core defect).
+                const option = page.locator('[role="option"]', {
+                    hasText: 'Initech',
+                });
+                await expect(option).toBeVisible();
+                const box = await option.boundingBox();
+                if (!box) throw new Error('no option box');
+                const top = await page.evaluate(
+                    ([x, y]) =>
+                        document
+                            .elementFromPoint(x ?? 0, y ?? 0)
+                            ?.closest('[role="option"]')?.textContent ?? null,
+                    [box.x + box.width / 2, box.y + box.height / 2]
+                );
+                expect(top).toBe('Initech');
+                const ib = await input.locator('xpath=..').boundingBox();
+                const list = await page
+                    .locator('[data-combobox-content]')
+                    .boundingBox();
+                if (!ib || !list) throw new Error('no box');
+                expect(
+                    Math.abs(list.y - (ib.y + ib.height) - 4)
+                ).toBeLessThanOrEqual(1);
+                await page.keyboard.press('Enter');
+                await expect(input).toHaveValue('Initech');
+                await expect(input).toBeFocused();
+                await input.press('ArrowDown');
+                await expect(option).toBeVisible();
+                await page.keyboard.press('Escape');
+                await expect(
+                    page.locator('[data-combobox-content]')
+                ).toHaveCount(0);
+                await expect(
+                    page.getByTestId('mui-dialog-content')
+                ).toBeVisible();
+            });
 });

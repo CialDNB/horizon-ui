@@ -51,3 +51,29 @@ export function fieldStateOf({
     if (readOnly) return 'readOnly';
     return invalid ? 'invalid' : 'rest';
 }
+
+/** Text size of a field's text element per size (16px at mobile/touch). */
+export const fieldInputText = {
+    sm: 'hz:text-body-default hz:tablet:pointer-fine:text-body-secondary',
+    md: 'hz:text-body-default hz:tablet:pointer-fine:text-body-secondary',
+    lg: 'hz:text-body-default',
+} as const;
+
+/**
+ * The bare `<input>` inside a field box (Input, Combobox, EmailsField).
+ * Every property a host `input` rule touches is set on the element:
+ * Bootstrap reboot (margin, font, line-height, search appearance, number
+ * spin buttons) and customer360 (`input { font-size }`, `::placeholder`).
+ */
+export const fieldInputElement = [
+    'hz:m-0 hz:h-full hz:min-w-0 hz:flex-1 hz:appearance-none hz:rounded-none hz:border-0 hz:bg-transparent hz:p-0',
+    'hz:text-foreground hz:outline-none hz:shadow-none hz:placeholder:text-muted-foreground hz:placeholder:opacity-100',
+    'hz:disabled:cursor-not-allowed hz:disabled:text-muted-foreground',
+    // The reboot's `[type='search'] { outline-offset: -2px }` (0,1,0) would
+    // win when it loads later; `[type]` raises this to 0,2,0.
+    'hz:[&[type]]:outline-offset-0',
+    // Number spin buttons and the search cancel button are hidden: their
+    // look differs per browser; use clearable for clearing.
+    'hz:[&::-webkit-inner-spin-button]:m-0 hz:[&::-webkit-inner-spin-button]:appearance-none hz:[&::-webkit-outer-spin-button]:m-0 hz:[&::-webkit-outer-spin-button]:appearance-none hz:[-moz-appearance:textfield]',
+    'hz:[&::-webkit-search-cancel-button]:appearance-none hz:[&::-webkit-search-decoration]:appearance-none',
+].join(' ');

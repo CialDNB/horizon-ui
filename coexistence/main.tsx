@@ -17,6 +17,7 @@ import {
     Button,
     Checkbox,
     Chip,
+    Combobox,
     FormField,
     HorizonProvider,
     IconButton,
@@ -229,6 +230,7 @@ const TYPOGRAPHY_ROLES = [
 ] as const;
 
 const SELECT_OPTIONS = ['Acme Ltd.', 'Globex', 'Initech'] as const;
+const COMBOBOX_OPTIONS = SELECT_OPTIONS.map((o) => ({ value: o, label: o }));
 
 /**
  * An MUI dialog (z-index 1300) holding horizon Selects. Inside: a
@@ -257,6 +259,11 @@ function SelectInMuiDialog() {
                         <Input
                             aria-label="Inner input"
                             data-testid="hz-input-dialog"
+                        />
+                        <Combobox
+                            aria-label="Inside provider search"
+                            options={COMBOBOX_OPTIONS}
+                            data-testid="hz-combobox-dialog"
                         />
                         <Select
                             aria-label="Inside provider"
@@ -1066,6 +1073,26 @@ function App() {
                                 </SelectItem>
                             ))}
                         </Select>
+                        <Combobox
+                            aria-label="Company search"
+                            placeholder="Search companies"
+                            options={COMBOBOX_OPTIONS}
+                            data-testid="hz-combobox"
+                        />
+                        <Combobox
+                            aria-label="Owner search"
+                            defaultValue="Globex"
+                            clearable
+                            options={COMBOBOX_OPTIONS}
+                            data-testid="hz-combobox-value"
+                        />
+                        <Combobox
+                            multiple
+                            aria-label="Companies"
+                            defaultValue={['Acme Ltd.', 'Globex']}
+                            options={COMBOBOX_OPTIONS}
+                            data-testid="hz-combobox-multi"
+                        />
                         <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"
