@@ -38,6 +38,7 @@ import {
     EmailsField,
     Filter,
     NumberInput,
+    Pagination,
     SearchBar,
     SplitButton,
     Popover,
@@ -1215,6 +1216,15 @@ function App() {
                                 data-testid="hz-filter-toggle"
                             />
                         </div>
+                        <Pagination
+                            page={3}
+                            count={120}
+                            rowsPerPage={10}
+                            showTotalItems
+                            showRowsPerPage
+                            aria-label="Harness pagination"
+                            data-testid="hz-pagination"
+                        />
                         <SelectInMuiDialog />
                         <Textarea
                             aria-label="Comment"

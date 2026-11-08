@@ -527,6 +527,8 @@ const BUTTON: Target[] = [
     },
 ];
 
+const pagination = (part: string) => `${byTestId('hz-pagination')} ${part}`;
+
 const PROBES: Record<string, Probe> = {
     Button: {
         targets: BUTTON,
@@ -822,6 +824,52 @@ const PROBES: Record<string, Probe> = {
             ...FIELD_PROPS,
             'borderInlineStartColor',
             'borderInlineStartWidth',
+        ],
+    },
+    // Bootstrap reboot: `ul { margin-bottom: 1rem }`, `p { margin-bottom:
+    // 1rem }`, `button` font/radius/focus; customer360: `ul { margin: 0 }`,
+    // `button + button`, `button:focus`.
+    Pagination: {
+        targets: [
+            { key: 'nav', selector: byTestId('hz-pagination') },
+            { key: 'list (ul)', selector: pagination('ul') },
+            {
+                key: 'page item (li)',
+                selector: pagination('li:has(> [aria-label="Page 2"])'),
+            },
+            {
+                key: 'page button',
+                selector: pagination('[aria-label="Page 2"]'),
+            },
+            {
+                key: 'current page',
+                selector: pagination('[aria-current="page"]'),
+            },
+            {
+                key: 'page button, focused',
+                selector: pagination('[aria-label="Page 4"]'),
+                focus: pagination('[aria-label="Page 4"]'),
+            },
+            {
+                key: 'previous',
+                selector: pagination('[data-page-edge="previous"]'),
+            },
+            { key: 'next', selector: pagination('[data-page-edge="next"]') },
+            {
+                key: 'range (p)',
+                selector: pagination('[data-pagination-range]'),
+            },
+            {
+                key: 'rows-per-page trigger',
+                selector: pagination('[role="combobox"]'),
+            },
+        ],
+        props: [
+            ...FIELD_PROPS,
+            'listStyleType',
+            'paddingBottom',
+            'textAlign',
+            'fontVariantNumeric',
         ],
     },
     Textarea: {
@@ -2443,6 +2491,11 @@ const POINTER_TARGETS: PointerTarget[] = [
         },
     },
     { key: 'Filter toggle', selector: byTestId('hz-filter-toggle') },
+    { key: 'Pagination page', selector: pagination('[aria-label="Page 2"]') },
+    {
+        key: 'Pagination next',
+        selector: pagination('[data-page-edge="next"]'),
+    },
     {
         key: 'DropdownMenu trigger, focus returned after a pointer pick',
         selector: byTestId('hz-menu-trigger'),

@@ -504,6 +504,53 @@ nonTextPairs.push(
     }
 );
 
+// Task 12a: Pagination.
+textPairs.push(
+    {
+        use: 'Pagination page number',
+        text: 'foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Pagination page number, hover',
+        text: 'accent-foreground',
+        surface: 'accent',
+    },
+    {
+        use: 'Pagination current page',
+        text: 'primary-foreground',
+        surface: 'primary',
+    },
+    {
+        use: 'Pagination current page, hover',
+        text: 'primary-foreground',
+        surface: 'primary-hover',
+    },
+    {
+        use: 'Pagination range text and indicator',
+        text: 'foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Pagination rows-per-page label and ellipsis',
+        text: 'muted-foreground',
+        surface: 'background',
+    }
+);
+nonTextPairs.push(
+    {
+        use: 'Pagination arrows (ghost IconButton)',
+        text: 'foreground',
+        surface: 'background',
+    },
+    {
+        use: 'Pagination current page fill',
+        text: 'primary',
+        surface: 'background',
+    },
+    { use: 'Pagination focus ring', text: 'ring', surface: 'background' }
+);
+
 describe('semantic non-text contrast (WCAG 1.4.11, 3:1)', () => {
     for (const brand of Object.keys(brands) as Brand[])
         it.each(nonTextPairs)(`${brand}: $use`, ({ text, surface }) => {

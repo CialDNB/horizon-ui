@@ -384,7 +384,10 @@ export const curation: Record<string, Curation> = {
     Pagination: {
         batch: 3,
         horizon: 'Pagination',
-        note: 'Planned: previous/next + indicator at mobile.',
+        note: 'Done in Task 12a, see Pagination section below. `nav` landmark with page buttons (`aria-current="page"`); `page` (1-based), `count` (items), `rowsPerPage`, `showRowsPerPage`, `onRowsPerPageChange`, `showFirstButton`/`showLastButton`, `siblingCount`/`boundaryCount`, `showTotalItems` kept; `onChange(event, page)` -> `onPageChange(page)`; `showRowsPerPageOptions` -> `rowsPerPageOptions`; `shouldShow` -> `showPages`; `isTablePagination`, MUI look props (`color`, `variant`, `shape`, `size`, `sx`, `renderItem`) dropped (dev warning). Text via `labels` (translations). Below tablet: previous, "Page 2 of 12", next (x-core switched to TablePagination).',
+        supersededNote:
+            'v1 `count` is a page count: pass it as `pageCount` (V2 and horizon `count` is the item count).',
+        status: 'done',
     },
     Timeline: {
         batch: 3,

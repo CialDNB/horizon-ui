@@ -157,6 +157,18 @@ for (const build of ['layered', 'unlayered'] as const)
             }
         });
 
+        test('Pagination: the current page keeps a system-colour fill; a focused page is outlined', async ({
+            page,
+        }) => {
+            const current = `${byTestId('hz-pagination')} [aria-current="page"]`;
+            const s = await style(page, current);
+            expect(s.adjust).toBe('none');
+            expect(s.background).not.toBe('rgba(0, 0, 0, 0)');
+            const other = `${byTestId('hz-pagination')} [aria-label="Page 2"]`;
+            await page.locator(other).focus();
+            visibleOutline(await style(page, other));
+        });
+
         test('overlays keep a visible boundary', async ({ page }) => {
             await page
                 .getByTestId('hz-tooltip-trigger')
