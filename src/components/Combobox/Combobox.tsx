@@ -38,6 +38,7 @@ import {
     fieldInputText,
     fieldState,
     fieldStateOf,
+    listItem,
     overlaySurface,
     useFieldControl,
     useFormField,
@@ -97,14 +98,8 @@ const contentStyles = cn(
     anchoredMotion
 );
 
-// 44px rows at mobile and on touch pointers, 36px with a fine pointer.
-const optionStyles = [
-    'hz:group hz:relative hz:flex hz:min-h-11 hz:w-full hz:cursor-pointer hz:items-center hz:gap-2 hz:rounded-xs hz:px-3 hz:py-2 hz:select-none',
-    'hz:text-body-default hz:text-popover-foreground hz:tablet:pointer-fine:min-h-9 hz:tablet:pointer-fine:text-body-secondary',
-    'hz:data-[highlighted]:bg-accent hz:data-[highlighted]:text-accent-foreground',
-    'hz:aria-disabled:cursor-not-allowed hz:aria-disabled:text-muted-foreground',
-    'hz:forced-colors:data-[highlighted]:outline-2 hz:forced-colors:data-[highlighted]:-outline-offset-2 hz:forced-colors:data-[highlighted]:outline-solid hz:forced-colors:data-[highlighted]:outline-[Highlight]',
-].join(' ');
+// Shared list row (src/primitives/listItem.ts).
+const optionStyles = cn(listItem({ disabledBy: 'aria' }), 'hz:px-3');
 
 const messageStyles =
     'hz:flex hz:min-h-11 hz:items-center hz:gap-2 hz:px-3 hz:text-body-default hz:text-muted-foreground hz:tablet:pointer-fine:min-h-9 hz:tablet:pointer-fine:text-body-secondary';

@@ -36,6 +36,7 @@ import {
     useResolvedDir,
     type Direction,
     clearAction,
+    listItem,
 } from '../../primitives';
 import { usePortalContainer } from '../../provider';
 import type { DnbBase } from '../../types/DnbBase';
@@ -106,13 +107,8 @@ export function selectVariants(options?: SelectVariantOptions): string {
 const contentStyles =
     'hz:relative hz:z-dropdown hz:max-h-(--radix-select-content-available-height) hz:w-(--radix-select-trigger-width) hz:min-w-48 hz:overflow-hidden hz:rounded-sm hz:bg-popover hz:text-popover-foreground hz:shadow-2 hz:ring-1 hz:ring-border hz:forced-colors:border hz:forced-colors:border-solid hz:forced-colors:border-[CanvasText]';
 
-// 44px rows at mobile and on touch pointers, 36px with a fine pointer.
-const itemStyles = [
-    'hz:relative hz:m-0 hz:flex hz:min-h-11 hz:w-full hz:cursor-pointer hz:items-center hz:gap-2 hz:rounded-xs hz:py-2 hz:ps-3 hz:pe-9 hz:outline-none hz:select-none',
-    'hz:text-body-default hz:text-popover-foreground hz:tablet:pointer-fine:min-h-9 hz:tablet:pointer-fine:text-body-secondary',
-    'hz:data-[highlighted]:bg-accent hz:data-[highlighted]:text-accent-foreground',
-    'hz:data-[disabled]:cursor-not-allowed hz:data-[disabled]:text-muted-foreground',
-].join(' ');
+// Shared list row (src/primitives/listItem.ts); room for the check at the end.
+const itemStyles = cn(listItem(), 'hz:ps-3 hz:pe-9');
 
 const scrollButton =
     'hz:flex hz:h-6 hz:cursor-default hz:items-center hz:justify-center hz:text-muted-foreground hz:[&>svg]:size-4';

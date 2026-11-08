@@ -42,3 +42,5 @@ export {
 export type { LogicalAlign, LogicalSide } from './overlay';
 export { useKeptContent } from './keptContent';
 export { useModalLayer } from './useModalLayer';
+export { listItem } from './listItem';
+export type { ListItemOptions } from './listItem';

@@ -21,6 +21,7 @@ import {
     anchorGuard,
     anchoredMotion,
     containEscape,
+    listItem,
     overlaySurface,
     physicalPlacement,
     type Direction,
@@ -158,17 +159,13 @@ export const DropdownMenuContent = forwardRef<
 DropdownMenuContent.displayName = 'DropdownMenuContent';
 
 // 44px rows at mobile and on touch pointers, 36px with a fine pointer.
-const itemBase = [
-    'hz:group hz:relative hz:m-0 hz:flex hz:min-h-11 hz:w-full hz:cursor-pointer hz:items-center hz:gap-2 hz:rounded-xs hz:border-0 hz:bg-transparent hz:px-3 hz:py-2 hz:text-start hz:outline-none hz:select-none hz:no-underline',
-    'hz:text-body-default hz:text-popover-foreground hz:tablet:pointer-fine:min-h-9 hz:tablet:pointer-fine:text-body-secondary',
-    'hz:data-[highlighted]:bg-accent hz:data-[highlighted]:text-accent-foreground',
-    'hz:data-[disabled]:cursor-not-allowed hz:data-[disabled]:text-muted-foreground',
-    // Forced colors drop the highlight fill: outline the highlighted row.
-    'hz:forced-colors:data-[highlighted]:outline-2 hz:forced-colors:data-[highlighted]:-outline-offset-2 hz:forced-colors:data-[highlighted]:outline-solid hz:forced-colors:data-[highlighted]:outline-[Highlight]',
+const itemBase = cn(
+    listItem(),
+    'hz:border-0 hz:bg-transparent hz:px-3 hz:text-start hz:no-underline',
     'hz:[&_svg]:size-4 hz:[&_svg]:shrink-0',
     // asChild links: Bootstrap/customer360 `a`, `a:hover`, `a:focus` rules.
-    anchorGuard('foreground', { hover: 'accent-foreground' }),
-].join(' ');
+    anchorGuard('foreground', { hover: 'accent-foreground' })
+);
 
 // Muted on the popover; the highlight colour on a highlighted row (muted
 // text on `accent` is below 4.5:1 for il).
