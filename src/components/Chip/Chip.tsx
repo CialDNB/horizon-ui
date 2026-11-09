@@ -7,7 +7,6 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import {
     forwardRef,
     useEffect,
-    useLayoutEffect,
     useRef,
     useState,
     type HTMLAttributes,
@@ -321,19 +320,43 @@ function HitLayer({
     );
 }
 
+/*
+ * One ResizeObserver for every Chip (a table column of 500 chips made 500
+ * observers). Its initial callback per element is the first measurement,
+ * so mounting reads no layout (no forced reflow per chip).
+ */
+const resizeCallbacks = new WeakMap<Element, () => void>();
+let sharedObserver: ResizeObserver | undefined;
+let sharedObserverCtor: typeof ResizeObserver | undefined;
+
+function observeResize(el: Element, onResize: () => void): () => void {
+    if (typeof ResizeObserver === 'undefined') return () => undefined;
+    if (!sharedObserver || sharedObserverCtor !== ResizeObserver) {
+        sharedObserverCtor = ResizeObserver;
+        sharedObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) resizeCallbacks.get(entry.target)?.();
+        });
+    }
+    const observer = sharedObserver;
+    resizeCallbacks.set(el, onResize);
+    observer.observe(el);
+    return () => {
+        resizeCallbacks.delete(el);
+        observer.unobserve(el);
+    };
+}
+
 /** True while the element's text overflows its box (ellipsis is showing). */
 function useIsTruncated(label: string) {
     const ref = useRef<HTMLSpanElement>(null);
     const [truncated, setTruncated] = useState(false);
-    useLayoutEffect(() => {
+    useEffect(() => {
         const el = ref.current;
         if (!el) return;
-        const check = () => setTruncated(el.scrollWidth > el.clientWidth);
-        check();
-        if (typeof ResizeObserver === 'undefined') return;
-        const observer = new ResizeObserver(check);
-        observer.observe(el);
-        return () => observer.disconnect();
+        // A changed label is re-observed, so the observer measures it again.
+        return observeResize(el, () =>
+            setTruncated(el.scrollWidth > el.clientWidth)
+        );
     }, [label]);
     return [ref, truncated] as const;
 }

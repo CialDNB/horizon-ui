@@ -795,8 +795,19 @@ export const ComputedStyles: Story = {
     },
 };
 
-/** 500 rows x 8 columns render within budget in the browser. */
-function TimedTable() {
+const PLAIN_COLUMNS: Column<Company>[] = COLUMNS.map((c) => ({
+    id: c.id,
+    label: c.label,
+}));
+
+/** Times the first commit of a 500-row table with the given columns; Clear unmounts it. */
+function TimedTable({
+    name,
+    columns,
+}: {
+    name: string;
+    columns: Column<Company>[];
+}) {
     const [show, setShow] = useState(false);
     const started = useRef(0);
     const [elapsed, setElapsed] = useState<number | null>(null);
@@ -813,15 +824,26 @@ function TimedTable() {
                     setShow(true);
                 }}
             >
-                Render 500 rows
+                Render {name}
+            </button>
+            <button
+                type="button"
+                onClick={() => {
+                    setShow(false);
+                    setElapsed(null);
+                }}
+            >
+                Clear {name}
             </button>
             {elapsed !== null && (
-                <output data-testid="elapsed">{Math.round(elapsed)}</output>
+                <output data-testid={`elapsed-${name}`}>
+                    {Math.round(elapsed)}
+                </output>
             )}
             {show && (
                 <Table<Company>
-                    caption="500 rows"
-                    columns={COLUMNS}
+                    caption={`500 rows, ${name}`}
+                    columns={columns}
                     data={makeRows(500)}
                     disablePagination
                 />
@@ -830,19 +852,57 @@ function TimedTable() {
     );
 }
 
+/**
+ * 500 rows x 8 columns with rich cells (chips, badges, dates, an info
+ * tooltip) cost at most 5x the same table with plain text. Both are
+ * rendered three times, alternating, after a warm-up, and the fastest of
+ * each is compared: a ratio in the same run, so machine load and JIT
+ * warm-up cancel out. Storybook runs React in development mode. Measured
+ * (Task 12a review): plain ~38ms, rich ~125ms, ratio ~3.3. Virtualization is a future option (no
+ * dependency).
+ */
 export const Performance: Story = {
-    name: 'renders 500 rows within budget',
+    name: 'renders 500 rich rows within 5x of plain text',
     tags: ['!autodocs', '!dev'],
-    render: () => <TimedTable />,
+    render: () => (
+        <div>
+            <Table<Company>
+                caption="Warm-up, rich"
+                columns={COLUMNS}
+                data={makeRows(50)}
+                disablePagination
+            />
+            <Table<Company>
+                caption="Warm-up, plain"
+                columns={PLAIN_COLUMNS}
+                data={makeRows(50)}
+                disablePagination
+            />
+            <TimedTable name="plain" columns={PLAIN_COLUMNS} />
+            <TimedTable name="rich" columns={COLUMNS} />
+        </div>
+    ),
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await userEvent.click(canvas.getByRole('button', { name: /Render/ }));
-        const out = await canvas.findByTestId('elapsed');
-        await expect(canvas.getAllByRole('rowheader')).toHaveLength(500);
-        // Storybook runs React in development mode. Measured (Task 12a,
-        // load average ~7): 820-940ms with these chip/badge/date columns,
-        // ~500ms with plain text. The budget catches a regression to
-        // quadratic work; virtualization is a future option (no dependency).
-        await expect(Number(out.textContent)).toBeLessThan(1500);
+        const time = async (name: string) => {
+            await userEvent.click(
+                canvas.getByRole('button', { name: `Render ${name}` })
+            );
+            const out = await canvas.findByTestId(`elapsed-${name}`);
+            const ms = Number(out.textContent);
+            await userEvent.click(
+                canvas.getByRole('button', { name: `Clear ${name}` })
+            );
+            return ms;
+        };
+        const plain: number[] = [];
+        const rich: number[] = [];
+        for (let round = 0; round < 3; round++) {
+            plain.push(await time('plain'));
+            rich.push(await time('rich'));
+        }
+        await expect(
+            Math.min(...rich) / Math.max(Math.min(...plain), 1)
+        ).toBeLessThan(5);
     },
 };

@@ -159,6 +159,7 @@ describe('Chip', () => {
                     callback = cb;
                 }
                 observe() {}
+                unobserve() {}
                 disconnect() {}
             }
         );
@@ -168,8 +169,47 @@ describe('Chip', () => {
         expect(text).not.toHaveAttribute('title');
         Object.defineProperty(text, 'scrollWidth', { value: 400 });
         Object.defineProperty(text, 'clientWidth', { value: 120 });
-        act(() => callback([], {} as ResizeObserver));
+        act(() =>
+            callback(
+                [{ target: text } as unknown as ResizeObserverEntry],
+                {} as ResizeObserver
+            )
+        );
         expect(text).toHaveAttribute('title', label);
+    });
+
+    it('many chips share one ResizeObserver and do not read layout on mount', () => {
+        const created = vi.fn();
+        const observed: Element[] = [];
+        vi.stubGlobal(
+            'ResizeObserver',
+            class {
+                constructor() {
+                    created();
+                }
+                observe(el: Element) {
+                    observed.push(el);
+                }
+                unobserve() {}
+                disconnect() {}
+            }
+        );
+        const scrollWidth = vi.spyOn(
+            HTMLElement.prototype,
+            'scrollWidth',
+            'get'
+        );
+        render(
+            <>
+                {Array.from({ length: 20 }, (_, i) => (
+                    <Chip key={i} label={`Chip ${i}`} />
+                ))}
+            </>
+        );
+        expect(created).toHaveBeenCalledTimes(1);
+        expect(observed).toHaveLength(20);
+        // The first measurement comes from the observer's initial callback.
+        expect(scrollWidth).not.toHaveBeenCalled();
     });
 
     it('forwards ref to the root, data-did and native attributes', () => {
