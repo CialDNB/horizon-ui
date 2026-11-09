@@ -134,3 +134,113 @@ for (const c of CASES)
             await expect(drawer).toBeHidden();
         });
     });
+
+/*
+ * A Table in an MUI dialog shaped like x-core DialogV2 (`?mui=v2`:
+ * disablePortal + Slide) under an inner HorizonProvider (the documented
+ * pattern): the scroll region takes keyboard focus and scrolls by keys
+ * inside MUI's FocusTrap, and the rows-per-page Select opens above the
+ * dialog, picks, and leaves the dialog open.
+ */
+for (const build of ['layered', 'unlayered'] as const)
+    test.describe(`Table in an MUI dialog (?mui=v2, inner provider, ${build})`, () => {
+        test('the scroll region scrolls by keyboard; rows per page works', async ({
+            page,
+        }) => {
+            await page.goto(
+                `/?mui=v2${build === 'unlayered' ? '&build=unlayered' : ''}`
+            );
+            await page.getByTestId('open-mui-table-dialog').click();
+            const content = page.getByTestId('mui-table-dialog-content');
+            const table = content.getByTestId('hz-table-mui-dialog');
+            await expect(table).toBeVisible();
+            const scroller = table.locator('[data-table-scroll]');
+            await expect(scroller).toHaveAttribute('role', 'region');
+            // Names are not computed here: x-core DialogV2 (disablePortal)
+            // makes MUI aria-hide #root, which contains the dialog (existing
+            // customer360 defect, docs/05). Check the wiring instead.
+            const labelledBy = await scroller.getAttribute('aria-labelledby');
+            expect(
+                await page.locator(`[id="${labelledBy ?? ''}"]`).textContent()
+            ).toBe('MUI dialog companies');
+            // Keyboard focus on the region stays inside MUI's FocusTrap.
+            await page.keyboard.press('Shift');
+            await scroller.focus();
+            await expect(scroller).toBeFocused();
+            await page.keyboard.press('PageDown');
+            await expect
+                .poll(() => scroller.evaluate((el) => el.scrollTop))
+                .toBeGreaterThan(0);
+            await expect(scroller).toBeFocused();
+            // Rows per page (CSS locators: roles are aria-hidden here, above).
+            const select = table.locator('[data-pagination] [role="combobox"]');
+            await select.click();
+            const option = page.locator('[role="option"]', { hasText: '25' });
+            await expect(option).toBeVisible();
+            await option.click();
+            await expect(select).toHaveText(/25/);
+            await expect(content).toBeVisible();
+            await expect(table.locator('th[scope="row"]')).toHaveCount(25);
+            await expect(table.locator('[data-pagination]')).toHaveAttribute(
+                'aria-label',
+                'Pagination: MUI dialog companies'
+            );
+        });
+    });
+
+/*
+ * The row details list (dl/dt/dd) at mobile width against Bootstrap's
+ * `dl { margin-bottom }`, `dt { font-weight: 700 }`,
+ * `dd { margin-bottom; margin-left: 0 }` and customer360 host CSS:
+ * unchanged in the unlayered build, both load orders.
+ */
+const DETAILS_PROPS = [
+    'display',
+    'marginTop',
+    'marginBottom',
+    'marginInlineStart',
+    'paddingInlineStart',
+    'fontSize',
+    'fontWeight',
+    'lineHeight',
+    'color',
+] as const;
+
+const detailsStyles = async (page: Page, query: string) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(`/${query}`);
+    const details = page.locator(
+        `${byTestId('hz-table')} tr[data-details]:not([hidden])`
+    );
+    await expect(details.locator('dt')).toBeVisible();
+    const read = (selector: string) =>
+        details.locator(selector).evaluate(
+            (el, props) => {
+                const cs = getComputedStyle(el);
+                return Object.fromEntries(
+                    props.map((p) => [
+                        p,
+                        cs[p as keyof CSSStyleDeclaration] as string,
+                    ])
+                );
+            },
+            [...DETAILS_PROPS]
+        );
+    return { dl: await read('dl'), dt: await read('dt'), dd: await read('dd') };
+};
+
+test.describe('Table row details (dl/dt/dd) at mobile against Bootstrap', () => {
+    for (const order of ['', '&order=horizon-first'])
+        test(`unlayered build unchanged by full Bootstrap + customer360 host CSS${order ? ' (horizon CSS first)' : ' (Bootstrap first)'}`, async ({
+            page,
+        }) => {
+            const without = await detailsStyles(page, '?build=unlayered');
+            const withHost = await detailsStyles(
+                page,
+                `?build=unlayered&reboot=full&host=customer360${order}`
+            );
+            expect(withHost).toEqual(without);
+            expect(without.dt['fontWeight']).toBe('600');
+            expect(without.dd['marginBottom']).toBe('0px');
+        });
+});

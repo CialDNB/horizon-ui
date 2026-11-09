@@ -395,6 +395,7 @@ type HarnessRow = {
     city: string;
     employees: number;
     risk: { label: string; color: string };
+    region: string;
 };
 
 const TABLE_ROWS = (count: number) =>
@@ -405,6 +406,7 @@ const TABLE_ROWS = (count: number) =>
             city: ['Haifa', 'Tel Aviv', 'Eilat'][i % 3] ?? '',
             employees: (i * 37) % 500,
             risk: { label: ['Low', 'High'][i % 2] ?? '', color: 'error' },
+            region: ['North', 'South'][i % 2] ?? '',
         },
     }));
 
@@ -413,6 +415,8 @@ const TABLE_COLUMNS = [
     { id: 'city', label: 'City', info: 'Head office' },
     { id: 'employees', label: 'Employees', type: 'numeric' as const },
     { id: 'risk', label: 'Risk', type: 'chip' as const, disableSort: true },
+    // In the row details below tablet (dl/dt/dd against Bootstrap's dt/dd rules).
+    { id: 'region', label: 'Region', hideBelow: 'tablet' as const },
 ];
 
 /**
@@ -454,10 +458,64 @@ function HarnessTable() {
                     <TableCell />
                     <TableCell numeric>111</TableCell>
                     <TableCell />
+                    <TableCell className="hz:hidden hz:tablet:table-cell" />
                 </>
             }
             data-testid="hz-table"
         />
+    );
+}
+
+/**
+ * A paginated Table in an MUI Dialog (`?mui=v2`: x-core DialogV2 shape)
+ * under an inner HorizonProvider: the scroll region and the rows-per-page
+ * Select must work inside MUI's FocusTrap.
+ */
+function TableInMuiDialog() {
+    const [open, setOpen] = useState(false);
+    const [limit, setLimit] = useState(10);
+    const [page, setPage] = useState(1);
+    return (
+        <>
+            <MuiButton
+                data-testid="open-mui-table-dialog"
+                onClick={() => setOpen(true)}
+            >
+                Open MUI table dialog
+            </MuiButton>
+            <MuiDialog
+                open={open}
+                onClose={() => setOpen(false)}
+                {...muiDialogVariant}
+            >
+                <MuiDialogContent data-testid="mui-table-dialog-content">
+                    <HorizonProvider>
+                        <Table<HarnessRow>
+                            caption="MUI dialog companies"
+                            columns={TABLE_COLUMNS}
+                            data={TABLE_ROWS(40).slice(
+                                (page - 1) * limit,
+                                page * limit
+                            )}
+                            maxBlockSize={180}
+                            page={page}
+                            limit={limit}
+                            totalCount={40}
+                            onPageChange={setPage}
+                            paginationProps={{
+                                showRowsPerPage: true,
+                                rowsPerPageOptions: [10, 25],
+                                onRowsPerPageChange: (n) => {
+                                    setLimit(n);
+                                    setPage(1);
+                                },
+                            }}
+                            data-testid="hz-table-mui-dialog"
+                        />
+                    </HorizonProvider>
+                </MuiDialogContent>
+            </MuiDialog>
+        </>
     );
 }
 
@@ -1360,6 +1418,7 @@ function App() {
                         />
                         <HarnessTable />
                         <SelectInMuiDialog />
+                        <TableInMuiDialog />
                         <Textarea
                             aria-label="Comment"
                             placeholder="Add a comment"
