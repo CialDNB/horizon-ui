@@ -9,7 +9,7 @@ import { CaretDoubleLeftIcon } from '@phosphor-icons/react/dist/csr/CaretDoubleL
 import { CaretDoubleRightIcon } from '@phosphor-icons/react/dist/csr/CaretDoubleRight';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
-import { cva } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import {
     forwardRef,
     useEffect,
@@ -134,6 +134,14 @@ const pageButtonStyles = cva(
         defaultVariants: { current: false },
     }
 );
+
+/** Options accepted by {@link paginationVariants}: `current`. */
+export type PaginationVariantOptions = VariantProps<typeof pageButtonStyles>;
+
+/** Class string for a page button (`current` page or not), conflict-resolved with `cn()`. */
+export function paginationVariants(options?: PaginationVariantOptions): string {
+    return cn(pageButtonStyles(options));
+}
 
 /** x-core PaginationV2 / MUI Pagination props that are dropped (dev warning). */
 const legacyPaginationProps = {
@@ -309,6 +317,8 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
         const from = count ? (page - 1) * rowsPerPage + 1 : 0;
         const to = count ? Math.min(page * rowsPerPage, count) : 0;
 
+        // The page list wraps in a narrow container: breakpoints follow the
+        // viewport, not the container (ADR 0001).
         return (
             <nav
                 {...rest}
@@ -317,7 +327,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
                 data-pagination=""
                 className={cn(
                     // text-start: Bootstrap's `body { text-align: left }` is inherited (wrong under RTL).
-                    'hz:flex hz:flex-wrap hz:items-center hz:justify-end hz:gap-x-6 hz:gap-y-2 hz:text-start hz:text-body-secondary hz:text-foreground',
+                    'hz:flex hz:min-w-0 hz:flex-wrap hz:items-center hz:justify-end hz:gap-x-6 hz:gap-y-2 hz:text-start hz:text-body-secondary hz:text-foreground',
                     className
                 )}
             >
@@ -360,7 +370,10 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
                     </div>
                 )}
                 {showPages && (
-                    <ul className="hz:m-0 hz:flex hz:list-none hz:items-center hz:gap-1 hz:p-0">
+                    <ul
+                        data-pagination-pages=""
+                        className="hz:m-0 hz:flex hz:min-w-0 hz:list-none hz:flex-wrap hz:items-center hz:justify-end hz:gap-1 hz:p-0"
+                    >
                         {showFirstButton &&
                             edge(
                                 'first',
@@ -401,7 +414,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
                                             item === page ? 'page' : undefined
                                         }
                                         aria-disabled={disabled || undefined}
-                                        className={pageButtonStyles({
+                                        className={paginationVariants({
                                             current: item === page,
                                         })}
                                         onClick={() => go(item)}

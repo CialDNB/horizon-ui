@@ -80,11 +80,12 @@ export type {
 } from './Link';
 export { NumberInput } from './NumberInput';
 export type { NumberInputProps } from './NumberInput';
-export { Pagination, paginationItems } from './Pagination';
+export { Pagination, paginationItems, paginationVariants } from './Pagination';
 export type {
     PaginationItem,
     PaginationLabels,
     PaginationProps,
+    PaginationVariantOptions,
 } from './Pagination';
 export { Progress, progressVariants } from './Progress';
 export type {

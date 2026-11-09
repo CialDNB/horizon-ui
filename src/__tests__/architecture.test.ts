@@ -179,6 +179,7 @@ describe('architecture', () => {
                 "linkVariants",
                 "normalizeEmailInput",
                 "paginationItems",
+                "paginationVariants",
                 "progressVariants",
                 "radioGroupVariants",
                 "sanitizeEmail",

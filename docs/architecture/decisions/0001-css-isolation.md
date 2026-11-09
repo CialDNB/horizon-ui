@@ -210,6 +210,10 @@ Related decisions made in this task:
 
 Scoping by `.hz-root` means a Horizon component rendered into a host portal (an MUI Dialog in `document.body`) is unstyled unless that portal content has its own `.hz-root`: wrap it in a `<HorizonProvider>` (it inherits brand and direction from the parent provider). Measured consequences without it and the snippet: `docs/architecture/05-migration-and-coexistence.md`, "Horizon controls inside MUI dialogs".
 
+## Breakpoints follow the viewport, not the container (Task 12a note)
+
+`tablet:`/`laptop:`/`desktop:` are viewport media queries (Responsive Standard). A component placed in a narrow container at a wide viewport (Pagination or a Table in a 320-400px Drawer at laptop width) gets its wide layout. Pagination's page list therefore wraps (`flex-wrap`, `min-w-0`) instead of overflowing; it does not collapse to the mobile form. Container-query collapse (`hz:@container` with `--container-*` tokens) is a future option and would be a deliberate deviation from the viewport-breakpoint standard; not implemented.
+
 ## Consequences
 
 - No class collisions with consumer CSS or a consumer's own Tailwind (v3 or v4). MUI/Emotion pages are unaffected (measured).

@@ -320,3 +320,35 @@ export const ComputedStyles: Story = {
         await expect(current.borderRadius).toBe('100px');
     },
 };
+
+/** In a narrow container (a Drawer) at a laptop viewport the row wraps instead of overflowing. */
+export const NarrowContainerLaptop: Story = {
+    ...viewportStory(
+        'laptop',
+        () => (
+            <div data-testid="narrow" style={{ inlineSize: 320 }}>
+                <Controlled page={6} showTotalItems showRowsPerPage />
+            </div>
+        ),
+        async (canvasElement) => {
+            const box = canvasElement.querySelector<HTMLElement>(
+                '[data-testid="narrow"]'
+            );
+            const ul = canvasElement.querySelector('ul');
+            const outer = box?.getBoundingClientRect();
+            if (!ul || !outer) throw new Error('missing parts');
+            // Overflow under justify-end goes to the inline start, which
+            // scrollWidth does not count: check the boxes instead.
+            await expect(box?.scrollWidth).toBeLessThanOrEqual(320);
+            await expect(ul.getBoundingClientRect().width).toBeLessThanOrEqual(
+                320
+            );
+            for (const button of Array.from(ul.querySelectorAll('button'))) {
+                const r = button.getBoundingClientRect();
+                await expect(r.left).toBeGreaterThanOrEqual(outer.left - 0.5);
+                await expect(r.right).toBeLessThanOrEqual(outer.right + 0.5);
+            }
+        }
+    ),
+    name: 'wraps inside a 320px container at laptop',
+};
