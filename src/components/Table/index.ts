@@ -11,6 +11,7 @@ export {
     TableHeader,
     TableRoot,
     TableRow,
+    tableVariants,
 } from './TablePrimitives';
 export type {
     TableAlign,
@@ -24,6 +25,7 @@ export type {
     TableResponsive,
     TableRootProps,
     TableRowProps,
+    TableVariantOptions,
 } from './TablePrimitives';
 export { ColumnDataType } from './Table.types';
 export type {

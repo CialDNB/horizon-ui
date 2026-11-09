@@ -187,6 +187,7 @@ describe('architecture', () => {
                 "separatorVariants",
                 "spinnerVariants",
                 "switchVariants",
+                "tableVariants",
                 "textareaVariants",
                 "toast",
                 "typographyVariants",

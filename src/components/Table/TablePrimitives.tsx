@@ -8,7 +8,7 @@
 import { ArrowDownIcon } from '@phosphor-icons/react/dist/csr/ArrowDown';
 import { ArrowUpIcon } from '@phosphor-icons/react/dist/csr/ArrowUp';
 import { CaretUpDownIcon } from '@phosphor-icons/react/dist/csr/CaretUpDown';
-import { cva } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import {
     createContext,
     forwardRef,
@@ -151,6 +151,14 @@ const tableStyles = cva(
     }
 );
 
+/** Options accepted by {@link tableVariants}: `responsive`. */
+export type TableVariantOptions = VariantProps<typeof tableStyles>;
+
+/** Class string for the `<table>` element (`responsive`), conflict-resolved with `cn()`. */
+export function tableVariants(options?: TableVariantOptions): string {
+    return cn(tableStyles(options));
+}
+
 /*
  * `responsive="stack"` restyles table elements as blocks and grids below
  * `tablet`, which drops their table semantics in some browsers; explicit
@@ -167,49 +175,86 @@ type Edges = {
     scrollable: boolean;
     atStart: boolean;
     atEnd: boolean;
+    /** Width of the sticky cells at the inline start (the start shadow begins after them). */
+    stickyWidth: number;
 };
 
-/** Watches a horizontal scroller: does it overflow, is it at either end. */
+/**
+ * How far the sticky cells of the first body row reach from the scroller's
+ * inline start once stuck: their `inset-inline-start` plus their width (a
+ * non-sticky Details column may sit between them, so not their natural
+ * position, and they may overlap, so not a sum).
+ */
+function stickyWidthOf(el: HTMLElement): number {
+    const row = el.querySelector('tbody > tr');
+    if (!row) return 0;
+    let reach = 0;
+    for (const cell of Array.from(row.children) as HTMLElement[]) {
+        const cs = getComputedStyle(cell);
+        if (cs.position !== 'sticky') continue;
+        const start = Number.parseFloat(cs.insetInlineStart) || 0;
+        reach = Math.max(reach, start + cell.offsetWidth);
+    }
+    return Math.round(reach);
+}
+
+/**
+ * Watches a horizontal scroller: does it overflow, is it at either end, how
+ * wide are its sticky cells. Sizes are read when it resizes (which includes
+ * crossing `tablet`, where sticky cells change), positions on scroll.
+ */
 function useScrollEdges(el: HTMLElement | null): Edges {
     const [edges, setEdges] = useState<Edges>({
         overflowing: false,
         scrollable: false,
         atStart: true,
         atEnd: true,
+        stickyWidth: 0,
     });
-    const measure = useCallback(() => {
-        if (!el) return;
-        // RTL scrollLeft is 0 at the start and negative towards the end.
-        const pos = Math.abs(el.scrollLeft);
-        const overflowing = el.scrollWidth - el.clientWidth > 1;
-        const next = {
-            overflowing,
-            scrollable: overflowing || el.scrollHeight - el.clientHeight > 1,
-            atStart: pos <= 1,
-            atEnd: !overflowing || pos + el.clientWidth >= el.scrollWidth - 1,
-        };
-        setEdges((prev) =>
-            prev.overflowing === next.overflowing &&
-            prev.scrollable === next.scrollable &&
-            prev.atStart === next.atStart &&
-            prev.atEnd === next.atEnd
-                ? prev
-                : next
-        );
-    }, [el]);
+    const measure = useCallback(
+        (resized: boolean) => {
+            if (!el) return;
+            // RTL scrollLeft is 0 at the start and negative towards the end.
+            const pos = Math.abs(el.scrollLeft);
+            const overflowing = el.scrollWidth - el.clientWidth > 1;
+            const next = {
+                overflowing,
+                scrollable:
+                    overflowing || el.scrollHeight - el.clientHeight > 1,
+                atStart: pos <= 1,
+                atEnd:
+                    !overflowing || pos + el.clientWidth >= el.scrollWidth - 1,
+            };
+            setEdges((prev) => {
+                const stickyWidth = resized
+                    ? stickyWidthOf(el)
+                    : prev.stickyWidth;
+                return prev.overflowing === next.overflowing &&
+                    prev.scrollable === next.scrollable &&
+                    prev.atStart === next.atStart &&
+                    prev.atEnd === next.atEnd &&
+                    prev.stickyWidth === stickyWidth
+                    ? prev
+                    : { ...next, stickyWidth };
+            });
+        },
+        [el]
+    );
     useEffect(() => {
         if (!el) return;
-        measure();
-        el.addEventListener('scroll', measure, { passive: true });
+        const onScroll = () => measure(false);
+        const onResize = () => measure(true);
+        onResize();
+        el.addEventListener('scroll', onScroll, { passive: true });
         const observer =
             typeof ResizeObserver === 'undefined'
                 ? undefined
-                : new ResizeObserver(measure);
+                : new ResizeObserver(onResize);
         observer?.observe(el);
         const table = el.firstElementChild;
         if (table) observer?.observe(table);
         return () => {
-            el.removeEventListener('scroll', measure);
+            el.removeEventListener('scroll', onScroll);
             observer?.disconnect();
         };
     }, [el, measure]);
@@ -285,26 +330,8 @@ export const TableRoot = forwardRef<HTMLTableElement, TableRootProps>(
             () => composeRefs(setScroller, scrollRef),
             [scrollRef]
         );
-        const { overflowing, scrollable, atStart, atEnd } =
+        const { overflowing, scrollable, atStart, atEnd, stickyWidth } =
             useScrollEdges(scroller);
-
-        // The start shadow begins after sticky cells (they never scroll).
-        const [stickyWidth, setStickyWidth] = useState(0);
-        useIsomorphicLayoutEffect(() => {
-            if (!scroller) return;
-            const row = scroller.querySelector('tbody > tr');
-            const sticky = row
-                ? Array.from(
-                      row.querySelectorAll<HTMLElement>(
-                          ':scope > [data-sticky]'
-                      )
-                  ).filter(
-                      (cell) => getComputedStyle(cell).position === 'sticky'
-                  )
-                : [];
-            const width = sticky.reduce((sum, c) => sum + c.offsetWidth, 0);
-            setStickyWidth((prev) => (prev === width ? prev : width));
-        });
 
         const context = useMemo(
             () => ({
@@ -367,7 +394,7 @@ export const TableRoot = forwardRef<HTMLTableElement, TableRootProps>(
                             data-density={density}
                             data-responsive={responsive}
                             className={cn(
-                                tableStyles({ responsive }),
+                                tableVariants({ responsive }),
                                 className
                             )}
                         >

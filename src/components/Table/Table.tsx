@@ -127,6 +127,12 @@ export type TableProps<Row extends object = TableRowData> = Omit<
          * Clicks on links, buttons and checkboxes inside the row do not
          * count. Rows with `disableRowSelect` are not clickable. The event
          * has `ctrlKey`/`metaKey` for "open in a new tab" (Ctrl+Enter too).
+         *
+         * Prefer a link in the row header (a column `render` returning a
+         * `Link`) when a row opens a page: screen readers announce a named
+         * link, while a focusable row (`tr`) has no role or name hint that it
+         * acts. Use `onRowClick` for x-core parity or as a pointer shortcut
+         * next to such a link.
          */
         onRowClick?(
             id: string | number,
@@ -201,6 +207,8 @@ const legacyTableProps = {
 } as const;
 
 // Complete literals: the Tailwind scanner only compiles classes it can see.
+// `max-tablet:hidden` is not redundant: with `responsive="stack"` cells get
+// `max-tablet:grid`/`block`, which would override `hidden` below tablet.
 const hideBelowClass: Record<ColumnHideBelow, string> = {
     tablet: 'hz:hidden hz:max-tablet:hidden hz:tablet:table-cell',
     laptop: 'hz:hidden hz:max-tablet:hidden hz:laptop:table-cell',

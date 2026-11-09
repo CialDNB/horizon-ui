@@ -153,6 +153,7 @@ export {
     TableHeader,
     TableRoot,
     TableRow,
+    tableVariants,
 } from './Table';
 export type {
     Column,
@@ -176,6 +177,7 @@ export type {
     TableRootProps,
     TableRowData,
     TableRowProps,
+    TableVariantOptions,
 } from './Table';
 export { Textarea, textareaVariants } from './Textarea';
 export type {

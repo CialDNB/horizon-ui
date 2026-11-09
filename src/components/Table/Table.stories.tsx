@@ -639,6 +639,10 @@ async function assertScroll(canvasElement: HTMLElement, vp: Viewport) {
         await waitFor(() =>
             expect(start && getComputedStyle(start).opacity).toBe('1')
         );
+        // The start shadow begins after the sticky columns.
+        await waitFor(() =>
+            expect(Math.round(rect(start).left - rect(rowHeader).right)).toBe(0)
+        );
         // The row header stays at the inline start (after the 56px selection column).
         await expect(
             Math.round(rect(rowHeader).left - rect(scroller).left)
@@ -696,6 +700,9 @@ async function assertStack(canvasElement: HTMLElement, vp: Viewport) {
         await expect(getComputedStyle(cell, '::before').content).toBe(
             '"D-U-N-S"'
         );
+        // A `hideBelow: 'tablet'` column is not in the card (it is in Details).
+        const city = row.querySelector<HTMLElement>('td[data-label="City"]');
+        await expect(city && getComputedStyle(city).display).toBe('none');
         // Not sortable: kept for screen readers, out of the header bar.
         await expect(rect(founded).width).toBe(1);
         const sort = within(
